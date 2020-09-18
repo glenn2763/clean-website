@@ -17,8 +17,9 @@
   text-align: center;
   padding: 38px 16px;
   text-decoration: none;
-  font-size: 17px;
-  font-family: subtitles, sans-serif;
+  font-size: 1.2em; /* currently ems cause chrome bug misinterpreting rems on body element */
+  font-family: "Raleway", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #222;
 }
 
 /* Change the color of links on hover */
