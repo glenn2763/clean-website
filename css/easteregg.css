@@ -22,3 +22,22 @@ div.center {
     top: 30%;
     right: 10%;
 }
+
+#ryan {
+    position: absolute;
+    width: 40px;
+    bottom: 0px;
+    right: 0px;
+}
+#nick {
+    position: absolute;
+    width: 30px;
+    bottom: 0px;
+    right: 40px;
+}
+#anna {
+    position: absolute;
+    width: 40px;
+    bottom: 0px;
+    right: 80px;
+}
