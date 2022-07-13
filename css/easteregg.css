@@ -1,0 +1,24 @@
+body {
+    background-image: url("../images/tifosi.jpg");
+   }
+div.center {
+    text-align: center;
+    margin-top: 1%;
+  }
+.tifosi {
+    color: crimson;
+    font-size: 80px;
+    text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
+}
+
+#left_text {
+    position: absolute;
+    top: 30%;
+    left: 10%;
+}
+
+#right_text {
+    position: absolute;
+    top: 30%;
+    right: 10%;
+}
