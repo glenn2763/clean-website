@@ -79,4 +79,41 @@
   }
 }
 
+.fade_short {
+  animation: fadein 1s;
+  -webkit-animation: fadein 1s; /* Safari and Chrome */
+}
 
+.fade_medium {
+  opacity: 0;
+  animation: fadein 1s;
+  animation-delay: 1s;
+  -webkit-animation: fadein 1s; /* Safari and Chrome */
+  -webkit-animation-delay: 1s;
+  -webkit-animation-fill-mode: forwards;
+}
+
+.fade_long {
+  opacity: 0;
+  animation: fadein 1s;
+  animation-delay: 2s;
+  -webkit-animation: fadein 1s; /* Safari and Chrome */
+  -webkit-animation-delay: 2s;
+  -webkit-animation-fill-mode: forwards;
+}
+@keyframes fadein {
+  from {
+      opacity:0;
+  }
+  to {
+      opacity:1;
+  }
+}
+@-webkit-keyframes fadein { /* Safari and Chrome */
+  from {
+      opacity:0;
+  }
+  to {
+      opacity:1;
+  }
+}
