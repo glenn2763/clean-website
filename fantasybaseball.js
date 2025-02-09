@@ -254,16 +254,28 @@ function createConfetti(x, y) {
         confetti.style.width = `${size}px`;
         confetti.style.height = `${size}px`;
         
-        // Random position spread around click
-        const spread = 100;
-        confetti.style.left = `${x + (Math.random() - 0.5) * spread}px`;
-        confetti.style.top = `${y + (Math.random() - 0.5) * spread}px`;
+        // Set initial position to click point
+        confetti.style.left = `${x}px`;
+        confetti.style.top = `${y}px`;
         
         // Random color
         confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
         
-        // Random rotation
-        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        // Random initial rotation
+        const rotation = Math.random() * 360;
+        
+        // Random angle for explosion direction
+        const angle = (Math.random() * 360) * (Math.PI / 180);
+        const velocity = 15 + Math.random() * 15; // Random velocity between 15-30
+        const velocityX = Math.cos(angle) * velocity;
+        const velocityY = Math.sin(angle) * velocity;
+
+        confetti.style.transform = `rotate(${rotation}deg)`;
+        
+        // Add custom properties for animation
+        confetti.style.setProperty('--x-velocity', velocityX);
+        confetti.style.setProperty('--y-velocity', velocityY);
+        confetti.style.setProperty('--rotation-speed', (Math.random() * 720 - 360) + 'deg');
         
         document.body.appendChild(confetti);
         setTimeout(() => confetti.remove(), 2000);

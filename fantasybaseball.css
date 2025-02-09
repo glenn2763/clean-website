@@ -438,6 +438,21 @@ th:nth-child(3) {
 .confetti {
     position: fixed;
     pointer-events: none;
+    animation: particle-burst 2s ease-out forwards;
+}
+
+@keyframes particle-burst {
+    0% {
+        transform: translate(0, 0) rotate(0);
+        opacity: 1;
+    }
+    35% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(calc(var(--x-velocity) * 30px), calc(var(--y-velocity) * 30px + 400px)) rotate(var(--rotation-speed));
+        opacity: 0;
+    }
 }
 
 .confetti.circle {
@@ -451,33 +466,6 @@ th:nth-child(3) {
     border-right: 5px solid transparent;
     border-bottom: 10px solid;
     background-color: transparent !important;
-}
-
-.confetti {
-    animation: confetti-fall-and-spin 2s ease-out forwards;
-}
-
-@keyframes confetti-fall-and-spin {
-    0% {
-        transform: translateY(0) translateX(0) rotate(0deg);
-        opacity: 1;
-    }
-    25% {
-        transform: translateY(25vh) translateX(30px) rotate(180deg);
-        opacity: 0.8;
-    }
-    50% {
-        transform: translateY(50vh) translateX(-30px) rotate(360deg);
-        opacity: 0.6;
-    }
-    75% {
-        transform: translateY(75vh) translateX(30px) rotate(540deg);
-        opacity: 0.4;
-    }
-    100% {
-        transform: translateY(100vh) translateX(-30px) rotate(720deg);
-        opacity: 0;
-    }
 }
 
 @keyframes pulse {
