@@ -30,6 +30,19 @@ body {
     background-color: var(--surface);
     border-radius: 16px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: linear-gradient(180deg, rgba(227, 24, 55, 0.05) 0%, transparent 100%);
+    pointer-events: none;
 }
 
 h1 {
@@ -195,10 +208,12 @@ button:hover {
 
 .prediction-icon.correct {
     color: #22C55E;
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
 }
 
 .prediction-icon.incorrect {
     color: #EF4444;
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }
 
 /* Mobile optimizations */
@@ -307,4 +322,52 @@ button:hover {
     font-size: clamp(1.25rem, 3vw, 2rem);
     font-weight: 600;
     margin-top: 4px;
+    text-shadow: 0 0 10px rgba(255, 184, 28, 0.3);
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 10px rgba(255, 184, 28, 0.3);
+    }
+    to {
+        text-shadow: 0 0 20px rgba(255, 184, 28, 0.6);
+    }
+}
+
+/* Add smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Improve table hover states */
+tr {
+    transition: background-color 0.2s ease;
+}
+
+tr:hover {
+    background-color: var(--surface-light);
+}
+
+/* Update table cell alignments but keep original font sizes */
+td[data-label="Rank"],
+th:first-child {
+    text-align: center;
+}
+
+td[data-label="Score"],
+th:nth-child(3) {
+    text-align: center;
+}
+
+/* Remove the mobile-specific font size overrides */
+@media (max-width: 768px) {
+    td[data-label="Name"] {
+        color: var(--chiefs-gold);
+    }
+
+    td[data-label="Rank"] {
+        color: var(--eagles-silver);
+        text-align: left; /* Keep left alignment on mobile */
+    }
 } 
