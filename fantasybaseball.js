@@ -139,6 +139,14 @@ function updateScores() {
 // Update the leaderboard display with hierarchical sorting
 function updateLeaderboard() {
     const tbody = document.getElementById('standings-body');
+    const oldPositions = new Map();
+    
+    // Store old positions
+    tbody.querySelectorAll('tr').forEach((row, index) => {
+        const name = row.querySelector('[data-label="Name"]').textContent;
+        oldPositions.set(name, index);
+    });
+    
     tbody.innerHTML = '';
     
     const participants = Object.keys(scores);
@@ -159,10 +167,16 @@ function updateLeaderboard() {
     
     sortedParticipants.forEach((name, index) => {
         const row = tbody.insertRow();
+        const oldPos = oldPositions.get(name);
+        
+        if (oldPos !== undefined && oldPos !== index) {
+            row.classList.add('position-change');
+            row.classList.add(oldPos > index ? 'moved-up' : 'moved-down');
+        }
+        
         row.innerHTML = `
             <td data-label="Rank">${index + 1}</td>
             <td data-label="Name">${name}</td>
-            <td data-label="Score">${getCorrectPredictions(name)}</td>
             <td data-label="Predictions">${getParticipantResults(name)}</td>
         `;
     });
@@ -175,8 +189,8 @@ function getParticipantResults(name) {
         .map(event => {
             const correct = event.predictions[event.result].includes(name);
             return `<span class="prediction-icon ${correct ? 'correct' : 'incorrect'}" 
-                         title="${event.name}"
-                         onclick="if(this.classList.contains('correct')) createConfetti(event.clientX, event.clientY)">
+                         title="${event.name}: ${event.result}"
+                         onclick="toggleTooltip(event)">
                 ${correct ? '✓' : '✗'}
             </span>`;
         })
@@ -304,6 +318,83 @@ function initializeTheme() {
     });
 }
 
+// Add mobile-specific features
+function initializeMobileFeatures() {
+    if (window.innerWidth <= 768) {
+        // Add pull-to-refresh functionality
+        let touchStart = 0;
+        let pulling = false;
+
+        document.body.insertAdjacentHTML('afterbegin', 
+            '<div class="pull-indicator">Pull down to refresh</div>'
+        );
+
+        document.addEventListener('touchstart', e => {
+            touchStart = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', e => {
+            const touchY = e.touches[0].clientY;
+            const pull = touchY - touchStart;
+            
+            if (pull > 50 && !pulling && window.scrollY === 0) {
+                pulling = true;
+                document.body.classList.add('pulling');
+            }
+        });
+
+        document.addEventListener('touchend', e => {
+            if (pulling) {
+                pulling = false;
+                document.body.classList.remove('pulling');
+                location.reload();
+            }
+        });
+
+        // Add swipe between sections
+        let startX = 0;
+        document.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchend', e => {
+            const endX = e.changedTouches[0].clientX;
+            const diff = startX - endX;
+
+            if (Math.abs(diff) > 100) { // Minimum swipe distance
+                const sections = ['leaderboard', 'event-history'];
+                const currentSection = sections.find(s => 
+                    isElementInViewport(document.querySelector(`.${s}`))
+                );
+                const currentIndex = sections.indexOf(currentSection);
+
+                if (diff > 0 && currentIndex < sections.length - 1) {
+                    // Swipe left - next section
+                    document.querySelector(`.${sections[currentIndex + 1]}`).scrollIntoView({ 
+                        behavior: 'smooth' 
+                    });
+                } else if (diff < 0 && currentIndex > 0) {
+                    // Swipe right - previous section
+                    document.querySelector(`.${sections[currentIndex - 1]}`).scrollIntoView({ 
+                        behavior: 'smooth' 
+                    });
+                }
+            }
+        });
+    }
+}
+
+// Helper function for swipe detection
+function isElementInViewport(el) {
+    const rect = el.getBoundingClientRect();
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= window.innerHeight &&
+        rect.right <= window.innerWidth
+    );
+}
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', () => {
     loadSavedResults();
@@ -314,4 +405,42 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLeaderboard();
     updateEventHistory();
     initializeTheme();
+    initializeMobileFeatures();
+});
+
+// Keep this function for potential future use
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// Add tooltip toggle function
+function toggleTooltip(event) {
+    // Remove active class from all other tooltips
+    document.querySelectorAll('.prediction-icon.tooltip-active').forEach(icon => {
+        if (icon !== event.target) {
+            icon.classList.remove('tooltip-active');
+        }
+    });
+    
+    // Toggle the clicked tooltip
+    event.target.classList.toggle('tooltip-active');
+    
+    // If it's a correct prediction, also show confetti
+    if (event.target.classList.contains('correct')) {
+        createConfetti(event.clientX, event.clientY);
+    }
+}
+
+// Close tooltip when clicking outside
+document.addEventListener('click', (event) => {
+    if (!event.target.classList.contains('prediction-icon')) {
+        document.querySelectorAll('.prediction-icon.tooltip-active').forEach(icon => {
+            icon.classList.remove('tooltip-active');
+        });
+    }
 }); 

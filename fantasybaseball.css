@@ -208,13 +208,8 @@ button:hover {
 
 /* Update prediction icons */
 .prediction-icon {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 14px;
-    background: none;
-    padding: 2px 4px;
     position: relative;
+    cursor: pointer;
 }
 
 .prediction-icon.correct {
@@ -233,48 +228,100 @@ button:hover {
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    padding: 4px 8px;
+    padding: 8px 12px;
     background: var(--surface);
     border: 1px solid var(--chiefs-gold);
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 14px;
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s;
+    transform: translateX(-50%) translateY(10px);
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.prediction-icon:hover::after {
+/* Add active class for click state */
+.prediction-icon.tooltip-active::after {
     opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
+    /* Tighter spacing for mobile */
     .container {
-        padding: 12px;
+        padding: 12px 8px;
+        margin: 0;
+        border-radius: 0; /* Full width on mobile */
     }
 
-    tr {
-        padding: 8px 0;
-        border-bottom: 1px solid var(--surface-light);
+    /* Adjust stats grid for mobile */
+    .stats-grid {
+        grid-template-columns: 1fr; /* Stack cards vertically */
+        gap: 12px;
     }
 
-    td[data-label="Name"] {
-        font-size: 1rem;
-        color: var(--chiefs-gold);
+    .stat-card {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
     }
 
-    td[data-label="Rank"] {
-        font-size: 0.9rem;
-        color: var(--eagles-silver);
+    .stat-card h3 {
+        margin: 0;
     }
 
+    /* Make the theme toggle smaller and move to bottom right */
+    .theme-toggle {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        width: 36px;
+        height: 36px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        z-index: 100;
+    }
+
+    /* Optimize table for mobile */
     td[data-label="Predictions"] {
-        padding-top: 4px;
+        width: 100%;
+        padding: 8px 0;
+        margin-bottom: 4px;
     }
 
     .prediction-icon {
-        font-size: 13px;
+        display: inline-flex;
+        padding: 4px 8px;
+        background: var(--surface);
+        border-radius: 4px;
+    }
+
+    /* Add pull-to-refresh indicator */
+    .pull-indicator {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--chiefs-gold);
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .pulling .pull-indicator {
+        opacity: 1;
+    }
+
+    /* Make notifications more mobile-friendly */
+    .notification {
+        bottom: 70px; /* Above theme toggle */
+        left: 20px;
+        right: 20px;
+        text-align: center;
     }
 }
 
@@ -412,14 +459,9 @@ tr:hover {
     background-color: var(--surface-light);
 }
 
-/* Update table cell alignments but keep original font sizes */
+/* Update table cell alignments */
 td[data-label="Rank"],
 th:first-child {
-    text-align: center;
-}
-
-td[data-label="Score"],
-th:nth-child(3) {
     text-align: center;
 }
 
@@ -540,4 +582,74 @@ th:nth-child(3) {
 [data-theme="light"] .prediction-icon::after {
     background: var(--surface);
     border-color: var(--chiefs-red);
+}
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 8px;
+    border-left: 4px solid var(--chiefs-gold);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Position Change Animations */
+.position-change {
+    transition: transform 0.5s ease;
+}
+
+.moved-up {
+    animation: slideDown 0.5s ease;
+}
+
+.moved-down {
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideDown {
+    0% { transform: translateY(-100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideUp {
+    0% { transform: translateY(100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Update prediction display styles */
+td[data-label="Predictions"] {
+    white-space: nowrap;
+    overflow-x: auto;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+.prediction-icon {
+    display: inline-block;
+    padding: 2px 8px;
+}
+
+/* Keep the scrollbar hidden */
+td[data-label="Predictions"]::-webkit-scrollbar {
+    display: none;
+}
+
+td[data-label="Predictions"] {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 } 
