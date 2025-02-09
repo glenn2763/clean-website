@@ -182,15 +182,14 @@ function updateLeaderboard() {
     });
 }
 
-// Helper function to show which events a participant got correct
+// Update getParticipantResults to remove tooltip
 function getParticipantResults(name) {
     return eventData.events
         .filter(event => event.result)
         .map(event => {
             const correct = event.predictions[event.result].includes(name);
             return `<span class="prediction-icon ${correct ? 'correct' : 'incorrect'}" 
-                         title="${event.name}: ${event.result}"
-                         onclick="toggleTooltip(event)">
+                         onclick="if(this.classList.contains('correct')) createConfetti(event.clientX, event.clientY)">
                 ${correct ? '✓' : '✗'}
             </span>`;
         })
@@ -416,31 +415,4 @@ function showNotification(message) {
     document.body.appendChild(notification);
     
     setTimeout(() => notification.remove(), 3000);
-}
-
-// Add tooltip toggle function
-function toggleTooltip(event) {
-    // Remove active class from all other tooltips
-    document.querySelectorAll('.prediction-icon.tooltip-active').forEach(icon => {
-        if (icon !== event.target) {
-            icon.classList.remove('tooltip-active');
-        }
-    });
-    
-    // Toggle the clicked tooltip
-    event.target.classList.toggle('tooltip-active');
-    
-    // If it's a correct prediction, also show confetti
-    if (event.target.classList.contains('correct')) {
-        createConfetti(event.clientX, event.clientY);
-    }
-}
-
-// Close tooltip when clicking outside
-document.addEventListener('click', (event) => {
-    if (!event.target.classList.contains('prediction-icon')) {
-        document.querySelectorAll('.prediction-icon.tooltip-active').forEach(icon => {
-            icon.classList.remove('tooltip-active');
-        });
-    }
-}); 
+} 

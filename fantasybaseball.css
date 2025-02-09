@@ -208,7 +208,8 @@ button:hover {
 
 /* Update prediction icons */
 .prediction-icon {
-    position: relative;
+    display: inline-block;
+    padding: 2px 8px;
     cursor: pointer;
 }
 
@@ -220,32 +221,6 @@ button:hover {
 .prediction-icon.incorrect {
     color: #EF4444;
     text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
-}
-
-.prediction-icon::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 8px 12px;
-    background: var(--surface);
-    border: 1px solid var(--chiefs-gold);
-    border-radius: 4px;
-    font-size: 14px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s, transform 0.2s;
-    transform: translateX(-50%) translateY(10px);
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Add active class for click state */
-.prediction-icon.tooltip-active::after {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
 }
 
 /* Mobile optimizations */
