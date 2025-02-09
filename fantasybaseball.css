@@ -26,7 +26,7 @@
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     margin: 0;
-    padding: 10px;
+    padding: 0;
     background-color: var(--background);
     color: var(--text);
     line-height: 1.5;
@@ -34,7 +34,7 @@ body {
 
 .container {
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 8px auto;
     padding: 24px;
     background-color: var(--surface);
     border-radius: 16px;
@@ -250,11 +250,10 @@ button:hover {
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
-    /* Tighter spacing for mobile */
     .container {
+        margin: 8px;
         padding: 12px 8px;
-        margin: 0;
-        border-radius: 0; /* Full width on mobile */
+        border-radius: 16px;
     }
 
     /* Adjust stats grid for mobile */
