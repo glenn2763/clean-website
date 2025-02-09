@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Baseball Draft</title>
+    <link rel="stylesheet" href="/fantasybaseball/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Fantasy Baseball Draft</h1>
+        <div class="scoreboard">
+            <table id="predictions-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Score</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="predictions-body">
+                    <!-- Will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="admin-controls">
+            <h2>Update Results</h2>
+            <div id="questions-container">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            <button onclick="updateScores()">Update Scores</button>
+        </div>
+    </div>
+    <script src="/fantasybaseball/script.js"></script>
+</body>
+</html> 
