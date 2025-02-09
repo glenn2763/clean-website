@@ -37,22 +37,12 @@ h1 {
     color: #FFFFFF;
     font-weight: 800;
     letter-spacing: -0.025em;
-    margin-bottom: 32px;
+    margin-bottom: 0;
     font-size: clamp(1.875rem, 4vw, 3rem);
-    position: relative;
-    padding-bottom: 16px;
 }
 
 h1::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 4px;
-    background: linear-gradient(90deg, var(--chiefs-red), var(--eagles-green));
-    border-radius: 2px;
+    display: none;
 }
 
 h2 {
@@ -113,29 +103,27 @@ h2 {
     margin-bottom: 30px;
 }
 
+/* Update table styles */
 table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
     margin-top: 24px;
-    background-color: var(--surface);
-    border-radius: 12px;
-    overflow: hidden;
+    background-color: transparent;
 }
 
 th, td {
-    padding: 16px;
+    padding: 12px 8px;
     text-align: left;
     border-bottom: 1px solid var(--surface-light);
 }
 
 th {
-    background-color: var(--surface-light);
-    color: #FFFFFF;
+    color: var(--eagles-silver);
     font-weight: 600;
     text-transform: uppercase;
     font-size: 14px;
     letter-spacing: 0.05em;
+    background-color: transparent;
 }
 
 tr:last-child td {
@@ -195,68 +183,51 @@ button:hover {
     background-color: #45a049;
 }
 
-/* Add football-themed icons */
-.correct {
-    color: var(--chiefs-gold);
-    font-weight: 500;
+/* Update prediction icons */
+.prediction-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    background: none;
+    padding: 2px 4px;
 }
 
-.incorrect {
-    color: var(--chiefs-red);
-    font-weight: 500;
+.prediction-icon.correct {
+    color: #22C55E;
 }
 
-/* Specific mobile optimizations */
+.prediction-icon.incorrect {
+    color: #EF4444;
+}
+
+/* Mobile optimizations */
 @media (max-width: 768px) {
     .container {
-        padding: 16px;
-        border-radius: 12px;
-    }
-
-    table thead {
-        display: none;
-    }
-
-    table, tbody, tr, td {
-        display: block;
-        width: 100%;
+        padding: 12px;
     }
 
     tr {
-        margin-bottom: 16px;
-        background-color: var(--surface-light);
-        border-radius: 8px;
-        padding: 16px;
-    }
-
-    td {
-        display: flex;
         padding: 8px 0;
-        border: none;
-        align-items: center;
+        border-bottom: 1px solid var(--surface-light);
     }
 
-    td:before {
-        content: attr(data-label);
-        font-weight: 500;
-        width: 120px;
-        min-width: 120px;
+    td[data-label="Name"] {
+        font-size: 1rem;
+        color: var(--chiefs-gold);
+    }
+
+    td[data-label="Rank"] {
+        font-size: 0.9rem;
         color: var(--eagles-silver);
     }
 
-    .event-control select {
-        width: 100%;
-        max-width: none;
+    td[data-label="Predictions"] {
+        padding-top: 4px;
     }
 
-    /* Adjust event history for mobile */
-    .event-result {
-        padding: 10px;
-    }
-
-    .event-result p {
-        margin: 5px 0;
-        font-size: 14px;
+    .prediction-icon {
+        font-size: 13px;
     }
 }
 
@@ -268,4 +239,72 @@ button:hover {
 
 .updated {
     animation: highlight 1s ease-out;
+}
+
+/* Add after the container styles */
+.title-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 48px;
+}
+
+.team-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.chiefs-logo {
+    filter: drop-shadow(0 2px 4px rgba(227, 24, 55, 0.3));
+}
+
+.eagles-logo {
+    filter: drop-shadow(0 2px 4px rgba(0, 76, 84, 0.3));
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .title-container {
+        gap: 16px;
+    }
+
+    .team-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    h1 {
+        font-size: clamp(1.25rem, 4vw, 1.875rem);
+    }
+}
+
+/* Hover effects */
+.chiefs-logo {
+    transition: transform 0.3s ease;
+}
+
+.eagles-logo {
+    transition: transform 0.3s ease;
+}
+
+.title-container:hover .chiefs-logo {
+    transform: rotate(-10deg);
+}
+
+.title-container:hover .eagles-logo {
+    transform: rotate(10deg);
+}
+
+.title-wrapper {
+    text-align: center;
+}
+
+.year {
+    color: var(--chiefs-gold);
+    font-size: clamp(1.25rem, 3vw, 2rem);
+    font-weight: 600;
+    margin-top: 4px;
 } 

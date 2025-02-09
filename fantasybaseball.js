@@ -141,15 +141,11 @@ function updateLeaderboard() {
     const tbody = document.getElementById('standings-body');
     tbody.innerHTML = '';
     
-    // Get all participants
     const participants = Object.keys(scores);
-    
-    // Sort participants based on hierarchical event results
     const sortedParticipants = participants.sort((a, b) => {
-        // Compare each event in order until we find a difference
         for (const eventName of eventOrder) {
             const event = eventData.events.find(e => e.name === eventName);
-            if (!event.result) continue; // Skip events that haven't happened yet
+            if (!event.result) continue;
 
             const aCorrect = event.predictions[event.result].includes(a);
             const bCorrect = event.predictions[event.result].includes(b);
@@ -158,12 +154,9 @@ function updateLeaderboard() {
                 return bCorrect ? 1 : -1;
             }
         }
-        
-        // If all events match, sort alphabetically
         return a.localeCompare(b);
     });
     
-    // Display the sorted participants
     sortedParticipants.forEach((name, index) => {
         const row = tbody.insertRow();
         row.innerHTML = `
@@ -181,9 +174,11 @@ function getParticipantResults(name) {
         .filter(event => event.result)
         .map(event => {
             const correct = event.predictions[event.result].includes(name);
-            return `${event.name}: ${correct ? '✓' : '✗'}`;
+            return `<span class="prediction-icon ${correct ? 'correct' : 'incorrect'}" title="${event.name}">
+                ${correct ? '✓' : '✗'}
+            </span>`;
         })
-        .join(', ');
+        .join('');
 }
 
 // Create event toggle controls
