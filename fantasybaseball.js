@@ -174,7 +174,9 @@ function getParticipantResults(name) {
         .filter(event => event.result)
         .map(event => {
             const correct = event.predictions[event.result].includes(name);
-            return `<span class="prediction-icon ${correct ? 'correct' : 'incorrect'}" title="${event.name}">
+            return `<span class="prediction-icon ${correct ? 'correct' : 'incorrect'}" 
+                         title="${event.name}"
+                         onclick="if(this.classList.contains('correct')) createConfetti(event.clientX, event.clientY)">
                 ${correct ? '✓' : '✗'}
             </span>`;
         })
@@ -239,6 +241,57 @@ function getCorrectPredictions(name) {
     ).length;
 }
 
+function createConfetti(x, y) {
+    const colors = ['#E31837', '#FFB81C', '#004C54', '#A5ACAF', '#FFFFFF'];
+    const shapes = ['circle', 'square', 'triangle'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = `confetti ${shapes[Math.floor(Math.random() * shapes.length)]}`;
+        
+        // Random size between 5px and 10px
+        const size = Math.random() * 5 + 5;
+        confetti.style.width = `${size}px`;
+        confetti.style.height = `${size}px`;
+        
+        // Random position spread around click
+        const spread = 100;
+        confetti.style.left = `${x + (Math.random() - 0.5) * spread}px`;
+        confetti.style.top = `${y + (Math.random() - 0.5) * spread}px`;
+        
+        // Random color
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // Random rotation
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 2000);
+    }
+}
+
+// Add theme toggle functionality
+function initializeTheme() {
+    const themeToggle = document.querySelector('.theme-toggle');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('theme');
+    
+    // Set initial theme
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    } else if (prefersDark) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+    });
+}
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', () => {
     loadSavedResults();
@@ -248,4 +301,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeScores();
     updateLeaderboard();
     updateEventHistory();
+    initializeTheme();
 }); 

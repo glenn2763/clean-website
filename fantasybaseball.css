@@ -12,6 +12,15 @@
     --background: #111827;
     --surface: #1F2937;
     --surface-light: #374151;
+    --text: #FFFFFF;
+}
+
+/* Light theme */
+[data-theme="light"] {
+    --background: #F3F4F6;
+    --surface: #FFFFFF;
+    --surface-light: #E5E7EB;
+    --text: #111827;
 }
 
 body {
@@ -19,7 +28,7 @@ body {
     margin: 0;
     padding: 10px;
     background-color: var(--background);
-    color: #FFFFFF;
+    color: var(--text);
     line-height: 1.5;
 }
 
@@ -47,10 +56,10 @@ body {
 
 h1 {
     text-align: center;
-    color: #FFFFFF;
+    color: var(--text);
     font-weight: 800;
     letter-spacing: -0.025em;
-    margin-bottom: 0;
+    margin: 0;
     font-size: clamp(1.875rem, 4vw, 3rem);
 }
 
@@ -59,7 +68,7 @@ h1::after {
 }
 
 h2 {
-    color: #FFFFFF;
+    color: var(--text);
     font-weight: 700;
     letter-spacing: -0.025em;
     margin-top: 32px;
@@ -150,6 +159,7 @@ tr:last-child td {
     border-radius: 12px;
     border-left: 4px solid var(--chiefs-gold);
     transition: transform 0.2s ease;
+    animation: pulse 1s ease-out;
 }
 
 .event-result:hover {
@@ -157,7 +167,7 @@ tr:last-child td {
 }
 
 .event-result h3 {
-    color: #FFFFFF;
+    color: var(--text);
     margin: 0 0 8px 0;
     font-size: 1.25rem;
     font-weight: 600;
@@ -204,6 +214,7 @@ button:hover {
     font-size: 14px;
     background: none;
     padding: 2px 4px;
+    position: relative;
 }
 
 .prediction-icon.correct {
@@ -214,6 +225,27 @@ button:hover {
 .prediction-icon.incorrect {
     color: #EF4444;
     text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.prediction-icon::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: var(--surface);
+    border: 1px solid var(--chiefs-gold);
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.prediction-icon:hover::after {
+    opacity: 1;
 }
 
 /* Mobile optimizations */
@@ -270,6 +302,7 @@ button:hover {
     height: 60px;
     object-fit: contain;
     transition: transform 0.3s ease;
+    animation: float 3s ease-in-out infinite;
 }
 
 .chiefs-logo {
@@ -314,7 +347,35 @@ button:hover {
 }
 
 .title-wrapper {
+    position: relative;
+    overflow: hidden;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.title-wrapper::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
 }
 
 .year {
@@ -324,6 +385,8 @@ button:hover {
     margin-top: 4px;
     text-shadow: 0 0 10px rgba(255, 184, 28, 0.3);
     animation: glow 2s ease-in-out infinite alternate;
+    text-align: center;
+    width: 100%;
 }
 
 @keyframes glow {
@@ -370,4 +433,123 @@ th:nth-child(3) {
         color: var(--eagles-silver);
         text-align: left; /* Keep left alignment on mobile */
     }
+}
+
+.confetti {
+    position: fixed;
+    pointer-events: none;
+}
+
+.confetti.circle {
+    border-radius: 50%;
+}
+
+.confetti.triangle {
+    width: 0 !important;
+    height: 0 !important;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 10px solid;
+    background-color: transparent !important;
+}
+
+.confetti {
+    animation: confetti-fall-and-spin 2s ease-out forwards;
+}
+
+@keyframes confetti-fall-and-spin {
+    0% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+        opacity: 1;
+    }
+    25% {
+        transform: translateY(25vh) translateX(30px) rotate(180deg);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateY(50vh) translateX(-30px) rotate(360deg);
+        opacity: 0.6;
+    }
+    75% {
+        transform: translateY(75vh) translateX(30px) rotate(540deg);
+        opacity: 0.4;
+    }
+    100% {
+        transform: translateY(100vh) translateX(-30px) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Theme toggle button styles */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface-light);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+}
+
+.theme-toggle .sun-icon,
+.theme-toggle .moon-icon {
+    position: absolute;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.theme-toggle .sun-icon {
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+.theme-toggle .moon-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+[data-theme="light"] .theme-toggle .sun-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+[data-theme="light"] .theme-toggle .moon-icon {
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+/* Update table styles for light theme */
+[data-theme="light"] th {
+    color: var(--eagles-green);
+}
+
+[data-theme="light"] .event-result {
+    background-color: var(--surface-light);
+}
+
+[data-theme="light"] .prediction-icon::after {
+    background: var(--surface);
+    border-color: var(--chiefs-red);
 } 
