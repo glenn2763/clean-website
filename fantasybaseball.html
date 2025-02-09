@@ -9,27 +9,39 @@
 <body>
     <div class="container">
         <h1>Fantasy Baseball Draft</h1>
-        <div class="scoreboard">
-            <table id="predictions-table">
+        
+        <!-- Event Controls -->
+        <div class="event-controls">
+            <h2>Update Event Results</h2>
+            <div id="events-container">
+                <!-- Will be populated by JavaScript with event toggles -->
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="leaderboard">
+            <h2>Current Standings</h2>
+            <table id="standings-table">
                 <thead>
                     <tr>
+                        <th>Rank</th>
                         <th>Name</th>
                         <th>Score</th>
-                        <th>Details</th>
+                        <th>Correct Predictions</th>
                     </tr>
                 </thead>
-                <tbody id="predictions-body">
+                <tbody id="standings-body">
                     <!-- Will be populated by JavaScript -->
                 </tbody>
             </table>
         </div>
-        
-        <div class="admin-controls">
-            <h2>Update Results</h2>
-            <div id="questions-container">
+
+        <!-- Event History -->
+        <div class="event-history">
+            <h2>Event Results</h2>
+            <div id="event-history-container">
                 <!-- Will be populated by JavaScript -->
             </div>
-            <button onclick="updateScores()">Update Scores</button>
         </div>
     </div>
     <script src="/fantasybaseball/script.js"></script>
