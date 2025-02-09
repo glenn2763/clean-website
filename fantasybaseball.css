@@ -1,19 +1,67 @@
+:root {
+    /* Chiefs Colors */
+    --chiefs-red: #E31837;
+    --chiefs-gold: #FFB81C;
+    
+    /* Eagles Colors */
+    --eagles-green: #004C54;
+    --eagles-silver: #A5ACAF;
+    --eagles-black: #000000;
+    
+    /* UI Colors */
+    --background: #111827;
+    --surface: #1F2937;
+    --surface-light: #374151;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     margin: 0;
-    padding: 20px;
-    background-color: #f0f0f0;
+    padding: 10px;
+    background-color: var(--background);
+    color: #FFFFFF;
+    line-height: 1.5;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 24px;
+    background-color: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 h1 {
     text-align: center;
-    color: #333;
+    color: #FFFFFF;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    margin-bottom: 32px;
+    font-size: clamp(1.875rem, 4vw, 3rem);
+    position: relative;
+    padding-bottom: 16px;
+}
+
+h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--chiefs-red), var(--eagles-green));
+    border-radius: 2px;
+}
+
+h2 {
+    color: #FFFFFF;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-top: 32px;
+    margin-bottom: 16px;
+    font-size: clamp(1.5rem, 3vw, 2rem);
 }
 
 .scoreboard {
@@ -21,19 +69,44 @@ h1 {
 }
 
 .event-controls {
-    margin-bottom: 30px;
-    padding: 20px;
-    background-color: #f5f5f5;
-    border-radius: 5px;
+    background-color: var(--surface-light);
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 32px;
 }
 
 .event-control {
-    margin: 10px 0;
+    margin: 16px 0;
+}
+
+.event-control label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+    color: var(--eagles-silver);
 }
 
 .event-control select {
-    margin-left: 10px;
-    padding: 5px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--surface-light);
+    background-color: var(--surface);
+    color: #FFFFFF;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 300px;
+    transition: all 0.2s ease;
+}
+
+.event-control select:hover {
+    border-color: var(--chiefs-gold);
+}
+
+.event-control select:focus {
+    outline: none;
+    border-color: var(--chiefs-red);
+    box-shadow: 0 0 0 3px rgba(227, 24, 55, 0.2);
 }
 
 .leaderboard {
@@ -42,33 +115,56 @@ h1 {
 
 table {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 24px;
+    background-color: var(--surface);
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 th, td {
-    padding: 10px;
+    padding: 16px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--surface-light);
 }
 
 th {
-    background-color: #f5f5f5;
+    background-color: var(--surface-light);
+    color: #FFFFFF;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 14px;
+    letter-spacing: 0.05em;
 }
 
-.event-history {
-    margin-top: 30px;
+tr:last-child td {
+    border-bottom: none;
 }
 
 .event-result {
-    margin: 20px 0;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 5px;
+    background-color: var(--surface-light);
+    padding: 20px;
+    margin: 16px 0;
+    border-radius: 12px;
+    border-left: 4px solid var(--chiefs-gold);
+    transition: transform 0.2s ease;
+}
+
+.event-result:hover {
+    transform: translateX(4px);
 }
 
 .event-result h3 {
-    margin-top: 0;
+    color: #FFFFFF;
+    margin: 0 0 8px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.event-result p {
+    margin: 5px 0;
+    font-size: 14px;
 }
 
 .admin-controls {
@@ -99,10 +195,77 @@ button:hover {
     background-color: #45a049;
 }
 
+/* Add football-themed icons */
 .correct {
-    color: #4CAF50;
+    color: var(--chiefs-gold);
+    font-weight: 500;
 }
 
 .incorrect {
-    color: #f44336;
+    color: var(--chiefs-red);
+    font-weight: 500;
+}
+
+/* Specific mobile optimizations */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    table thead {
+        display: none;
+    }
+
+    table, tbody, tr, td {
+        display: block;
+        width: 100%;
+    }
+
+    tr {
+        margin-bottom: 16px;
+        background-color: var(--surface-light);
+        border-radius: 8px;
+        padding: 16px;
+    }
+
+    td {
+        display: flex;
+        padding: 8px 0;
+        border: none;
+        align-items: center;
+    }
+
+    td:before {
+        content: attr(data-label);
+        font-weight: 500;
+        width: 120px;
+        min-width: 120px;
+        color: var(--eagles-silver);
+    }
+
+    .event-control select {
+        width: 100%;
+        max-width: none;
+    }
+
+    /* Adjust event history for mobile */
+    .event-result {
+        padding: 10px;
+    }
+
+    .event-result p {
+        margin: 5px 0;
+        font-size: 14px;
+    }
+}
+
+/* Animation for updates */
+@keyframes highlight {
+    0% { background-color: rgba(227, 24, 55, 0.1); }
+    100% { background-color: transparent; }
+}
+
+.updated {
+    animation: highlight 1s ease-out;
 } 
