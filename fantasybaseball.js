@@ -3,66 +3,66 @@ const eventData = {
     events: [
         {
             name: "Anthem",
-            options: ["under", "over"],
+            options: ["Under", "Over"],
+            result: "Under",
             predictions: {
-                "under": ["Nick", "Kent", "Ryan", "Jeff", "Paavo", "Connor", "Jshu", "Emmett", "Jake"],
-                "over": ["Glenn", "Isaac", "Cormac"]
-            },
-            result: null
+                "Under": ["Nick", "Kent", "Ryan", "Jeff", "Paavo", "Connor", "Jshu", "Emmett", "Jake"],
+                "Over": ["Glenn", "Isaac", "Cormac"]
+            }
         },
         {
-            name: "Penalty",
-            options: ["KC", "PHI"],
+            name: "First Penalty",
+            options: ["PHI", "KC"],
+            result: "PHI",
             predictions: {
-                "KC": ["Jeff", "Connor", "Jshu", "Emmett"],
-                "PHI": ["Kent", "Nick", "Ryan", "Paavo", "Jake", "Glenn", "Isaac", "Cormac"]
-            },
-            result: null
+                "PHI": ["Kent", "Nick", "Ryan", "Paavo", "Jake", "Glenn", "Isaac", "Cormac"],
+                "KC": ["Jeff", "Connor", "Jshu", "Emmett"]
+            }
         },
         {
-            name: "Score Under 7",
-            options: ["yes", "no"],
+            name: "Score < 7",
+            options: ["Yes", "No"],
+            result: "No",
             predictions: {
-                "yes": ["Jeff", "Jshu", "Ryan", "Nick", "Paavo", "Jake", "Glenn"],
-                "no": ["Connor", "Emmett", "Kent", "Isaac", "Cormac"]
-            },
-            result: null
+                "Yes": ["Jeff", "Jshu", "Ryan", "Nick", "Paavo", "Jake", "Glenn", "Cormac"],
+                "No": ["Connor", "Emmett", "Kent", "Isaac"]
+            }
         },
         {
             name: "First Score",
-            options: ["KC", "PHI"],
+            options: ["PHI", "KC"],
+            result: "PHI",
             predictions: {
-                "KC": ["Jeff", "Jshu", "Emmett", "Ryan", "Nick", "Jake", "Glenn"],
-                "PHI": ["Connor", "Paavo", "Cormac"]
-            },
-            result: null
+                "PHI": ["Jeff", "Jshu", "Emmett", "Ryan", "Nick", "Jake", "Cormac"],
+                "KC": ["Connor", "Paavo", "Glenn"]
+            }
         },
         {
             name: "Saquon TD",
-            options: ["Y", "N"],
+            options: ["Yes", "No"],
+            result: "No",
             predictions: {
-                "Y": ["Jshu", "Jeff", "Nick", "Ryan"],
-                "N": ["Jake"]
-            },
-            result: null
+                "Yes": ["Jshu", "Jeff", "Nick", "Ryan", "Jake"],
+                "No": []
+            }
         },
         {
             name: "Hurts TD",
-            options: ["Y", "N"],
+            options: ["Yes", "No"],
+            result: "Yes",
             predictions: {
-                "Y": ["Jshu", "Jeff", "Nick", "Ryan"],
-                "N": ["Jake"]
-            },
-            result: null
+                "Yes": ["Jshu", "Jeff", "Nick", "Ryan"],
+                "No": ["Jake"]
+            }
         },
         {
             name: "Kelce TD",
-            options: ["Y", "N"],
+            options: ["Yes", "No"],
+            result: "No",
             predictions: {
-                "Y": ["Jshu", "Nick"],
-                "N": ["Jeff", "Ryan"]
-            },
-            result: null
+                "Yes": ["Jshu", "Nick"],
+                "No": ["Jeff", "Ryan"]
+            }
         }
     ]
 };
@@ -72,27 +72,7 @@ let scores = {};
 let anthemCorrect = new Set();
 
 // Keep track of results for hierarchical sorting
-let eventOrder = ["Anthem", "Penalty", "Score Under 7", "First Score", "Saquon TD", "Hurts TD", "Kelce TD"];
-
-// Load saved results from localStorage
-function loadSavedResults() {
-    const savedResults = localStorage.getItem('eventResults');
-    if (savedResults) {
-        const results = JSON.parse(savedResults);
-        eventData.events.forEach((event, index) => {
-            event.result = results[index];
-        });
-    }
-}
-
-// Save results to localStorage
-function saveResults() {
-    const results = eventData.events.map(event => event.result);
-    localStorage.setItem('eventResults', JSON.stringify(results));
-}
-
-// Check if we're on the admin page
-const isAdminPage = window.location.pathname.includes('admin');
+let eventOrder = ["Anthem", "First Penalty", "Score < 7", "First Score", "Saquon TD", "Hurts TD", "Kelce TD"];
 
 // Initialize scores for all participants
 function initializeScores() {
@@ -194,38 +174,6 @@ function getParticipantResults(name) {
             </span>`;
         })
         .join('');
-}
-
-// Create event toggle controls
-function createEventControls() {
-    const container = document.getElementById('events-container');
-    if (!container) return; // Exit if not on admin page
-    
-    eventData.events.forEach(event => {
-        const eventDiv = document.createElement('div');
-        eventDiv.className = 'event-control';
-        
-        const label = document.createElement('label');
-        label.textContent = event.name + ': ';
-        
-        const select = document.createElement('select');
-        select.innerHTML = `
-            <option value="">-- Select Result --</option>
-            ${event.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-        `;
-        
-        select.value = event.result || '';
-        select.addEventListener('change', (e) => {
-            event.result = e.target.value || null;
-            saveResults(); // Save after each change
-            updateScores();
-            updateEventHistory();
-        });
-        
-        eventDiv.appendChild(label);
-        eventDiv.appendChild(select);
-        container.appendChild(eventDiv);
-    });
 }
 
 // Update event history display
@@ -396,10 +344,6 @@ function isElementInViewport(el) {
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', () => {
-    loadSavedResults();
-    if (isAdminPage) {
-        createEventControls();
-    }
     initializeScores();
     updateLeaderboard();
     updateEventHistory();
