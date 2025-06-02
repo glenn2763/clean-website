@@ -1,0 +1,609 @@
+:root {
+  /* Light Theme Variables */
+  --bg-primary: #f4f7f6;
+  --bg-secondary: #ffffff;
+  --bg-header-footer: #0f1c2e;
+  --text-primary: #333a45;
+  --text-secondary: #555a65;
+  --text-on-dark-bg: #ffffff;
+  --accent-primary: #76c7c0;
+  --accent-primary-darker: #5aa8a0;
+  --border-color: #e0e0e0;
+  --shadow-color-light: rgba(0,0,0,0.05);
+  --shadow-color-medium: rgba(0,0,0,0.1);
+  --hero-overlay-start: rgba(15, 28, 46, 0.85); 
+  --hero-overlay-end: rgba(15, 28, 46, 0.85);
+  --mets-tagline-color: #FF5722;
+  --link-color: var(--accent-primary);
+  --icon-color-sun: #f1c40f;
+  --icon-color-moon: #f39c12; /* Or a more bluish white if preferred for moon */
+  --card-bg: var(--bg-secondary); /* Added for icon project item */
+  --primary-color: var(--accent-primary); /* Added for icon project item */
+}
+
+body.dark-mode {
+  /* Dark Theme Variables */
+  --bg-primary: #1a1a1a; /* Darker overall background */
+  --bg-secondary: #2c2c2c; /* Slightly lighter dark for cards/elements */
+  --bg-header-footer: #1f2937; /* Dark gray for header/footer */
+  --text-primary: #e0e0e0; /* Light gray for primary text */
+  --text-secondary: #b0b0b0; /* Lighter gray for secondary text */
+  --text-on-dark-bg: #ffffff; /* White text still works on dark header */
+  --accent-primary: #81d4fa; /* Lighter, vibrant blue for accent */
+  --accent-primary-darker: #6abbea;
+  --border-color: #444444; /* Darker border */
+  --shadow-color-light: rgba(255,255,255,0.05);
+  --shadow-color-medium: rgba(255,255,255,0.1);
+  --hero-overlay-start: rgba(10, 10, 20, 0.9); /* Darker overlay for dark mode */
+  --hero-overlay-end: rgba(10, 10, 20, 0.9);
+  --mets-tagline-color: #FF8A65; /* Lighter Mets Orange for dark mode */
+  --link-color: var(--accent-primary);
+  --icon-color-sun: #f1c40f; /* Sun color can remain similar */
+  --icon-color-moon: #e0e0e0; /* Moon color for dark mode */
+  --card-bg: var(--bg-secondary); /* Added for icon project item */
+  --primary-color: var(--accent-primary); /* Added for icon project item */
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&display=swap');
+
+/* Basic Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  line-height: 1.8;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth theme transition */
+}
+
+.container {
+  width: 85%;
+  margin: auto;
+  overflow: hidden;
+  padding: 0 20px;
+}
+
+header {
+  background: var(--bg-header-footer);
+  color: var(--text-on-dark-bg);
+  padding: 1.5rem 0;
+  text-align: center;
+  box-shadow: 0 2px 4px var(--shadow-color-medium);
+}
+
+header h1 {
+  font-family: 'Montserrat', sans-serif;
+  margin-bottom: 0.5rem;
+  font-size: 2.2rem;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  text-align: center; /* Revert to centering nav links if flex is removed */
+}
+
+nav ul li {
+  display: inline-block; /* If not using flex on ul */
+  margin-right: 25px;
+}
+
+nav ul li:last-child {
+    margin-right: 0; 
+}
+
+nav a {
+  color: var(--text-on-dark-bg);
+  text-decoration: none;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  transition: color 0.3s ease;
+}
+
+nav a:hover {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+/* Footer Styles for positioning switch */
+footer .container.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* New Theme Switch Styles for Footer */
+.theme-switch-footer {
+  display: inline-block;
+  cursor: pointer;
+  user-select: none; /* Prevent text selection on click */
+  /* margin-left: auto; */ /* Pushes to the right if footer content is simple */
+}
+
+.theme-switch-footer input {
+  display: none; /* Hide the actual checkbox */
+}
+
+.theme-switch-footer .icon-container {
+  display: flex; /* Align icons if needed, or use single icon */
+  align-items: center;
+  justify-content: center;
+  width: 40px;  /* Adjust size as needed */
+  height: 40px; /* Adjust size as needed */
+  font-size: 1.5rem; /* Icon size */
+  border-radius: 50%;
+  background-color: var(--bg-secondary); /* Use a contrasting background */
+  color: var(--text-primary);
+  box-shadow: 0 2px 5px var(--shadow-color-medium);
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+
+.theme-switch-footer .icon-container:hover {
+    transform: scale(1.1);
+}
+
+.theme-switch-footer .sun-icon,
+.theme-switch-footer .moon-icon {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Light mode: show sun, hide moon */
+.theme-switch-footer .moon-icon {
+  display: none; 
+}
+.theme-switch-footer .sun-icon {
+  display: inline-block;
+  color: var(--icon-color-sun);
+}
+
+/* Dark mode: show moon, hide sun (when body.dark-mode is active) */
+body.dark-mode .theme-switch-footer .sun-icon {
+  display: none;
+}
+body.dark-mode .theme-switch-footer .moon-icon {
+  display: inline-block;
+  color: var(--icon-color-moon);
+}
+
+section {
+  padding: 3rem 0;
+}
+
+section h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2rem;
+}
+
+.project-grid, .experience-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.project-item, .experience-item {
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--shadow-color-light);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.experience-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.experience-item-title-role {
+  flex-grow: 1;
+}
+
+.experience-item-logo {
+  max-width: 80px;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: 5px;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+.project-item:hover, .experience-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px var(--shadow-color-medium);
+}
+
+.project-item h3, .experience-item h3 {
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.project-item a, .experience-item a {
+  color: var(--link-color);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.project-item a:hover, .experience-item a:hover {
+  text-decoration: underline;
+}
+
+/* Ensure buttons within project items retain button styling */
+.project-item a.btn {
+  color: var(--text-on-dark-bg); /* Override teal link color for buttons */
+}
+
+.project-item a.btn:hover {
+  text-decoration: none; /* Override general link hover underline for buttons */
+  /* Background color change is handled by .btn:hover */
+}
+
+footer {
+  text-align: center;
+  padding: 1.5rem 0;
+  background: var(--bg-header-footer);
+  color: var(--text-on-dark-bg);
+  margin-top: 3rem;
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(var(--hero-overlay-start), var(--hero-overlay-end)), url('images/Citi Field.JPG');
+  background-size: cover;
+  background-position: center;
+  color: var(--text-on-dark-bg);
+  padding: 4rem 0;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.hero-content {
+  flex: 1;
+  animation: fadeInText 1s ease-out forwards;
+}
+
+.hero-profile-image {
+  flex-basis: 300px;
+  animation: fadeInImage 1s ease-out 0.5s forwards;
+  opacity: 0;
+}
+
+.hero-profile-image img {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 50%;
+  border: 5px solid var(--accent-primary);
+  box-shadow: 0 4px 15px var(--shadow-color-medium);
+}
+
+.hero h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+  color: var(--text-on-dark-bg);
+  animation: slideInUp 0.8s ease-out forwards;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  max-width: 550px;
+  margin-left: 0;
+  margin-right: 0;
+  animation: slideInUp 0.8s ease-out 0.2s forwards;
+  opacity:0;
+}
+
+.hero .btn {
+  animation: slideInUp 0.8s ease-out 0.4s forwards;
+  opacity:0;
+}
+
+.mets-tagline {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.3rem;
+  color: var(--mets-tagline-color);
+  font-weight: bold;
+  margin-top: 1rem;
+  text-shadow: 1px 1px 2px var(--shadow-color-light);
+  animation: fadeInText 1s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+/* Keyframe Animations */
+@keyframes fadeInText {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInImage {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* About Me Section */
+.about-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.about-image img {
+  width: 100%;
+  max-width: 350px;
+  border-radius: 8px;
+  margin-top: 0;
+}
+
+.hobbies-section-title {
+  margin-top: 2rem;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.hobbies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.hobby-item {
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--shadow-color-light);
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Added transition */
+}
+
+.hobby-item h4 {
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.hobby-item img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 5px;
+  margin-top: 1rem;
+  align-self: center;
+}
+
+.running-image-focus {
+  object-position: center 30%;
+}
+
+/* Experience Section */
+.experience-item h4 {
+  font-family: 'Open Sans', sans-serif;
+  font-weight: bold;
+  color: var(--text-secondary);
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.experience-item ul, .experience-item-details {
+  list-style-position: outside;
+  padding-left: 1.2rem;
+  margin-top: 0.5rem;
+  color: var(--text-primary);
+  clear: both;
+}
+
+.experience-item ul li, .experience-item-details li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+/* Projects Section */
+.projects-intro {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.project-item img {
+  width: 100%;
+  /* height: 180px; */ /* Removing fixed height, let it be auto */
+  object-fit: cover; /* Ensures the image covers the area, might crop */
+  border-bottom: 1px solid var(--border-color); /* Changed to use theme variable */
+  border-radius: 8px 8px 0 0; /* Rounded corners only at the top */
+}
+
+/* Styling for project items that use an icon instead of an image */
+.project-item-icon-bg {
+  background-color: var(--card-bg); /* Match card background or choose a specific one */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center content vertically */
+  align-items: center; /* Center content horizontally */
+  /* height: 200px; */ /* Removed fixed height, let content define it */
+  min-height: 150px; /* Added a min-height to ensure it doesn't collapse if there's no icon */
+  padding: 1.5rem; /* Add some padding for the icon area */
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 8px 8px 0 0;
+}
+
+.project-icon-container {
+  font-size: 4rem; /* Adjust icon size as needed */
+  color: var(--primary-color); /* Use primary color for the icon, or a specific color */
+  margin-bottom: 1rem; /* Space between icon and title */
+}
+
+/* Contact Section */
+.contact-intro {
+  text-align:center;
+  max-width: 600px;
+  margin: 0 auto 1.5rem auto;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.contact-button-container {
+  text-align:center;
+}
+
+.contact-resume-link {
+  text-align:center;
+  margin-top: 1.5rem;
+}
+
+.contact-resume-link a {
+  color: var(--link-color);
+  font-weight:bold;
+  text-decoration: none;
+}
+
+.contact-resume-link a:hover {
+  text-decoration: underline;
+}
+
+/* Button Style (can be used for CTAs) */
+.btn {
+  display: inline-block;
+  background: var(--accent-primary);
+  color: var(--text-on-dark-bg); /* Ensure text is white or contrasts well with button BG */
+  padding: 0.8rem 1.5rem;
+  text-decoration: none;
+  border-radius: 5px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background: var(--accent-primary-darker);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    width: 95%;
+  }
+
+  nav ul {
+    flex-wrap: wrap; /* Allow nav items to wrap if needed */
+  }
+
+  nav ul li {
+    /* margin-right: 15px; */ /* Potentially adjust for tighter space */
+  }
+
+  .theme-switch {
+    margin-left: 10px; /* Reduce margin on small screens */
+    margin-top: 10px; /* Add some top margin if it wraps */
+  }
+
+  header h1 {
+    font-size: 1.8rem;
+  }
+
+  /* .project-grid, .experience-grid remain 1fr */
+
+  .hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .hero p {
+    font-size: 1.1rem;
+  }
+  
+  .hero .container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-content {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .hero p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-profile-image {
+    margin: 0 auto;
+    flex-basis: auto;
+    width: 70%;
+    max-width: 250px;
+  }
+
+  .about-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .about-image img {
+    margin: 1rem auto 0; 
+  }
+
+  .hobbies-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .experience-item-header {
+    flex-direction: column-reverse;
+    align-items: center;
+    text-align: center;
+  }
+
+  .experience-item-logo {
+    margin-bottom: 1rem;
+  }
+
+  .experience-item-details {
+    padding-left: 0;
+    list-style-position: inside;
+    text-align: left;
+  }
+
+  footer .container.footer-content {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .theme-switch-footer {
+    margin-top: 10px; /* Add some space when stacked */
+  }
+
+  nav ul li {
+    display: block; /* Re-ensure stacking for mobile nav if flex removed from nav ul */
+    margin-bottom: 0.8rem;
+    text-align: center;
+  }
+} 

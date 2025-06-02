@@ -1,107 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-  <!-- Basic Page Needs
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta charset="utf-8">
-  <title>Glenn Wysen</title>
-  <meta name="Personal Website" content="">
-
-  <!-- Mobile Specific Metas
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- FONT
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-
-  <!-- CSS
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/skeleton.css">
-  <link rel="stylesheet" href="css/main.css">
-
-  <!-- JavaScript
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <script src="app.js"></script>
-
-  <!-- Favicon
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="icon" type="image/png" href="images/favicon.ico">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glenn Wysen - Software Engineer</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="images/favicon.ico">
+    <!-- Font Awesome for icons, if not already included -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Placeholder for any additional fonts or icons -->
 </head>
 <body>
+    <header>
+        <div class="container">
+            <h1>Glenn Wysen</h1>
+            <nav>
+                <ul>
+                    <li><a href="#about">About Me</a></li>
+                    <li><a href="#experience">Experience</a></li>
+                    <li><a href="#projects">Projects</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-  <!-- Primary Page Layout
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-<div class="container">
-  <link rel="burger stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  <div class="topnav" id="myTopnav">
-    <a href="index.html" class="active">Home</a>
-    <a href="projects.html" class="inactive">Projects</a>
-    <a href="frisbee.html" class="inactive">Frisbee</a>
-    <a href="contact.html" class="inactive">Contact</a>
-    <a href="javascript:void(0);" id="bars" class="icon" onclick="topNavResponsive()">
-      <i class="fa fa-bars"></i>
-    </a>
-  </div>
-</div>
+    <section id="hero" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Hi. I'm Glenn Wysen</h1>
+                <p>Software Engineer based in NYC, currently with the New York Mets. As part of the Performance Technology team, I focus on leveraging player biometrics and data analytics to enhance on-field success and create impactful technological experiences. I specialize in building secure, scalable software solutions and have a keen interest in computer graphics and astrophysics.</p>
+                <p class="mets-tagline">Let's Go Mets!</p>
+            </div>
+            <div class="hero-profile-image">
+                <img src="images/Glenn Profile.jpeg" alt="Glenn Wysen">
+            </div>
+        </div>
+    </section>
 
-<noscript>You need to enable JavaScript to view the full site.</noscript>
+    <section id="about" class="container">
+        <h2>About Me</h2>
+        <div class="about-content">
+            <div class="about-text">
+                <p>I graduated from UC Berkeley in 2021 with a double major in Computer Science and Astrophysics. My academic background provided me with a strong foundation in algorithmic thinking, data analysis, and complex problem-solving. I thrive in environments that demand continuous learning and adaptation.</p>
+                <p>Beyond my professional work, I'm passionate about creative pursuits. You can often find me composing electronic music, training for marathons (always up for a running buddy!), or diving into new coding projects to explore emerging technologies. An area of computer science I'm particularly excited about right now is real-time computer graphics and its applications in various industries.</p>
+            </div>
+        </div>
+        
+        <h3 class="hobbies-section-title">Hobbies & Interests</h3>
+        <div class="hobbies-grid">
+            <div class="hobby-item">
+                <h4>Marathon Running</h4>
+                <p>Training for and running marathons has taught me a lot about discipline, perseverance, and pushing my limits. It's a fantastic way to explore the city and stay active.</p>
+                <img src="images/running.PNG" alt="Marathon Running" class="running-image-focus">
+            </div>
+            <div class="hobby-item">
+                <h4>Electronic Music Production</h4>
+                <p>Creating electronic music is one of my favorite ways to unwind and express creativity. I enjoy experimenting with different synths, drum machines, and samples to produce unique sounds and compositions.</p>
+                <img src="images/ableton.avif" alt="Ableton Live Music Production">
+            </div>
+            <div class="hobby-item">
+                <h4>Ultimate Frisbee</h4>
+                <p>I started playing Ultimate when I was 8 years old and it has been a significant part of my life. I've had the privilege to play with many competitive teams including Oakland Guerrilla (Club), the <a href="https://www.watchufa.com/spiders" target="_blank">Oakland Spiders</a> (UFA), American Barbecue (Club), and my college team, California Ursa Major. For some highlights, check out the <a href="https://www.youtube.com/channel/UCKgR8SJmRb23k9WPwN0B-zg/featured" target="_blank">Ursa Major YouTube channel</a>.</p>
+                 <img src="images/Ugmo-team.jpg" alt="California Ursa Major Team">
+            </div>
+        </div>
+    </section>
 
-<div class="container top-container">
-  <div class="row">
-    <div class="six columns">
-      <h1 class="fade_short" style="text-align: right;">Hi. I'm Glenn</h1>
-      <h4 class="fade_medium" style="text-align: right; margin-top: 15%">A software engineer in NYC.</h4>
-      <h5 class="fade_long" style="text-align: right; margin-top: 15%">I graduated from UC Berkeley in 2021 with a double major in Computer Science 
-        and Astrophysics. When I'm not working, you can find me making electronic music, training for marathons, 
-        or coding up a new project.</h5>
-    </div>
-    <div class="six columns">
-      <img class="u-full-width" src="images/glenn.JPG" alt="glenn bridge">
-    </div>
-  </div>
+    <section id="experience" class="container">
+        <h2>Experience</h2>
+        <div class="experience-grid">
+            <div class="experience-item">
+                <div class="experience-item-header">
+                    <div class="experience-item-title-role">
+                        <h3>New York Mets, NYC</h3>
+                        <h4>Software Engineer - Performance Technology &middot; Jan 2025 - Present</h4>
+                    </div>
+                    <img src="images/mets_logo.png" alt="New York Mets Logo" class="experience-item-logo">
+                </div>
+                <ul class="experience-item-details">
+                    <li>Contribute to the Performance Technology team, focusing on enhancing player development and on-field strategy.</li>
+                    <li>Develop and maintain innovative video analysis tools and applications to support batter training and performance insights.</li>
+                    <li>Utilize strong communication skills to translate complex technical data and analytical concepts into actionable information for coaches and players.</li>
+                    <li>Collaborate on various performance technology initiatives to provide a competitive edge.</li>
+                </ul>
+            </div>
+            <div class="experience-item">
+                <div class="experience-item-header">
+                    <div class="experience-item-title-role">
+                        <h3>AWS - Key Management Service (KMS)</h3>
+                        <h4>Software Engineer &middot; Sep 2022 - Dec 2023</h4>
+                    </div>
+                    <img src="images/KMS.png" alt="AWS KMS Logo" class="experience-item-logo">
+                </div>
+                <ul class="experience-item-details">
+                    <li>Led an internal tooling project to automate log analysis for engineers, reducing average ticket resolution time by 80%.</li>
+                    <li>Onboarded KMS's host management fleet to AWS CloudWatch, leading to 2x faster issue resolution through metric-driven dashboards and alarms.</li>
+                    <li>Decoupled KMS's internal cryptographic service into a control plane, data plane, and log plane. This improved core cryptographic operation latency by 20% and allowed for parallel development at scale while maintaining FIPS 140-3 level 3 certification.</li>
+                    <li>Served as a backend on-call engineer, ensuring the health of the worldwide KMS Hardware Security Module fleet. Improved my skills of working under pressure to diagnose and resolve critical incidents, minimizing downtime and customer impact.</li>
+                </ul>
+            </div>
+            <div class="experience-item">
+                <div class="experience-item-header">
+                    <div class="experience-item-title-role">
+                        <h3>Next Insurance, Palo Alto, CA</h3>
+                        <h4>Software Engineer &middot; July 2021 - July 2022</h4>
+                    </div>
+                    <img src="images/next_insurance_logo.jpg" alt="Next Insurance Logo" class="experience-item-logo">
+                </div>
+                <ul class="experience-item-details">
+                    <li>Enhanced screening logic in Kotlin to prevent automatic policy declines based on recent felonies. These efforts balanced focusing on data-driven decision-making with real world critical analysis of issues that disproportionately affect people of color.</li>
+                    <li>Developed a Slackbot using Selenium for web scraping, saving 50 hours/week for the Insurance Compliance Team.</li>
+                    <li>Leveraged Python, Pandas, and Selenium to automate document retrieval and storage for over 5,000 insurance forms every week.</li>
+                    <li>Utilized SQL and Tableau to manage and analyze data, responding to over 200 requests from state departments of insurance.</li>
+                </ul>
+            </div>
+            <div class="experience-item">
+                <div class="experience-item-header">
+                    <div class="experience-item-title-role">
+                        <h3>Air Force Research Lab, Albuquerque, NM</h3>
+                        <h4>Solar Physics Lab Assistant &middot; May 2018 - Aug 2018</h4>
+                    </div>
+                    <img src="images/afrl.jpg" alt="AFRL Logo" class="experience-item-logo">
+                </div>
+                <ul class="experience-item-details">
+                    <li>Conducted research on solar irradiance variation and its effects on Thermosphere/Ionosphere models.</li>
+                    <li>Analyzed solar irradiance data from NASA satellites using IDL, contributing to a more accurate atmosphere model for Low Earth Orbit (LEO) satellite safety.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
 
-  <div class="row" style="margin-top: 10%;">
-    <div class="six columns">
-      <img class="u-full-width" src="images/KMS.png">
-    </div>
-    <div class="six columns">
-      <h4 style="margin-top: 30%;">AWS - Key Management Service</h4>
-      <h5>I recently finished working at Amazon Web Services with the Key Management Service (KMS) Team. While there I 
-        had the opportunity to work alongside many amazing people and learned an immense amount about working with software security on 
-        a global scale.</h5>
-    </div>
-  </div>
+    <section id="projects" class="container">
+        <h2>My Projects</h2>
+        <p class="projects-intro">Here are a few projects I've worked on, showcasing my skills in AI, computer graphics, and software development from my time at UC Berkeley, alongside a space for ongoing UI experiments.</p>
+        <div class="project-grid">
+            <div class="project-item"> <img src="images/crazy website.png" alt="UI Playground project">
+                <h3>UI Playground</h3>
+                <p>A collection of experimental UI features, animations, and interactive components I'm currently exploring and building. A space for creative coding and front-end fun!</p>
+                <a href="crazy-website.html" class="btn">Explore Playground</a>
+            </div>
+            <div class="project-item">
+                <img src="images/pacman.png" alt="Pacman AI project">
+                <h3>Pacman AI Agents</h3>
+                <p>Developed intelligent agents for Pacman using various search algorithms and reinforcement learning techniques as part of UC Berkeley's CS188 (Intro to AI) course. Explored algorithms like Minimax, Expectimax, and Q-learning.</p>
+                <a href="https://glenn2763.github.io/proj3cs188/" target="_blank" class="btn">View Project</a>
+            </div>
+            <div class="project-item">
+                <img src="images/teapot.png" alt="Mesh Editor project">
+                <h3>3D Mesh Editor</h3>
+                <p>Built a 3D mesh editing application for CS184 (Foundations of Computer Graphics). Implemented features like mesh subdivision (Loop subdivision), triangulation, and transformations. Provided a user interface to interact with and modify 3D models.</p>
+                <a href="https://glenn2763.github.io/CS-184-MeshEdit/" target="_blank" class="btn">View Project</a>
+            </div>
+             <div class="project-item">
+                <img src="images/bunnies.png" alt="Path Tracer project">
+                <h3>PathTracer</h3>
+                <p>Developed a physically-based path tracing renderer capable of generating photorealistic images. Implemented features like global illumination, depth of field, and material simulation (e.g., diffuse, mirror, glass) for CS184.</p>
+                <a href="https://glenn2763.github.io/CS-184-PathTracer-1/" target="_blank" class="btn">View Project</a>
+            </div>
+             <div class="project-item">
+                <img src="images/Lion.png" alt="Rasterizer project">
+                <h3>Software Rasterizer</h3>
+                <p>Created a software rasterizer from scratch for CS184. Implemented fundamental graphics pipeline stages, including triangle rasterization, texture mapping, and antialiasing techniques like supersampling.</p>
+                <a href="https://glenn2763.github.io/CS-184-Rasterizer/" target="_blank" class="btn">View Project</a>
+            </div>
+        </div>
+    </section>
 
-  <div class="row" style="margin-top: 10%;">
-    <div class="six columns">
-      <h4 style="margin-top: 30%;">Computer Graphics</h4>
-      <h5>An area of computer science I'm interested in right now is graphics. You can find more information about the projects I worked on 
-        at UC Berkeley <a href="projects.html">here</a>.</h5>
-    </div>
-    <div class="six columns">
-      <img class="u-full-width" src="images/spheres.png">
-    </div>
-  </div>
+    <section id="contact" class="container">
+        <h2>Get In Touch</h2>
+        <p class="contact-intro">I'm always open to discussing new projects, creative ideas, or opportunities to be part of something exciting. Feel free to reach out!</p>
+        <div class="contact-button-container">
+            <a href="mailto:gwysen@gmail.com" class="btn">Email Me: gwysen@gmail.com</a>
+        </div>
+        <p class="contact-resume-link">You can also find my <a href="images/Glenn Wysen - Resume.pdf" target="_blank">resume here</a> </p>
+    </section>
 
-  <div class="row" style="margin-top: 10%;">
-    <div class="six columns">
-      <img class="u-full-width" src="images/afrl.jpg">
-    </div>
-    <div class="six columns">
-      <h4 style="margin-top: 10%;">Physics Research</h4>
-      <h5>In 2018 I had the opportunity to work at the US Air Force Research Lab in Albuquerque, NM. I spent the summer 
-        writing code for a thermosphere/ionosphere model that is currently being used to keep satellites safe in low earth 
-        orbit. More details about my work can be found on my <a href="images/Glenn Wysen - Resume.pdf">resume</a>.</h5>
-    </div>
-  </div>
+    <footer>
+        <div class="container footer-content">
+            <p>&copy; <span id="currentYear"></span> Glenn Wysen. All rights reserved.</p>
+            <label class="theme-switch-footer" for="theme-toggle-footer" title="Toggle theme">
+                <input type="checkbox" id="theme-toggle-footer">
+                <span class="icon-container">
+                    <i class="fas fa-sun sun-icon"></i>
+                    <i class="fas fa-moon moon-icon"></i>
+                </span>
+            </label>
+        </div>
+    </footer>
 
-</div>
+    <script src="app.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/egg.js/1.0/egg.min.js"></script>
+    <script type="text/javascript">
+        // Konami Code Easter Egg
+        var egg = new Egg();
+        egg.addCode("t,i,f,o,s,i", function() {
+          window.open("easterEgg.html");
+        }, "konami-code");
+        egg.listen();
 
-<!-- End Document
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+        // Update Copyright Year
+        document.getElementById("currentYear").textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>

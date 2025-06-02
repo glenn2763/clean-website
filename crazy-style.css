@@ -1,0 +1,142 @@
+body {
+    margin: 0;
+    overflow: hidden; /* Hide scrollbars */
+    background-color: #000; /* Black background */
+    font-family: sans-serif;
+}
+
+canvas {
+    display: block;
+    position: fixed; /* Keep canvas behind nav */
+    top: 0;
+    left: 0;
+    z-index: -1; /* Ensure nav is on top */
+}
+
+#pageNav {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#pageNav a {
+    color: #fff;
+    text-decoration: none;
+    margin-right: 15px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    transition: background-color 0.3s ease;
+}
+
+#pageNav a:hover,
+#pageNav a.active {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+#pageNav a:last-child {
+    margin-right: 0;
+}
+
+#page4Container {
+    width: 100vw;
+    height: 100vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 5; /* Below nav, but potentially above a subdued canvas */
+    scroll-behavior: smooth; /* Enable smooth scrolling between sections if anchors are used */
+    background-color: #1a1a1a; /* Default dark background for page 4 */
+}
+
+.historySection {
+    min-height: 100vh; /* Each section takes at least the full viewport height */
+    padding: 50px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #f0f0f0;
+    opacity: 0; /* Hidden by default, revealed by JS on scroll */
+    transform: translateY(50px); /* Start slightly offset for transition */
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    position: relative; /* For potential pseudo-elements or absolutely positioned details */
+}
+
+.historySection.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.historySection h2 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.historySection p {
+    font-size: 1.2em;
+    max-width: 700px;
+    line-height: 1.6;
+    position: relative; /* Ensure text is above canvas if overlapping */
+    z-index: 2;
+}
+
+.historySection .historyTextContent {
+    position: relative; /* To allow z-indexing if needed */
+    z-index: 2; 
+    background-color: rgba(0,0,0,0.3); /* Slight dark background for text readability */
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.historyCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; /* Will be controlled by JS or specific CSS for each section */
+    z-index: 1; /* Behind text content */
+    /* --canvas-height variable can be used here if set by JS */
+    /* height: var(--canvas-height, 100%); */
+}
+
+/* --- Specific Era Styling Examples (to be expanded) --- */
+#primordial {
+    background: linear-gradient(to bottom, #2c3e50, #1a252f);
+}
+
+#ancientCivilizations {
+    background: linear-gradient(to bottom, #b29a68, #8c734a);
+    color: #333;
+}
+#ancientCivilizations h2 {
+    color: #4a3b29;
+}
+
+#digitalAge {
+    background: linear-gradient(to bottom, #0f0f23, #0a0a15);
+    color: #00ffea;
+}
+#digitalAge h2 {
+    font-family: 'Courier New', Courier, monospace;
+    text-shadow: 0 0 5px #00ffea, 0 0 10px #00ffea;
+}
+#digitalAge p {
+    font-family: 'Lucida Console', Monaco, monospace;
+}
+
+#headerImage {
+    width: 100%;
+    max-height: 200px; /* Adjust as needed */
+    object-fit: cover; /* Crop image to fit, or use 'contain' */
+    display: block; /* Remove extra space below image */
+} 
