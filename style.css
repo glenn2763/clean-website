@@ -76,16 +76,24 @@ header {
   box-shadow: 0 2px 4px var(--shadow-color-medium);
 }
 
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 header h1 {
   font-family: 'Montserrat', sans-serif;
-  margin-bottom: 0.5rem;
+  /* margin-bottom: 0.5rem; */ /* Removed for better flex alignment */
   font-size: 2.2rem;
+  flex-shrink: 0; /* Prevent h1 from shrinking */
 }
 
 nav ul {
   list-style: none;
   padding: 0;
-  text-align: center; /* Revert to centering nav links if flex is removed */
+  /* text-align: center; */ /* Revert to centering nav links if flex is removed */
+  margin: 0; /* Reset margin for flex container */
 }
 
 nav ul li {
@@ -505,33 +513,46 @@ footer {
 }
 
 .btn:hover {
-  background: var(--accent-primary-darker);
+  background-color: var(--accent-primary-darker);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .container {
-    width: 95%;
+    width: 90%;
   }
 
-  nav ul {
-    flex-wrap: wrap; /* Allow nav items to wrap if needed */
-  }
-
-  nav ul li {
-    /* margin-right: 15px; */ /* Potentially adjust for tighter space */
-  }
-
-  .theme-switch {
-    margin-left: 10px; /* Reduce margin on small screens */
-    margin-top: 10px; /* Add some top margin if it wraps */
+  header .container {
+    flex-direction: column;
   }
 
   header h1 {
-    font-size: 1.8rem;
+    margin-bottom: 1rem; /* Add space below title on mobile */
   }
 
-  /* .project-grid, .experience-grid remain 1fr */
+  nav ul {
+    text-align: center;
+  }
+
+  nav ul li {
+    display: block;
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  nav ul li:last-child {
+      margin-bottom: 0;
+  }
+
+  .theme-switch {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.8rem; /* Smaller font size for mobile */
+  }
 
   .hero h1 {
     font-size: 2.2rem;

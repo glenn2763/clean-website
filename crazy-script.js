@@ -329,36 +329,66 @@ pages.page2 = (() => {
         angle;
         orbitRadius;
         orbitSpeed;
+        explosionCooldown;
 
         constructor(x, y) {
             this.x = x;
             this.y = y;
-            this.size = Math.random() * 3 + 1;
-            this.color = `hsl(${Math.random() * 60 + 200}, 80%, 60%)`; // Blues/Purples
-            this.speedX = 0;
-            this.speedY = 0;
+            this.size = Math.random() * 2 + 1;
+            this.color = `hsl(${Math.random() * 60 + 200}, 100%, 70%)`;
             this.isExploding = false;
-            this.targetX = 0; // for explosion
-            this.targetY = 0; // for explosion
+            
+            // Set up for orbiting the mouse
             this.angle = Math.random() * Math.PI * 2;
-            this.orbitRadius = Math.random() * (Math.min(canvas.width, canvas.height) / 3) + 50;
-            this.orbitSpeed = (Math.random() - 0.5) * 0.02 + 0.005;
+            this.orbitRadius = Math.random() * 100 + 50; // Orbits at a random distance
+            this.orbitSpeed = Math.random() * 0.04 + 0.01;
+            this.targetX = mouseX; // Store initial mouse position
+            this.targetY = mouseY; // Store initial mouse position
+            this.explosionCooldown = 0; // New property for pulse effect
         }
 
         update() {
+            if (this.explosionCooldown > 0) {
+                this.explosionCooldown--;
+            }
+
             if (this.isExploding) {
-                this.x += (this.targetX - this.x) * 0.05;
-                this.y += (this.targetY - this.y) * 0.05;
-                this.size *= 0.97;
-            } else {
-                this.angle += this.orbitSpeed;
-                this.x = center.x + Math.cos(this.angle) * this.orbitRadius;
-                this.y = center.y + Math.sin(this.angle) * this.orbitRadius;
-                this.orbitRadius -= 0.1; // Slowly pull inwards
-                if (this.orbitRadius < 10) {
-                    this.orbitRadius = Math.random() * (Math.min(canvas.width, canvas.height) / 3) + 50; // Reset
-                    this.angle = Math.random() * Math.PI * 2;
+                if (this.explosionCooldown > 0) {
+                    // While on cooldown, just move
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    this.speedX *= 0.98; // Dampen speed
+                    this.speedY *= 0.98; // Dampen speed
+                } else {
+                    // Cooldown finished, return to orbit
+                    const orbitX = mouseX + Math.cos(this.angle) * this.orbitRadius;
+                    const orbitY = mouseY + Math.sin(this.angle) * this.orbitRadius;
+                    this.x += (orbitX - this.x) * 0.1;
+                    this.y += (orbitY - this.y) * 0.1;
+
+                    // If close enough to orbit, snap back and end explosion
+                    const distToOrbit = Math.hypot(this.x - orbitX, this.y - orbitY);
+                    if (distToOrbit < 1) {
+                        this.isExploding = false;
+                    }
                 }
+
+                this.size = Math.max(1, this.size * 0.99);
+
+            } else {
+                // Update target to current mouse position
+                this.targetX = mouseX;
+                this.targetY = mouseY;
+
+                // Orbit logic
+                this.angle += this.orbitSpeed;
+                this.x = this.targetX + Math.cos(this.angle) * this.orbitRadius;
+                this.y = this.targetY + Math.sin(this.angle) * this.orbitRadius;
+
+                // Gravitational pull towards the center
+                const pullStrength = 0.05;
+                this.orbitRadius -= pullStrength;
+                if (this.orbitRadius < 1) this.orbitRadius = 1;
             }
         }
 
@@ -371,11 +401,15 @@ pages.page2 = (() => {
         }
 
         explode(clickX, clickY) {
+            if (this.isExploding) return; // Don't re-explode if already exploding
+
             this.isExploding = true;
+            this.explosionCooldown = 60; // Set cooldown (e.g., 60 frames = 1 second)
             const angle = Math.atan2(this.y - clickY, this.x - clickX);
-            const explosionDistance = 200 + Math.random() * 100;
-            this.targetX = this.x + Math.cos(angle) * explosionDistance;
-            this.targetY = this.y + Math.sin(angle) * explosionDistance;
+            const force = Math.random() * 15 + 8;
+            this.speedX = Math.cos(angle) * force;
+            this.speedY = Math.sin(angle) * force;
+            this.size = Math.random() * 5 + 5; // Get bigger on explosion
         }
     }
 
@@ -421,7 +455,9 @@ pages.page2 = (() => {
             initSwirlParticles();
             explosionParticles = [];
             clickListener = (event) => {
-                swirlParticles.forEach(p => p.explode(event.clientX, event.clientY));
+                const clickX = event.clientX;
+                const clickY = event.clientY;
+                swirlParticles.forEach(p => p.explode(clickX, clickY));
             };
             canvas.addEventListener('click', clickListener);
             console.log("Page 2 Initialized");
