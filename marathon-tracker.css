@@ -211,6 +211,12 @@ body {
     background: rgba(245, 158, 11, 0.05);
 }
 
+.day-card.race {
+    border-color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+    font-weight: 600;
+}
+
 .day-header {
     display: flex;
     justify-content: space-between;
@@ -331,6 +337,28 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
     background: var(--secondary-color);
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+}
+
+#delete-run-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#delete-run-btn:hover {
+    background-color: #d82e2e;
 }
 
 #auth-container {

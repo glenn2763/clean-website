@@ -258,13 +258,13 @@ const trainingPlan = {
             week: 20,
             phase: "2-Week Taper Phase",
             days: [
-                { day: "Monday", workout: "Off Day", type: "rest" },
-                { day: "Tuesday", workout: "7-8 miles: 2 mile Warm Up, 3 x 1200 at HMP with 2 minutes rest, 4 x 400 at 5k Pace with 2 minutes rest, 2 mile Warm Down", type: "interval" },
-                { day: "Wednesday", workout: "2-4 mile Easy Run", type: "easy" },
+                { day: "Monday", workout: "Off Day or Cross Training", type: "rest" },
+                { day: "Tuesday", workout: "4 miles with 4-6 x 100m strides", type: "easy" },
+                { day: "Wednesday", workout: "2-3 mile Easy Run", type: "easy" },
                 { day: "Thursday", workout: "Off Day", type: "rest" },
-                { day: "Friday", workout: "6-7 miles: 1-2 mile Warm Up, 3 miles at MP, 4-5 minutes rest, 1k at 10k Pace, 1-2 mile Warm Down", type: "tempo" },
-                { day: "Saturday", workout: "Off Day", type: "rest" },
-                { day: "Sunday", workout: "2-3 mile Easy Run", type: "easy" }
+                { day: "Friday", workout: "2 mile shakeout run with 2-3 strides", type: "easy" },
+                { day: "Saturday", workout: "The Niagara Falls Marathon! Good luck!", type: "race" },
+                { day: "Sunday", workout: "Rest & Celebrate!", type: "rest" }
             ]
         }
     ]
@@ -287,9 +287,10 @@ function getPlanStartDate(raceDateStr) {
     const mondayOfRaceWeek = new Date(raceDate);
     mondayOfRaceWeek.setUTCDate(mondayOfRaceWeek.getUTCDate() - daysToSubtractForMonday);
     
-    // The plan starts TOTAL_WEEKS_IN_PLAN weeks before the Monday of race week
+    // The plan starts (TOTAL_WEEKS_IN_PLAN - 1) weeks before the Monday of race week
+    // so that Week 20 IS the race week.
     const planStartDate = new Date(mondayOfRaceWeek);
-    planStartDate.setUTCDate(planStartDate.getUTCDate() - TOTAL_WEEKS_IN_PLAN * 7);
+    planStartDate.setUTCDate(planStartDate.getUTCDate() - (TOTAL_WEEKS_IN_PLAN - 1) * 7);
     
     return planStartDate;
 }
@@ -403,6 +404,9 @@ function setupEventListeners() {
 
     // Run form submission
     document.getElementById('run-form').addEventListener('submit', handleRunSubmission);
+
+    // Delete run button
+    document.getElementById('delete-run-btn').addEventListener('click', handleRunDeletion);
 }
 
 function renderTrainingCalendar() {
@@ -447,9 +451,10 @@ function createDayCard(weekNumber, day) {
     const runKey = `${weekNumber}-${day.day}`;
     const isCompleted = isRunCompleted(weekNumber, day.day);
     const isRest = day.type === 'rest';
+    const isRace = day.type === 'race';
     
     return `
-        <div class="day-card ${isCompleted ? 'completed' : ''} ${isRest ? 'rest' : ''}" 
+        <div class="day-card ${isCompleted ? 'completed' : ''} ${isRest ? 'rest' : ''} ${isRace ? 'race' : ''}" 
              onclick="${isRest ? '' : `openRunModal('${runKey}', '${day.day}', '${day.workout}')`}">
             <div class="day-header">
                 <div class="day-name">${day.day}</div>
@@ -473,15 +478,28 @@ function openRunModal(runKey, dayName, workout) {
     
     title.textContent = `Log Run - ${dayName}`;
     form.dataset.runKey = runKey;
+
+    // Find the day object to check its type
+    const [weekNum, dayStr] = runKey.split('-');
+    const weekData = Object.values(trainingPlan).flat().find(w => w.week == weekNum);
+    const day = weekData.days.find(d => d.day === dayStr);
     
     // Pre-fill form if run data exists
     const existingData = runData[runKey];
+    const deleteBtn = document.getElementById('delete-run-btn');
+
     if (existingData) {
         document.getElementById('distance').value = existingData.distance || '';
         document.getElementById('pace').value = existingData.pace || '';
         document.getElementById('notes').value = existingData.notes || '';
+        deleteBtn.classList.remove('hidden');
     } else {
         form.reset();
+        deleteBtn.classList.add('hidden');
+        // If it's a race, pre-fill the distance
+        if (day.type === 'race') {
+            document.getElementById('distance').value = 26.2;
+        }
     }
     
     modal.classList.add('active');
@@ -521,6 +539,31 @@ function handleRunSubmission(e) {
     updateStats();
     updateProgress();
     closeModal();
+}
+
+function handleRunDeletion() {
+    if (!currentUser) {
+        alert("Please log in to delete your run.");
+        return;
+    }
+
+    const form = document.getElementById('run-form');
+    const runKey = form.dataset.runKey;
+
+    if (confirm('Are you sure you want to delete this run? This action cannot be undone.')) {
+        // Remove from local state
+        delete completedRuns[runKey];
+        delete runData[runKey];
+
+        // Save updated data to Firestore
+        saveUserData();
+
+        // Update UI
+        renderTrainingCalendar();
+        updateStats();
+        updateProgress();
+        closeModal();
+    }
 }
 
 async function saveUserData() {
