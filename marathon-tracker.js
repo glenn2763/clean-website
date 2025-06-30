@@ -319,6 +319,88 @@ let currentUser = null;
 let currentPhase = 'prep';
 let completedRuns = {};
 let runData = {};
+let goalTime = '3:30:00'; // Default
+
+// --- PACE CHART DATA ---
+const paceChartData = {
+    "2:45:00": {
+        "5k": "5:20", "10k": "5:45", "Half": "6:00", "Marathon": "6:20", "Easy": "7:15", "Aerobic": "6:50"
+    },
+    "3:00:00": {
+        "5k": "6:00", "10k": "6:18", "Half": "6:38", "Marathon": "6:55", "Easy": "7:53", "Aerobic": "7:25"
+    },
+    "3:15:00": {
+        "5k": "6:25", "10k": "6:48", "Half": "7:08", "Marathon": "7:30", "Easy": "8:33", "Aerobic": "8:00"
+    },
+    "3:30:00": {
+        "5k": "6:55", "10k": "7:20", "Half": "7:40", "Marathon": "8:03", "Easy": "9:10", "Aerobic": "8:40"
+    },
+    "3:45:00": {
+        "5k": "7:25", "10k": "7:50", "Half": "8:15", "Marathon": "8:38", "Easy": "9:50", "Aerobic": "9:18"
+    },
+    "4:00:00": {
+        "5k": "7:55", "10k": "8:20", "Half": "8:48", "Marathon": "9:13", "Easy": "10:30", "Aerobic": "9:55"
+    },
+    "4:15:00": {
+        "5k": "8:25", "10k": "8:50", "Half": "9:18", "Marathon": "9:45", "Easy": "11:13", "Aerobic": "10:33"
+    },
+    "4:30:00": {
+        "5k": "8:55", "10k": "9:25", "Half": "9:50", "Marathon": "10:20", "Easy": "11:40", "Aerobic": "11:08"
+    },
+    "4:45:00": {
+        "5k": "9:25", "10k": "10:25", "Half": "10:25", "Marathon": "10:55", "Easy": "12:25", "Aerobic": "11:45"
+    },
+    "5:00:00": {
+        "5k": "9:55", "10k": "10:25", "Half": "10:55", "Marathon": "11:30", "Easy": "13:10", "Aerobic": "12:25"
+    }
+};
+
+function renderPaceChart(goalTime) {
+    const paces = paceChartData[goalTime] || paceChartData['3:30:00'];
+    const tbody = document.querySelector('#pace-chart tbody');
+    tbody.innerHTML = '';
+    Object.entries(paces).forEach(([type, pace]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${type}</td><td>${pace}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+function setupPaceChartUI() {
+    const select = document.getElementById('goal-time-select');
+    const btn = document.getElementById('toggle-pace-chart');
+    const modal = document.getElementById('pace-modal');
+    const closeBtn = document.getElementById('close-pace-modal');
+    // Set initial value
+    if (currentUser && goalTime) {
+        select.value = goalTime;
+    } else {
+        const stored = localStorage.getItem('goalTime');
+        if (stored && select) select.value = stored;
+        goalTime = select.value;
+    }
+    function updateChart(save = true) {
+        let val = select.value;
+        if (!paceChartData[val]) val = '3:30:00';
+        renderPaceChart(val);
+        goalTime = val;
+        if (currentUser) {
+            if (save) saveUserData();
+        } else {
+            if (save) localStorage.setItem('goalTime', val);
+        }
+    }
+    btn.addEventListener('click', function() {
+        modal.classList.add('active');
+        renderPaceChart(select.value);
+    });
+    closeBtn.addEventListener('click', function() {
+        modal.classList.remove('active');
+    });
+    select.addEventListener('change', updateChart);
+    // Initialize
+    updateChart(false);
+}
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -337,6 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
             initializeApp(); // Render the empty state
         }
     });
+    setupPaceChartUI();
 });
 
 function showUserInfo(user) {
@@ -363,8 +446,15 @@ async function loadUserData() {
         const data = userDoc.data();
         completedRuns = data.completedRuns || {};
         runData = data.runData || {};
+        goalTime = data.goalTime || '3:30:00';
+    } else {
+        goalTime = '3:30:00';
     }
     initializeApp();
+    // Update pace chart UI to reflect loaded goalTime
+    const select = document.getElementById('goal-time-select');
+    if (select) select.value = goalTime;
+    renderPaceChart(goalTime);
 }
 
 function initializeApp() {
@@ -455,7 +545,7 @@ function createDayCard(weekNumber, day) {
     
     return `
         <div class="day-card ${isCompleted ? 'completed' : ''} ${isRest ? 'rest' : ''} ${isRace ? 'race' : ''}" 
-             onclick="${isRest ? '' : `openRunModal('${runKey}', '${day.day}', '${day.workout}')`}">
+             onclick="openRunModal('${runKey}', '${day.day}', '${day.workout}')">
             <div class="day-header">
                 <div class="day-name">${day.day}</div>
                 <div class="completion-status ${isCompleted ? 'completed' : ''}">
@@ -475,33 +565,38 @@ function openRunModal(runKey, dayName, workout) {
     const modal = document.getElementById('run-modal');
     const title = document.getElementById('modal-title');
     const form = document.getElementById('run-form');
-    
-    title.textContent = `Log Run - ${dayName}`;
-    form.dataset.runKey = runKey;
-
     // Find the day object to check its type
     const [weekNum, dayStr] = runKey.split('-');
     const weekData = Object.values(trainingPlan).flat().find(w => w.week == weekNum);
     const day = weekData.days.find(d => d.day === dayStr);
-    
+    const isRest = day.type === 'rest';
+    title.textContent = isRest ? `Log Activity - ${dayName}` : `Log Run - ${dayName}`;
+    form.dataset.runKey = runKey;
+    form.dataset.isRest = isRest;
+    // Toggle form fields for rest/cross/strength days
+    document.getElementById('distance').parentElement.style.display = isRest ? 'none' : '';
+    document.getElementById('pace').parentElement.style.display = isRest ? 'none' : '';
+    document.getElementById('activity-type-group').style.display = isRest ? '' : 'none';
     // Pre-fill form if run data exists
     const existingData = runData[runKey];
     const deleteBtn = document.getElementById('delete-run-btn');
-
     if (existingData) {
-        document.getElementById('distance').value = existingData.distance || '';
-        document.getElementById('pace').value = existingData.pace || '';
-        document.getElementById('notes').value = existingData.notes || '';
+        if (isRest) {
+            document.getElementById('activity-type').value = existingData.activityType || 'off';
+            document.getElementById('notes').value = existingData.notes || '';
+        } else {
+            document.getElementById('distance').value = existingData.distance || '';
+            document.getElementById('pace').value = existingData.pace || '';
+            document.getElementById('notes').value = existingData.notes || '';
+        }
         deleteBtn.classList.remove('hidden');
     } else {
         form.reset();
         deleteBtn.classList.add('hidden');
-        // If it's a race, pre-fill the distance
-        if (day.type === 'race') {
-            document.getElementById('distance').value = 26.2;
+        if (isRest) {
+            document.getElementById('activity-type').value = 'off';
         }
     }
-    
     modal.classList.add('active');
 }
 
@@ -512,28 +607,32 @@ function closeModal() {
 
 function handleRunSubmission(e) {
     e.preventDefault();
-    
     if (!currentUser) {
         alert("Please log in to save your run.");
         return;
     }
-
     const form = e.target;
     const runKey = form.dataset.runKey;
-    
-    const runInfo = {
-        distance: parseFloat(document.getElementById('distance').value),
-        pace: document.getElementById('pace').value,
-        notes: document.getElementById('notes').value,
-        date: new Date().toISOString()
-    };
-    
+    const isRest = form.dataset.isRest === 'true' || form.dataset.isRest === true;
+    let runInfo;
+    if (isRest) {
+        runInfo = {
+            activityType: document.getElementById('activity-type').value,
+            notes: document.getElementById('notes').value,
+            date: new Date().toISOString()
+        };
+    } else {
+        runInfo = {
+            distance: parseFloat(document.getElementById('distance').value),
+            pace: document.getElementById('pace').value,
+            notes: document.getElementById('notes').value,
+            date: new Date().toISOString()
+        };
+    }
     runData[runKey] = runInfo;
     completedRuns[runKey] = true;
-    
     // Save to Firestore
     saveUserData();
-    
     // Update UI
     renderTrainingCalendar();
     updateStats();
@@ -570,7 +669,8 @@ async function saveUserData() {
     if (!currentUser) return;
     await db.collection('users').doc(currentUser.uid).set({
         completedRuns,
-        runData
+        runData,
+        goalTime
     }, { merge: true });
 }
 
