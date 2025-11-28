@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: fantasy-football-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ESPN_S2
+        sync: false
+      - key: ESPN_SWID
+        sync: false
+      - key: NODE_ENV
+        value: production
+

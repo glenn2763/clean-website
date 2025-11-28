@@ -9,15 +9,21 @@ const { Client } = require('espn-fantasy-football-api/node');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Load ESPN config (cookies) from file if it exists
+// Load ESPN config (cookies) from environment variables or file
 let espnConfig = {};
 try {
-    if (fs.existsSync('espn-config.json')) {
+    // First try environment variables (for production)
+    if (process.env.ESPN_S2 && process.env.ESPN_SWID) {
+        espnConfig.espnS2 = process.env.ESPN_S2;
+        espnConfig.SWID = process.env.ESPN_SWID;
+        console.log('Loaded ESPN config from environment variables');
+    } else if (fs.existsSync('espn-config.json')) {
+        // Fall back to file (for local development)
         espnConfig = JSON.parse(fs.readFileSync('espn-config.json', 'utf8'));
         console.log('Loaded ESPN config from espn-config.json');
     }
 } catch (error) {
-    console.warn('Could not load espn-config.json:', error.message);
+    console.warn('Could not load ESPN config:', error.message);
 }
 
 // Middleware

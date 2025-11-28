@@ -175,9 +175,12 @@
         </div>
     </footer>
 
-    <script src="fantasy-football-stats.js"></script>
     <script>
+        // Set backend URL - update this with your Render backend URL after deployment
+        // For local development, leave as null to use relative path
+        window.BACKEND_URL = 'https://clean-website.onrender.com/api/espn';
         document.getElementById("currentYear").textContent = new Date().getFullYear();
     </script>
+    <script src="fantasy-football-stats.js"></script>
 </body>
 </html>

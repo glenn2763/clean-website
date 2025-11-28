@@ -1,6 +1,9 @@
 // ESPN Fantasy Football API Client and Data Processing
 
-const PROXY_BASE_URL = '/api/espn';
+// Use environment-specific backend URL
+// For local development: use relative path
+// For production: use deployed backend URL
+const PROXY_BASE_URL = window.BACKEND_URL || '/api/espn';
 
 // Chart instances storage
 const charts = {};
