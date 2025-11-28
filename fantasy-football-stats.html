@@ -176,9 +176,12 @@
     </footer>
 
     <script>
-        // Set backend URL - update this with your Render backend URL after deployment
-        // For local development, leave as null to use relative path
-        window.BACKEND_URL = 'https://clean-website.onrender.com/api/espn';
+        // Backend URL Configuration
+        // For LOCAL testing: point to your local Node.js server (port 3000)
+        // For PRODUCTION: set to your Render backend URL + '/api/espn'
+        // See TESTING_AND_DEPLOYMENT.md for details
+        // window.BACKEND_URL = 'https://clean-website.onrender.com/api/espn'; // Production
+        window.BACKEND_URL = 'http://localhost:3000/api/espn'; // Local testing - requires Node.js server running
         document.getElementById("currentYear").textContent = new Date().getFullYear();
     </script>
     <script type="module" src="fantasy-football/main.js"></script>
