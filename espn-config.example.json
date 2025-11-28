@@ -1,0 +1,15 @@
+{
+  "_comment": "Copy this file to espn-config.json and fill in your ESPN cookies",
+  "_instructions": [
+    "1. Log into ESPN.com in your browser",
+    "2. Open DevTools (F12) > Application tab > Cookies > espn.com",
+    "3. Find and copy the 'espn_s2' cookie value",
+    "4. Find and copy the 'SWID' cookie value",
+    "5. Paste them below (without quotes)",
+    "6. Save this file as 'espn-config.json' (without .example)"
+  ],
+  "espnS2": "YOUR_ESPN_S2_COOKIE_VALUE_HERE",
+  "SWID": "YOUR_SWID_COOKIE_VALUE_HERE",
+  "defaultLeagueId": 38088471
+}
+

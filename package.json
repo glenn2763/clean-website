@@ -1,0 +1,17 @@
+{
+  "name": "clean-website",
+  "version": "1.0.0",
+  "description": "Personal website with Fantasy Football Stats Analysis",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "espn-fantasy-football-api": "^2.0.1",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

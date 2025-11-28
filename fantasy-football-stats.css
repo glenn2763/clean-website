@@ -1,0 +1,306 @@
+/* Fantasy Football Stats Page Styles */
+
+body {
+    font-family: 'Open Sans', sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.input-section {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-color-light);
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group label {
+    font-weight: bold;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.input-group input,
+.input-group select {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: border-color 0.3s ease;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.btn-secondary {
+    background: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+    background: var(--text-primary);
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+}
+
+.loading.hidden {
+    display: none;
+}
+
+.spinner {
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--accent-primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error {
+    background: #ffebee;
+    color: #c62828;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #c62828;
+}
+
+.error.hidden {
+    display: none;
+}
+
+body.dark-mode .error {
+    background: #3e2723;
+    color: #ef5350;
+    border-left-color: #ef5350;
+}
+
+#content.hidden {
+    display: none;
+}
+
+.analysis-section {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-color-light);
+}
+
+.analysis-section h2 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-family: 'Montserrat', sans-serif;
+}
+
+.analysis-section h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+}
+
+.section-description {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    font-style: italic;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    margin-bottom: 2rem;
+}
+
+.chart-container canvas {
+    max-height: 100%;
+}
+
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+table th,
+table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+table th {
+    background: var(--accent-primary);
+    color: var(--text-on-dark-bg);
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif;
+}
+
+table tr:hover {
+    background: var(--bg-secondary);
+}
+
+table tr:last-child td {
+    border-bottom: none;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-card {
+    background: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 4px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-primary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.h2h-matrix {
+    overflow-x: auto;
+}
+
+.h2h-matrix table {
+    font-size: 0.9rem;
+}
+
+.h2h-matrix th:first-child,
+.h2h-matrix td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--bg-primary);
+    z-index: 1;
+}
+
+.h2h-matrix th:first-child {
+    background: var(--accent-primary);
+    color: var(--text-on-dark-bg);
+}
+
+.win {
+    background: #c8e6c9;
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.loss {
+    background: #ffcdd2;
+    color: #c62828;
+    font-weight: bold;
+}
+
+body.dark-mode .win {
+    background: #1b5e20;
+    color: #81c784;
+}
+
+body.dark-mode .loss {
+    background: #b71c1c;
+    color: #ef5350;
+}
+
+.matchup-item {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    border-left: 4px solid var(--accent-primary);
+}
+
+.matchup-item .matchup-header {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.matchup-item .matchup-details {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.position-group {
+    margin-bottom: 2rem;
+}
+
+.position-group h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-family: 'Montserrat', sans-serif;
+}
+
+@media (max-width: 768px) {
+    .input-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .input-group {
+        width: 100%;
+    }
+
+    .chart-container {
+        height: 300px;
+    }
+
+    .tables-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .h2h-matrix {
+        font-size: 0.8rem;
+    }
+}
