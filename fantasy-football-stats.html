@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Football Stats Analysis</title>
+    <link rel="stylesheet" href="fantasy-football-stats.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html" style="color: inherit; text-decoration: none;">Glenn Wysen</a></h1>
+            <nav>
+                <ul>
+                    <li><a href="index.html#about">About Me</a></li>
+                    <li><a href="index.html#experience">Experience</a></li>
+                    <li><a href="index.html#projects">Projects</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="container">
+        <h1>Fantasy Football Stats Analysis</h1>
+        <div class="input-section">
+            <div class="input-group">
+                <label for="league-id">ESPN League ID:</label>
+                <input type="text" id="league-id" value="37892" placeholder="Enter league ID">
+            </div>
+            <div class="input-group">
+                <label for="season-select">Season:</label>
+                <select id="season-select">
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                </select>
+            </div>
+            <button id="fetch-btn" class="btn">Fetch League Data</button>
+            <button id="fetch-all-seasons-btn" class="btn btn-secondary">Fetch All Seasons</button>
+            <button id="clear-cache-btn" class="btn btn-secondary" title="Clear cached data">Clear Cache</button>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading league data...</p>
+        </div>
+
+        <div id="error" class="error hidden"></div>
+
+        <div id="content" class="hidden">
+            <!-- League Overview -->
+            <section class="analysis-section">
+                <h2>League Overview</h2>
+                <div id="league-overview"></div>
+            </section>
+
+            <!-- Most Unlucky Player -->
+            <section class="analysis-section">
+                <h2>Most Unlucky Players</h2>
+                <p class="section-description">Players who consistently face the highest-scoring opponents</p>
+                <div class="chart-container">
+                    <canvas id="points-against-chart"></canvas>
+                </div>
+                <div id="unlucky-table"></div>
+            </section>
+
+            <!-- Underachievers/Overachievers -->
+            <section class="analysis-section">
+                <h2>Underachievers & Overachievers</h2>
+                <p class="section-description">Teams that scored significantly more or less than projected</p>
+                <div class="chart-container">
+                    <canvas id="projected-vs-actual-chart"></canvas>
+                </div>
+                <div class="tables-grid">
+                    <div>
+                        <h3>Biggest Underachievers</h3>
+                        <div id="underachievers-table"></div>
+                    </div>
+                    <div>
+                        <h3>Biggest Overachievers</h3>
+                        <div id="overachievers-table"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Highest/Lowest Scores -->
+            <section class="analysis-section">
+                <h2>Highest & Lowest Scores</h2>
+                <p class="section-description">League-wide scoring records and extremes</p>
+                <div class="chart-container">
+                    <canvas id="score-extremes-chart"></canvas>
+                </div>
+                <div id="score-records-table"></div>
+            </section>
+
+            <!-- Consistency Analysis -->
+            <section class="analysis-section">
+                <h2>Consistency Analysis</h2>
+                <p class="section-description">Teams ranked by score consistency (standard deviation)</p>
+                <div class="chart-container">
+                    <canvas id="consistency-chart"></canvas>
+                </div>
+                <div id="consistency-table"></div>
+            </section>
+
+            <!-- Head-to-Head Records -->
+            <section class="analysis-section">
+                <h2>Head-to-Head Records</h2>
+                <p class="section-description">Win/loss records between all teams</p>
+                <div id="h2h-matrix"></div>
+            </section>
+
+            <!-- Playoff Performance -->
+            <section class="analysis-section">
+                <h2>Playoff Performance</h2>
+                <p class="section-description">Playoff appearances and championship wins</p>
+                <div class="chart-container">
+                    <canvas id="playoff-chart"></canvas>
+                </div>
+                <div id="playoff-table"></div>
+            </section>
+
+            <!-- Transaction Analysis -->
+            <section class="analysis-section">
+                <h2>Transaction Analysis</h2>
+                <p class="section-description">Waiver claims, trades, and roster moves</p>
+                <div class="chart-container">
+                    <canvas id="transactions-chart"></canvas>
+                </div>
+                <div id="transactions-table"></div>
+            </section>
+
+            <!-- Positional Analysis -->
+            <section class="analysis-section">
+                <h2>Positional Analysis</h2>
+                <p class="section-description">Best performers by position</p>
+                <div id="positional-tables"></div>
+            </section>
+
+            <!-- Weekly Trends -->
+            <section class="analysis-section">
+                <h2>Weekly Trends</h2>
+                <p class="section-description">Average points per week by team</p>
+                <div class="chart-container">
+                    <canvas id="weekly-trends-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Matchup Analysis -->
+            <section class="analysis-section">
+                <h2>Matchup Analysis</h2>
+                <p class="section-description">Closest games and biggest blowouts</p>
+                <div id="matchup-analysis"></div>
+            </section>
+
+            <!-- Season-by-Season Comparison -->
+            <section class="analysis-section">
+                <h2>Season-by-Season Comparison</h2>
+                <p class="section-description">Team performance across multiple seasons</p>
+                <div class="chart-container">
+                    <canvas id="season-comparison-chart"></canvas>
+                </div>
+                <div id="season-comparison-table"></div>
+            </section>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container footer-content">
+            <p>&copy; <span id="currentYear"></span> Glenn Wysen. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Backend URL Configuration
+        // For LOCAL testing: point to your local Node.js server (port 3000)
+        // For PRODUCTION: set to your Render backend URL + '/api/espn'
+        // See TESTING_AND_DEPLOYMENT.md for details
+        // window.BACKEND_URL = 'https://clean-website.onrender.com/api/espn'; // Production
+        window.BACKEND_URL = 'http://localhost:3000/api/espn'; // Local testing - requires Node.js server running
+        document.getElementById("currentYear").textContent = new Date().getFullYear();
+    </script>
+    <script type="module" src="fantasy-football/main.js"></script>
+</body>
+</html>
