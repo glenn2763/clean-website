@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Football Tests</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .test-result {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .pass {
+            color: #4ec9b0;
+        }
+        .fail {
+            color: #f48771;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fantasy Football Component Tests</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        import { runner as utilsRunner } from './test-utils.js';
+        
+        const resultsDiv = document.getElementById('results');
+        
+        async function runTests() {
+            // Run utils tests
+            const utilsDiv = document.createElement('div');
+            utilsDiv.innerHTML = '<h2>Utility Tests</h2>';
+            resultsDiv.appendChild(utilsDiv);
+            
+            // Override console.log to display in page
+            const originalLog = console.log;
+            const originalError = console.error;
+            const logs = [];
+            
+            console.log = (...args) => {
+                logs.push({ type: 'log', args });
+                originalLog(...args);
+            };
+            
+            console.error = (...args) => {
+                logs.push({ type: 'error', args });
+                originalError(...args);
+            };
+            
+            await utilsRunner.run();
+            
+            // Restore console
+            console.log = originalLog;
+            console.error = originalError;
+            
+            // Display results
+            logs.forEach(log => {
+                const div = document.createElement('div');
+                div.className = `test-result ${log.type === 'error' ? 'fail' : 'pass'}`;
+                div.textContent = log.args.join(' ');
+                utilsDiv.appendChild(div);
+            });
+        }
+        
+        runTests();
+    </script>
+</body>
+</html>
+
