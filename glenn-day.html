@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Glenn Day — May 17, 2026</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="stylesheet" href="glenn-day.css">
+    <link rel="icon" type="image/png" href="images/favicon.ico">
+</head>
+<body class="glenn-day-body">
+    <main class="glenn-day-main">
+        <header class="glenn-day-top" aria-labelledby="glenn-day-title">
+            <div class="glenn-day-top-text">
+                <h1 id="glenn-day-title">Glenn Day</h1>
+                <p class="glenn-day-tagline">
+                    <time datetime="2026-05-17">Sunday, May 17, 2026</time>
+                    <span class="glenn-day-tagline-sep" aria-hidden="true">·</span>
+                    Birthday crawl — spell <strong>GLENN</strong> on the subway (G, L, E, N, N).
+                </p>
+                <p class="glenn-day-note">
+                    Stop four is <a href="https://en.wikipedia.org/wiki/Syttende_Mai" class="glenn-text-link" target="_blank" rel="noopener noreferrer"><strong>Syttende Mai</strong></a> — Norwegian drinks at KABIN.
+                </p>
+            </div>
+            <div class="glenn-day-top-controls">
+                <section class="glenn-day-controls" aria-label="Route overview">
+                    <h2 class="visually-hidden">GLENN route</h2>
+                    <div id="glenn-pills" class="glenn-pills" role="tablist" aria-label="Letters in GLENN"></div>
+                    <p class="glenn-day-keyboard-hint"><span class="glenn-day-keyboard-hint-kbd">←</span> <span class="glenn-day-keyboard-hint-kbd">→</span> stops</p>
+                </section>
+            </div>
+        </header>
+
+        <div class="glenn-day-layout">
+            <aside class="glenn-rail glenn-rail--steps" aria-label="Stops">
+                <h2 class="glenn-rail-heading">Stops</h2>
+                <ol id="glenn-steps" class="glenn-steps"></ol>
+            </aside>
+
+            <div class="glenn-map-stage">
+                <div class="glenn-map-wrap">
+                    <div id="glenn-map" class="glenn-map" role="img" aria-label="Map of crawl locations"></div>
+                </div>
+            </div>
+
+            <aside class="glenn-rail glenn-rail--detail" aria-label="Selected stop">
+                <h2 class="glenn-rail-heading visually-hidden">Current stop</h2>
+                <section id="glenn-detail" class="glenn-detail" aria-live="polite"></section>
+            </aside>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="glenn-day.js"></script>
+</body>
+</html>

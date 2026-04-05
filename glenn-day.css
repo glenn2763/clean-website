@@ -1,0 +1,716 @@
+/* Glenn Day — full viewport, map-centered, no document scroll */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&display=swap');
+
+:root {
+  --bg-primary: #f4f7f6;
+  --bg-secondary: #ffffff;
+  --text-primary: #333a45;
+  --text-secondary: #555a65;
+  --accent-primary: #76c7c0;
+  --accent-primary-darker: #5aa8a0;
+  --border-color: #e0e0e0;
+  --shadow-color-light: rgba(0, 0, 0, 0.05);
+  --shadow-color-medium: rgba(0, 0, 0, 0.1);
+  --link-color: var(--accent-primary);
+  --card-bg: var(--bg-secondary);
+  --bg-header-footer: #0f1c2e;
+  --text-on-dark-bg: #ffffff;
+  --glenn-rail-stops-width: 240px;
+  --glenn-rail-detail-col: minmax(260px, 320px);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  height: -webkit-fill-available;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.glenn-day-body {
+  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: 'Open Sans', sans-serif;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.glenn-day-main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ——— Top bar (compact) ——— */
+.glenn-day-top {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.6rem 1.5rem;
+  padding: 0.55rem max(0.85rem, env(safe-area-inset-right, 0px)) 0.55rem
+    max(0.85rem, env(safe-area-inset-left, 0px));
+  /* Add inset; cap so DevTools / bad env() values don’t create a huge blank band */
+  padding-top: calc(0.45rem + min(env(safe-area-inset-top, 0px), 70px));
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  box-shadow: 0 2px 8px var(--shadow-color-light);
+}
+
+.glenn-day-top-text {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.glenn-day-top-controls {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.glenn-day-top h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.glenn-day-tagline {
+  font-size: clamp(0.78rem, 2.8vw, 0.82rem);
+  color: var(--text-secondary);
+  margin-top: 0.15rem;
+  line-height: 1.35;
+}
+
+.glenn-day-tagline-sep {
+  margin: 0 0.35rem;
+  opacity: 0.6;
+}
+
+.glenn-day-note {
+  font-size: clamp(0.72rem, 2.5vw, 0.75rem);
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+  line-height: 1.35;
+  max-width: 42em;
+}
+
+.glenn-day-note strong {
+  color: var(--accent-primary-darker);
+}
+
+body.dark-mode .glenn-day-note strong {
+  color: var(--accent-primary);
+}
+
+.glenn-text-link {
+  color: var(--link-color);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+}
+
+.glenn-text-link:hover {
+  color: var(--accent-primary-darker);
+}
+
+.glenn-day-controls {
+  margin: 0;
+}
+
+.glenn-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.glenn-pill {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+  min-width: 2.1rem;
+  padding: 0.28rem 0.55rem;
+  border: 2px solid rgba(15, 28, 46, 0.35);
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(118, 199, 192, 0.25);
+}
+
+.glenn-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px var(--shadow-color-medium);
+}
+
+.glenn-pill:focus-visible {
+  outline: 3px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.glenn-pill.is-active {
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-primary);
+}
+
+.glenn-pill--G {
+  border-color: #6bbe44;
+  background: linear-gradient(180deg, #f8fff9 0%, #e8f6e0 100%);
+}
+
+.glenn-pill--L {
+  border-color: #a7a9ac;
+  background: linear-gradient(180deg, #fafafa 0%, #e8e9eb 100%);
+}
+
+.glenn-pill--E {
+  border-color: #2850a7;
+  color: #1a3770;
+  background: linear-gradient(180deg, #f3f6ff 0%, #e2e9fb 100%);
+}
+
+.glenn-pill--N {
+  border-color: #fccc0a;
+  background: linear-gradient(180deg, #fffef5 0%, #fff3bc 100%);
+}
+
+.glenn-pill--second-n {
+  box-shadow: inset 0 0 0 1px rgba(15, 28, 46, 0.12);
+}
+
+.glenn-pill--second-n.is-active {
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px #c9a227;
+}
+
+body.dark-mode .glenn-pill--G {
+  background: linear-gradient(180deg, #1e2a20 0%, #243222 100%);
+  color: #e0e0e0;
+}
+
+body.dark-mode .glenn-pill--L {
+  background: linear-gradient(180deg, #2a2a2a 0%, #333 100%);
+  color: #e0e0e0;
+}
+
+body.dark-mode .glenn-pill--E {
+  background: linear-gradient(180deg, #1a2540 0%, #1f2d4d 100%);
+  color: #dbe4ff;
+}
+
+body.dark-mode .glenn-pill--N {
+  background: linear-gradient(180deg, #3a3420 0%, #454028 100%);
+  color: #fff8dc;
+}
+
+.glenn-day-keyboard-hint {
+  margin-top: 0.25rem;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.glenn-day-keyboard-hint-kbd {
+  display: inline-block;
+  padding: 0.05rem 0.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  font-size: 0.62rem;
+  background: var(--bg-primary);
+}
+
+/* ——— Map-centered grid ——— */
+.glenn-day-layout {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--glenn-rail-stops-width) minmax(0, 1fr) var(--glenn-rail-detail-col);
+  grid-template-rows: minmax(280px, 1fr);
+  gap: 0;
+}
+
+/* Let grid rows shrink so overflow:auto panels can scroll (default min-height:auto breaks this) */
+.glenn-day-layout > * {
+  min-height: 0;
+}
+
+.glenn-rail {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+.glenn-rail--steps {
+  border-right-width: 1px;
+  border-right-style: solid;
+}
+
+.glenn-rail--detail {
+  border-left-width: 1px;
+  border-left-style: solid;
+}
+
+.glenn-rail-heading {
+  flex: 0 0 auto;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.65rem 0.35rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.glenn-map-stage {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: #dfe8e6;
+  align-self: stretch;
+}
+
+.glenn-map-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.glenn-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #c8d4d2;
+}
+
+.glenn-steps {
+  list-style: none;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.4rem;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.glenn-rail--detail .glenn-detail {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+/* Narrow / mobile: map first, largest share */
+@media (max-width: 840px) {
+  .glenn-day-main {
+    min-height: 100%;
+    max-height: 100svh;
+  }
+
+  .glenn-day-layout {
+    grid-template-columns: 1fr;
+    /* map | stop chips (auto height = never clip chips) | detail (scrolls) */
+    grid-template-rows: minmax(0, 2fr) auto minmax(0, 1fr);
+  }
+
+  .glenn-map-stage {
+    order: -1;
+    min-height: 0;
+    border-right: none;
+  }
+
+  .glenn-rail--steps {
+    order: 1;
+    flex-shrink: 0;
+    max-height: none;
+    z-index: 2;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    background: var(--bg-primary);
+  }
+
+  .glenn-rail--steps .glenn-rail-heading {
+    padding: 0.35rem 0.6rem 0.28rem;
+    line-height: 1.2;
+  }
+
+  .glenn-rail--detail {
+    order: 2;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+    z-index: 1;
+    position: relative;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .glenn-rail--detail .glenn-detail {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .glenn-day-top {
+    gap: 0.35rem 0.75rem;
+    padding: 0.35rem max(0.65rem, env(safe-area-inset-right, 0px)) 0.4rem
+      max(0.65rem, env(safe-area-inset-left, 0px));
+    padding-top: calc(0.3rem + min(env(safe-area-inset-top, 0px), 70px));
+    align-items: flex-start;
+  }
+
+  .glenn-day-top-text {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .glenn-steps {
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    min-height: 3.35rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    gap: 0.5rem;
+    padding: 0.45rem max(0.45rem, env(safe-area-inset-right, 0px)) 0.6rem
+      max(0.45rem, env(safe-area-inset-left, 0px));
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: max(0.45rem, env(safe-area-inset-left, 0px));
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .glenn-step {
+    flex: 0 0 auto;
+    width: min(13.5rem, calc(100vw - 3rem));
+    scroll-snap-align: start;
+    max-width: 85vw;
+  }
+
+  .glenn-step-button {
+    min-height: 3rem;
+    padding: 0.55rem 0.65rem;
+    font-size: 0.8rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(118, 199, 192, 0.25);
+  }
+
+  .glenn-step-num {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.78rem;
+  }
+
+  .glenn-pill {
+    min-height: 2.75rem;
+    min-width: 2.6rem;
+    padding: 0.4rem 0.7rem;
+  }
+
+  .glenn-day-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .glenn-pills {
+    justify-content: flex-start;
+  }
+
+  .glenn-day-keyboard-hint {
+    text-align: left;
+  }
+
+  /* Phones / tablets primarily using touch — arrow keys are secondary */
+  @media (pointer: coarse) {
+    .glenn-day-keyboard-hint {
+      display: none;
+    }
+  }
+}
+
+/* Short landscape: prioritize map; keep detail row fr-based so it still scrolls */
+@media (max-width: 840px) and (max-height: 520px) {
+  .glenn-day-layout {
+    grid-template-rows: minmax(0, 3fr) auto minmax(0, 1fr);
+  }
+
+  .glenn-step-button {
+    min-height: 2.75rem;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .glenn-steps {
+    min-height: 3rem;
+  }
+
+  .glenn-day-note {
+    display: none;
+  }
+}
+
+/* ——— Detail card typography ——— */
+.glenn-detail {
+  background: var(--bg-secondary);
+  padding: 0.65rem 0.75rem;
+}
+
+.glenn-detail-step-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.glenn-detail-venue {
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(1rem, 2.2vw, 1.25rem);
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
+}
+
+.glenn-detail-address {
+  margin-bottom: 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.glenn-detail-address a {
+  color: var(--link-color);
+  word-break: break-word;
+}
+
+.glenn-detail-leave {
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.glenn-detail-leave-label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-primary-darker);
+  margin-bottom: 0.15rem;
+}
+
+body.dark-mode .glenn-detail-leave-label {
+  color: var(--accent-primary);
+}
+
+.glenn-detail-leave-time {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.glenn-detail-leave--open-ended {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.glenn-detail-activity {
+  color: var(--text-primary);
+  line-height: 1.45;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 840px) {
+  .glenn-detail {
+    padding: 0.65rem max(0.75rem, env(safe-area-inset-right, 0px))
+      max(1rem, calc(0.65rem + env(safe-area-inset-bottom, 0px)))
+      max(0.75rem, env(safe-area-inset-left, 0px));
+  }
+
+  .glenn-detail-venue {
+    font-size: clamp(1.05rem, 4vw, 1.2rem);
+  }
+
+  .glenn-detail-address,
+  .glenn-detail-activity,
+  .glenn-detail-next {
+    font-size: max(0.8rem, 15px);
+  }
+}
+
+.glenn-detail-activity .glenn-text-link {
+  color: var(--link-color);
+  font-weight: 600;
+}
+
+.glenn-detail-next {
+  margin-top: 0.55rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  line-height: 1.45;
+  font-size: 0.75rem;
+}
+
+.glenn-detail-next-label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-primary-darker);
+  margin-bottom: 0.2rem;
+}
+
+body.dark-mode .glenn-detail-next-label {
+  color: var(--accent-primary);
+}
+
+.glenn-detail-callout {
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(118, 199, 192, 0.15);
+  border: 1px solid var(--accent-primary);
+  color: var(--text-primary);
+  line-height: 1.45;
+  font-size: 0.82rem;
+}
+
+.glenn-detail-callout--home {
+  font-size: 0.88rem;
+}
+
+.glenn-step-button {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  text-align: left;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font: inherit;
+  font-size: 0.75rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(118, 199, 192, 0.25);
+}
+
+.glenn-step-button:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px var(--shadow-color-light);
+}
+
+.glenn-step-button:focus-visible {
+  outline: 3px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.glenn-step.is-active .glenn-step-button {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-primary);
+  background: var(--card-bg);
+}
+
+.glenn-step-num {
+  flex-shrink: 0;
+  width: 1.55rem;
+  height: 1.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-header-footer);
+  color: var(--text-on-dark-bg);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.glenn-step.is-active .glenn-step-num {
+  background: var(--accent-primary);
+  color: #0f1c2e;
+}
+
+body.dark-mode .glenn-step.is-active .glenn-step-num {
+  color: #0f1c2e;
+}
+
+.glenn-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.glenn-step-venue {
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.glenn-step-meta {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  line-height: 1.25;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
