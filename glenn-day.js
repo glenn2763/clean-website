@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  /** @type {{ id: string; venue: string; address: string; mapsQuery?: string; leaveBy: string; activity: string; nextLeg: string; lat: number; lng: number }[]} */
+  /** @type {{ id: string; venue: string; address: string; mapsQuery?: string; leaveBy: string; activity: string; nextLeg: string; markerEmoji: string; lat: number; lng: number }[]} */
   var STOPS = [
     {
       id: 'stop-1',
@@ -9,6 +9,7 @@
       address: '296 Clifton Pl #1, Brooklyn, NY 11216',
       leaveBy: '1:00 PM',
       activity: 'Beer die',
+      markerEmoji: '\u{1F3B2}',
       nextLeg: 'Ride the **G** toward Brooklyn and Manhattan to the next stop.',
       lat: 40.68926,
       lng: -73.94972,
@@ -20,6 +21,7 @@
       mapsQuery: 'Alligator Lounge, Williamsburg, Brooklyn',
       leaveBy: '2:30 PM',
       activity: 'Drinks and pizza',
+      markerEmoji: '\u{1F40A}',
       nextLeg: 'Ride the **L** into Manhattan to the next stop.',
       lat: 40.71418,
       lng: -73.95438,
@@ -31,6 +33,7 @@
       mapsQuery: "Shaffer's bar, Chelsea, Manhattan",
       leaveBy: '3:30 PM',
       activity: 'Drinks',
+      markerEmoji: '\u2708\uFE0F',
       nextLeg: 'Ride the **E** downtown toward the next stop.',
       lat: 40.74095,
       lng: -73.99789,
@@ -42,6 +45,7 @@
       mapsQuery: 'KABIN Norwegian bar, Tribeca, New York',
       leaveBy: '4:15 PM',
       activity: 'Norwegian drinks',
+      markerEmoji: '\u{1F1F3}\u{1F1F4}',
       nextLeg:
         '**Walk** to the **N** and ride to the final stop.',
       lat: 40.72489,
@@ -54,6 +58,7 @@
       mapsQuery: 'Electric Shuffle, Herald Square, New York',
       leaveBy: 'Leave whenever',
       activity: 'Shuffleboard',
+      markerEmoji: '\u{1F3AF}',
       nextLeg: 'When you wrap up — **take the N home** (or your preferred line).',
       lat: 40.74692,
       lng: -73.98897,
@@ -284,14 +289,26 @@
     });
   }
 
+  var MARKER_BOX = 36;
+
+  function stopDivIcon(emoji) {
+    return L.divIcon({
+      className: 'glenn-map-marker',
+      html:
+        '<span class="glenn-map-marker-inner" aria-hidden="true">' +
+        emoji +
+        '</span>',
+      iconSize: [MARKER_BOX, MARKER_BOX],
+      iconAnchor: [MARKER_BOX / 2, MARKER_BOX / 2],
+      popupAnchor: [0, -MARKER_BOX / 2 + 2],
+    });
+  }
+
   function addStopMarkers(routeGroup) {
     STOPS.forEach(function (stop, index) {
-      var marker = L.circleMarker([stop.lat, stop.lng], {
-        radius: 11,
-        weight: 3,
-        color: '#0f1c2e',
-        fillColor: '#76c7c0',
-        fillOpacity: 0.95,
+      var marker = L.marker([stop.lat, stop.lng], {
+        icon: stopDivIcon(stop.markerEmoji),
+        title: stop.venue,
       });
       marker.bindPopup(
         '<strong>' +

@@ -105,22 +105,6 @@ html {
   opacity: 0.6;
 }
 
-.glenn-day-note {
-  font-size: clamp(0.72rem, 2.5vw, 0.75rem);
-  color: var(--text-secondary);
-  margin-top: 0.2rem;
-  line-height: 1.35;
-  max-width: 42em;
-}
-
-.glenn-day-note strong {
-  color: var(--accent-primary-darker);
-}
-
-body.dark-mode .glenn-day-note strong {
-  color: var(--accent-primary);
-}
-
 .glenn-text-link {
   color: var(--link-color);
   text-decoration: underline;
@@ -315,6 +299,26 @@ body.dark-mode .glenn-pill--N {
   background: #c8d4d2;
 }
 
+/* Emoji pins for each stop (Leaflet divIcon) */
+.glenn-map .glenn-map-marker {
+  background: #fff !important;
+  border: 3px solid #0f1c2e !important;
+  border-radius: 50%;
+  box-shadow: 0 2px 10px rgba(15, 28, 46, 0.28);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  user-select: none;
+}
+
+.glenn-map .glenn-map-marker-inner {
+  font-size: 1.05rem;
+  line-height: 1;
+  position: relative;
+  top: 0.02em;
+}
+
 .glenn-steps {
   list-style: none;
   flex: 1 1 0;
@@ -484,10 +488,6 @@ body.dark-mode .glenn-pill--N {
 
   .glenn-steps {
     min-height: 3rem;
-  }
-
-  .glenn-day-note {
-    display: none;
   }
 }
 
