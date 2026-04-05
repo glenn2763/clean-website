@@ -348,6 +348,10 @@
 
     var routeGroup = L.featureGroup().addTo(map);
 
+    function invalidateMapSize() {
+      if (map) map.invalidateSize({ animate: false });
+    }
+
     function afterLayers() {
       var tight =
         typeof window.matchMedia === 'function' &&
@@ -356,18 +360,45 @@
         padding: tight ? [14, 14] : [36, 36],
         maxZoom: tight ? 13 : 14,
       });
-      function invalidateSoon() {
-        if (map) map.invalidateSize();
-      }
-      invalidateSoon();
-      setTimeout(invalidateSoon, 120);
-      setTimeout(invalidateSoon, 450);
+      invalidateMapSize();
+      setTimeout(invalidateMapSize, 100);
+      setTimeout(invalidateMapSize, 350);
+      setTimeout(invalidateMapSize, 750);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(invalidateMapSize);
+      });
       if (typeof onReady === 'function') onReady();
     }
 
-    window.addEventListener('resize', function () {
-      if (map) map.invalidateSize();
+    window.addEventListener('resize', invalidateMapSize);
+
+    window.addEventListener('orientationchange', function () {
+      setTimeout(invalidateMapSize, 200);
+      setTimeout(invalidateMapSize, 600);
     });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', invalidateMapSize);
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        setTimeout(invalidateMapSize, 0);
+        setTimeout(invalidateMapSize, 300);
+      }
+    });
+
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) setTimeout(invalidateMapSize, 0);
+    });
+
+    var mapWrap = el.parentElement;
+    if (mapWrap && typeof ResizeObserver !== 'undefined') {
+      var ro = new ResizeObserver(function () {
+        invalidateMapSize();
+      });
+      ro.observe(mapWrap);
+    }
 
     fetch(ROUTE_GEOJSON_URL)
       .then(function (r) {
