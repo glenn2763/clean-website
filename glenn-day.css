@@ -528,13 +528,13 @@ body.dark-mode .glenn-pill--N {
   word-break: break-word;
 }
 
-.glenn-detail-leave {
+.glenn-detail-schedule {
   margin-bottom: 0.5rem;
   font-size: 0.82rem;
   line-height: 1.35;
 }
 
-.glenn-detail-leave-label {
+.glenn-detail-schedule-label {
   display: block;
   font-size: 0.65rem;
   text-transform: uppercase;
@@ -543,21 +543,15 @@ body.dark-mode .glenn-pill--N {
   margin-bottom: 0.15rem;
 }
 
-body.dark-mode .glenn-detail-leave-label {
+body.dark-mode .glenn-detail-schedule-label {
   color: var(--accent-primary);
 }
 
-.glenn-detail-leave-time {
+.glenn-detail-schedule-range {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: var(--text-primary);
-}
-
-.glenn-detail-leave--open-ended {
-  color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-style: italic;
 }
 
 .glenn-detail-activity {

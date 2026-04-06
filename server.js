@@ -26,6 +26,13 @@ try {
     console.warn('Could not load ESPN config:', error.message);
 }
 
+if (!espnConfig.espnS2 || !espnConfig.SWID) {
+    console.warn(
+        'No ESPN credentials (espn-config.json or ESPN_S2 + ESPN_SWID). ' +
+            'Private fantasy leagues will return 401 until you add them.'
+    );
+}
+
 // Middleware
 app.use(express.json());
 app.use(express.static('.'));

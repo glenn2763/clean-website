@@ -1,16 +1,16 @@
 (function () {
   'use strict';
 
-  /** @type {{ id: string; venue: string; address: string; mapsQuery?: string; leaveBy: string; activity: string; nextLeg: string; markerEmoji: string; lat: number; lng: number }[]} */
+  /** @type {{ id: string; venue: string; address: string; mapsQuery?: string; schedule: string; activity: string; nextLeg: string; markerEmoji: string; lat: number; lng: number }[]} */
   var STOPS = [
     {
       id: 'stop-1',
       venue: 'Chewy and Legos House',
       address: '296 Clifton Pl #1, Brooklyn, NY 11216',
-      leaveBy: '1:00 PM',
+      schedule: 'Noon \u2013 1:30 PM',
       activity: 'Beer die',
       markerEmoji: '\u{1F3B2}',
-      nextLeg: 'Ride the **G** toward Brooklyn and Manhattan to the next stop.',
+      nextLeg: 'Ride the **G** up to Williamsburg.',
       lat: 40.68926,
       lng: -73.94972,
     },
@@ -19,7 +19,7 @@
       venue: 'Alligator Lounge',
       address: '600 Metropolitan Ave, Brooklyn, NY 11211',
       mapsQuery: 'Alligator Lounge, Williamsburg, Brooklyn',
-      leaveBy: '2:30 PM',
+      schedule: '1:45 PM \u2013 2:45 PM',
       activity: 'Drinks and pizza',
       markerEmoji: '\u{1F40A}',
       nextLeg: 'Ride the **L** into Manhattan to the next stop.',
@@ -31,7 +31,7 @@
       venue: "Shaffer's",
       address: '151 8th Ave, New York, NY 10011',
       mapsQuery: "Shaffer's bar, Chelsea, Manhattan",
-      leaveBy: '3:30 PM',
+      schedule: '3:00 PM \u2013 3:30 PM',
       activity: 'Drinks',
       markerEmoji: '\u2708\uFE0F',
       nextLeg: 'Ride the **E** downtown toward the next stop.',
@@ -43,7 +43,7 @@
       venue: 'KABIN',
       address: '300 Spring St, New York, NY 10013',
       mapsQuery: 'KABIN Norwegian bar, Tribeca, New York',
-      leaveBy: '4:15 PM',
+      schedule: '3:45 PM \u2013 4:15 PM',
       activity: 'Norwegian drinks',
       markerEmoji: '\u{1F1F3}\u{1F1F4}',
       nextLeg:
@@ -56,8 +56,8 @@
       venue: 'Electric Shuffle',
       address: '44 W 30th St, New York, NY 10001',
       mapsQuery: 'Electric Shuffle, Herald Square, New York',
-      leaveBy: 'Leave whenever',
-      activity: 'Shuffleboard',
+      schedule: '4:45 PM \u2013 6:00 PM',
+      activity: 'Shuffleboard (5pm reservation)',
       markerEmoji: '\u{1F3AF}',
       nextLeg: 'When you wrap up — **take the N home** (or your preferred line).',
       lat: 40.74692,
@@ -175,12 +175,12 @@
         '</p>';
     }
 
-    var leaveByOpenEnded = stop.leaveBy === 'Leave whenever';
-    var leaveByHtml = leaveByOpenEnded
-      ? '<p class="glenn-detail-leave glenn-detail-leave--open-ended">' + stop.leaveBy + '</p>'
-      : '<p class="glenn-detail-leave"><span class="glenn-detail-leave-label">Leave by</span> <span class="glenn-detail-leave-time">' +
-        stop.leaveBy +
-        '</span></p>';
+    var scheduleHtml =
+      '<p class="glenn-detail-schedule">' +
+      '<span class="glenn-detail-schedule-label">Time</span> ' +
+      '<span class="glenn-detail-schedule-range">' +
+      stop.schedule +
+      '</span></p>';
 
     detailEl.innerHTML =
       '<p class="glenn-detail-step-label">' +
@@ -194,7 +194,7 @@
       '" target="_blank" rel="noopener noreferrer">' +
       stop.address +
       '</a></p>' +
-      leaveByHtml +
+      scheduleHtml +
       '<p class="glenn-detail-activity">' +
       simpleMarkdownBold(stop.activity) +
       '</p>' +
