@@ -228,8 +228,13 @@ app.get('/fantasy-football-stats', (req, res) => {
     res.sendFile(path.join(__dirname, 'fantasy-football-stats.html'));
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+// Health check for Render deploy probes
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
+// Start server — bind all interfaces so Render's proxy can reach the app
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
     console.log(`Fantasy Football Stats: http://localhost:${PORT}/fantasy-football-stats.html`);
 });

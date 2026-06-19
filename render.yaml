@@ -1,9 +1,13 @@
 services:
   - type: web
-    name: fantasy-football-backend
-    env: node
-    buildCommand: npm install
+    name: clean-website
+    runtime: node
+    plan: free
+    repo: https://github.com/glenn2763/clean-website
+    branch: master
+    buildCommand: npm ci
     startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: ESPN_S2
         sync: false
@@ -11,4 +15,3 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
-
