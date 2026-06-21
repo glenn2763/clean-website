@@ -1,9 +1,18 @@
 /**
- * Season Comparison Component
- * Shows manager performance across multiple completed or in-progress seasons
+ * Waiver Wire Specialist Component
+ * Tracks waiver/FA add (claim) counts by manager across seasons
  */
 
-import { buildOwnerMap, getActiveSeasons, getOwnerKey, getOwnerLabel, getTeams } from '../utils.js';
+import {
+    buildOwnerMap,
+    countWireAddsAndDrops,
+    getActiveSeasons,
+    getOwnerKey,
+    getOwnerLabel,
+    getTeams,
+    getTransactions,
+    hasTransactionView,
+} from '../utils.js';
 import { createChart } from '../charts.js';
 
 function fadeHslColor(hslColor, alpha) {
@@ -96,61 +105,77 @@ function syncTableLineVisibility(chart, tableEl) {
 function toggleDatasetLine(chart, datasetIndex) {
     const handlers = chart.$lineHighlightHandlers;
     handlers?.resetHighlight(chart);
-    chart.setDatasetVisibility(datasetIndex, !chart.isDatasetVisible(datasetIndex));
-    chart.update();
-    syncTableLineVisibility(chart, chart.$seasonCompTable);
+    const nextVisible = !chart.isDatasetVisible(datasetIndex);
+
+    (chart.$linkedCharts || [chart]).forEach((linkedChart) => {
+        linkedChart.setDatasetVisibility(datasetIndex, nextVisible);
+        linkedChart.update();
+        syncTableLineVisibility(linkedChart, linkedChart.$wireTable);
+    });
 }
 
-/**
- * Render season comparison chart and table
- * @param {Object} allSeasonsData - Data for all seasons
- */
-function renderSeasonComparison(allSeasonsData) {
-    const canvas = document.getElementById('season-comparison-chart');
-    const tableEl = document.getElementById('season-comparison-table');
-    if (!canvas || !tableEl) return;
-
+function collectManagerWireMoves(allSeasonsData) {
     const seasons = getActiveSeasons(allSeasonsData);
-    if (seasons.length === 0) {
-        tableEl.innerHTML = '<p>No completed seasons with game data yet.</p>';
-        return;
-    }
-
     const ownerMap = buildOwnerMap(allSeasonsData);
     const ownerSeasons = {};
+    let seasonsMissingTransactions = 0;
+    let leagueAdds = 0;
 
     seasons.forEach((season) => {
-        const data = allSeasonsData[season];
-        const standings = data?.mStandings;
-        const teams = getTeams(data);
+        const seasonData = allSeasonsData[season];
+        const transactions = getTransactions(seasonData);
+        const teams = getTeams(seasonData);
 
-        if (!standings || !Array.isArray(standings.entries)) return;
+        if (!hasTransactionView(seasonData)) {
+            seasonsMissingTransactions += 1;
+        }
 
-        standings.entries.forEach((entry) => {
-            const team = teams.find((t) => t.id === entry.teamId);
-            if (!team) return;
-
+        teams.forEach((team) => {
             const ownerKey = getOwnerKey(team);
             if (!ownerSeasons[ownerKey]) {
                 ownerSeasons[ownerKey] = {};
             }
-            ownerSeasons[ownerKey][season] = {
-                wins: entry.overallWinLossTie?.wins || 0,
-                losses: entry.overallWinLossTie?.losses || 0,
-                pointsFor: entry.overallPointsFor || 0,
-            };
+
+            const { adds } = countWireAddsAndDrops(transactions, team.id);
+            ownerSeasons[ownerKey][season] = { adds };
+            leagueAdds += adds;
         });
     });
 
     const ownerList = Object.keys(ownerSeasons).sort((a, b) => {
-        const totalA = seasons.reduce((sum, season) => sum + (ownerSeasons[a][season]?.wins || 0), 0);
-        const totalB = seasons.reduce((sum, season) => sum + (ownerSeasons[b][season]?.wins || 0), 0);
+        const totalA = seasons.reduce((sum, season) => sum + (ownerSeasons[a][season]?.adds || 0), 0);
+        const totalB = seasons.reduce((sum, season) => sum + (ownerSeasons[b][season]?.adds || 0), 0);
         return totalB - totalA;
     });
 
+    return {
+        seasons,
+        ownerMap,
+        ownerSeasons,
+        ownerList,
+        seasonsMissingTransactions,
+        leagueAdds,
+    };
+}
+
+function buildWireChart({
+    canvasId,
+    chartKey,
+    seasons,
+    ownerList,
+    ownerMap,
+    ownerSeasons,
+    metric,
+    title,
+    yLabel,
+    tableEl,
+}) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+
     const datasets = ownerList.map((ownerKey, idx) => ({
         label: getOwnerLabel(ownerKey, ownerMap),
-        data: seasons.map((season) => ownerSeasons[ownerKey][season]?.wins ?? null),
+        data: seasons.map((season) => ownerSeasons[ownerKey][season]?.[metric] ?? null),
         borderColor: `hsl(${idx * 33}, 65%, 45%)`,
         backgroundColor: `hsla(${idx * 33}, 65%, 45%, 0.08)`,
         borderWidth: 1.5,
@@ -161,23 +186,16 @@ function renderSeasonComparison(allSeasonsData) {
     buildLineStyleState(datasets);
 
     const highlightHandlers = createLineHighlightHandlers();
-
-    const chart = createChart('seasonComparison', canvas, {
+    const chart = createChart(chartKey, canvas, {
         type: 'line',
-        data: {
-            labels: seasons,
-            datasets,
-        },
+        data: { labels: seasons, datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: {
-                mode: 'dataset',
-                intersect: false,
-            },
+            interaction: { mode: 'dataset', intersect: false },
             onHover: highlightHandlers.onHover,
             plugins: {
-                title: { display: true, text: 'Regular-Season Wins by Manager' },
+                title: { display: true, text: title },
                 legend: {
                     position: 'bottom',
                     onClick: highlightHandlers.legend.onClick,
@@ -187,67 +205,64 @@ function renderSeasonComparison(allSeasonsData) {
                 tooltip: {
                     mode: 'nearest',
                     intersect: false,
-                    displayColors: true,
                     filter(tooltipItem) {
                         const active = tooltipItem.chart.$highlightedDatasetIndex;
                         return active == null || tooltipItem.datasetIndex === active;
                     },
                     callbacks: {
                         title(items) {
-                            if (!items.length) return '';
-                            return items[0].dataset.label;
+                            return items[0]?.dataset.label ?? '';
                         },
                         label(context) {
-                            const ownerKey = ownerList[context.datasetIndex];
-                            const record = ownerSeasons[ownerKey][context.label];
-                            if (!record) return `${context.label}: no data`;
-                            return `${context.label}: ${record.wins}-${record.losses}`;
+                            const value = context.parsed.y;
+                            if (value == null) return `${context.label}: no data`;
+                            return `${context.label}: ${value} claim${value === 1 ? '' : 's'}`;
                         },
                     },
                 },
             },
             scales: {
                 x: { title: { display: true, text: 'Season' } },
-                y: { beginAtZero: true, title: { display: true, text: 'Regular-Season Wins' } },
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 },
+                    title: { display: true, text: yLabel },
+                },
             },
         },
     });
+
     highlightHandlers.attachLeaveReset(chart);
     chart.$lineHighlightHandlers = highlightHandlers;
-    chart.$seasonCompTable = tableEl;
+    chart.$wireTable = tableEl;
+    return chart;
+}
 
+function renderWireTable(tableEl, seasons, ownerList, ownerMap, ownerSeasons, chart) {
     tableEl.innerHTML = `
         <table class="season-comp-table">
             <thead>
                 <tr>
                     <th>Manager</th>
-                    ${seasons.map((s) => `<th>${s} W-L</th>`).join('')}
-                    <th>Total Record</th>
+                    ${seasons.map((season) => `<th>${season}<br><span class="table-subhead">claims</span></th>`).join('')}
+                    <th>Career claims</th>
                 </tr>
             </thead>
             <tbody>
                 ${ownerList.map((ownerKey, datasetIndex) => {
-                    const name = getOwnerLabel(ownerKey, ownerMap);
-                    const totalRecord = seasons.reduce(
-                        (totals, season) => {
-                            const record = ownerSeasons[ownerKey][season];
-                            if (!record) return totals;
-                            return {
-                                wins: totals.wins + record.wins,
-                                losses: totals.losses + record.losses,
-                            };
-                        },
-                        { wins: 0, losses: 0 }
+                    const careerAdds = seasons.reduce(
+                        (sum, season) => sum + (ownerSeasons[ownerKey][season]?.adds || 0),
+                        0
                     );
-                    const totalRecordLabel = `${totalRecord.wins}-${totalRecord.losses}`;
                     return `
-                        <tr data-dataset-index="${datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this line">
-                            <td>${name}</td>
+                        <tr data-dataset-index="${datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this manager">
+                            <td>${getOwnerLabel(ownerKey, ownerMap)}</td>
                             ${seasons.map((season) => {
                                 const record = ownerSeasons[ownerKey][season];
-                                return `<td>${record ? `${record.wins}-${record.losses}` : '-'}</td>`;
+                                if (!record) return '<td>—</td>';
+                                return `<td>${record.adds}</td>`;
                             }).join('')}
-                            <td><strong>${totalRecordLabel}</strong></td>
+                            <td><strong>${careerAdds}</strong></td>
                         </tr>
                     `;
                 }).join('')}
@@ -255,10 +270,14 @@ function renderSeasonComparison(allSeasonsData) {
         </table>
     `;
 
+    const toggleFromRow = (datasetIndex) => {
+        if (chart) toggleDatasetLine(chart, datasetIndex);
+    };
+
     tableEl.onclick = (event) => {
         const row = event.target.closest('[data-dataset-index]');
         if (!row) return;
-        toggleDatasetLine(chart, Number(row.dataset.datasetIndex));
+        toggleFromRow(Number(row.dataset.datasetIndex));
     };
 
     tableEl.onkeydown = (event) => {
@@ -266,8 +285,65 @@ function renderSeasonComparison(allSeasonsData) {
         const row = event.target.closest('[data-dataset-index]');
         if (!row) return;
         event.preventDefault();
-        toggleDatasetLine(chart, Number(row.dataset.datasetIndex));
+        toggleFromRow(Number(row.dataset.datasetIndex));
     };
 }
 
-export { renderSeasonComparison };
+/**
+ * @param {Object} allSeasonsData
+ */
+function renderWaiverWireSpecialist(allSeasonsData) {
+    const tableEl = document.getElementById('waiver-wire-table');
+    const noticeEl = document.getElementById('waiver-wire-notice');
+    if (!tableEl) return;
+
+    const {
+        seasons,
+        ownerMap,
+        ownerSeasons,
+        ownerList,
+        seasonsMissingTransactions,
+        leagueAdds,
+    } = collectManagerWireMoves(allSeasonsData);
+
+    if (noticeEl) {
+        if (seasonsMissingTransactions > 0) {
+            noticeEl.innerHTML = `
+                <p><strong>Transaction data not loaded</strong> for ${seasonsMissingTransactions} season(s).
+                Click <strong>Clear Saved Data</strong>, then run <strong>Analyze All Seasons</strong> again to re-download <code>mTransactions</code>.</p>
+            `;
+            noticeEl.classList.remove('hidden');
+        } else if (leagueAdds === 0) {
+            noticeEl.innerHTML = `
+                <p>No executed waiver or free-agent claims were found across these seasons.
+                Most activity in this league is draft picks; wire moves are relatively rare.</p>
+            `;
+            noticeEl.classList.remove('hidden');
+        } else {
+            noticeEl.innerHTML = '';
+            noticeEl.classList.add('hidden');
+        }
+    }
+
+    if (!seasons.length || !ownerList.length) {
+        tableEl.innerHTML = '<p>No seasons with team data yet.</p>';
+        return;
+    }
+
+    const claimsChart = buildWireChart({
+        canvasId: 'waiver-claims-chart',
+        chartKey: 'waiverClaims',
+        seasons,
+        ownerList,
+        ownerMap,
+        ownerSeasons,
+        metric: 'adds',
+        title: 'Waiver / FA Claims by Manager',
+        yLabel: 'Claims',
+        tableEl,
+    });
+
+    renderWireTable(tableEl, seasons, ownerList, ownerMap, ownerSeasons, claimsChart);
+}
+
+export { renderWaiverWireSpecialist };

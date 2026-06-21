@@ -9,171 +9,224 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1><a href="index.html" style="color: inherit; text-decoration: none;">Glenn Wysen</a></h1>
-            <nav>
-                <ul>
-                    <li><a href="index.html#about">About Me</a></li>
-                    <li><a href="index.html#experience">Experience</a></li>
-                    <li><a href="index.html#projects">Projects</a></li>
-                    <li><a href="index.html#contact">Contact</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
     <section class="container">
         <h1>Fantasy Football Stats Analysis</h1>
-        <div class="input-section">
-            <div class="input-group">
-                <label for="league-id">ESPN League ID:</label>
-                <input type="text" id="league-id" value="37892" placeholder="Enter league ID">
+
+        <div class="analysis-controls">
+            <div class="mode-toggle" id="mode-toggle" role="radiogroup" aria-label="Analysis mode">
+                <label class="mode-option">
+                    <input type="radio" name="analysis-mode" value="single" checked>
+                    <span class="mode-option-label">Single Season</span>
+                    <span class="mode-option-hint">Weekly trends, matchups, roster moves</span>
+                </label>
+                <label class="mode-option">
+                    <input type="radio" name="analysis-mode" value="multi">
+                    <span class="mode-option-label">League History</span>
+                    <span class="mode-option-hint">Year-over-year comparison &amp; playoffs</span>
+                </label>
             </div>
-            <div class="input-group">
-                <label for="season-select">Season:</label>
-                <select id="season-select">
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
-                </select>
+
+            <p id="mode-description" class="mode-description"></p>
+
+            <div class="analysis-inputs">
+                <div class="input-group">
+                    <label for="league-select">League</label>
+                    <select id="league-select">
+                        <option value="37892">Domination League</option>
+                        <option value="38088471">Monkey Men</option>
+                        <option value="custom">Custom league ID…</option>
+                    </select>
+                </div>
+
+                <div id="custom-league-panel" class="input-group hidden">
+                    <label for="league-id">ESPN League ID</label>
+                    <input type="text" id="league-id" inputmode="numeric" placeholder="Enter public or private league ID">
+                </div>
+
+                <div id="single-season-panel" class="mode-input-panel">
+                    <div class="input-group">
+                        <label for="season-select">Season</label>
+                        <select id="season-select" disabled>
+                            <option>Loading seasons...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="multi-season-panel" class="mode-input-panel hidden">
+                    <div class="input-group input-group-wide">
+                        <label>Seasons included</label>
+                        <p id="multi-season-summary" class="input-hint"></p>
+                    </div>
+                </div>
+
+                <div class="analysis-actions">
+                    <button id="analyze-btn" type="button" class="btn">Analyze Season</button>
+                    <button id="clear-cache-btn" type="button" class="btn btn-secondary" title="Clear saved league data and force a full re-download">Clear Saved Data</button>
+                </div>
             </div>
-            <button id="fetch-btn" class="btn">Fetch League Data</button>
-            <button id="fetch-all-seasons-btn" class="btn btn-secondary">Fetch All Seasons</button>
-            <button id="clear-cache-btn" class="btn btn-secondary" title="Clear cached data">Clear Cache</button>
         </div>
+
+        <div id="results-banner" class="results-banner hidden" aria-live="polite"></div>
 
         <div id="loading" class="loading hidden">
             <div class="spinner"></div>
-            <p>Loading league data...</p>
+            <p id="loading-text">Loading league data...</p>
         </div>
 
         <div id="error" class="error hidden"></div>
 
         <div id="content" class="hidden">
-            <!-- League Overview -->
-            <section class="analysis-section">
-                <h2>League Overview</h2>
-                <div id="league-overview"></div>
-            </section>
+            <div id="single-season-view" class="view-panel hidden">
+                <p class="view-intro">In-depth look at one season — standings, weekly scoring, and matchup highlights.</p>
 
-            <!-- Most Unlucky Player -->
-            <section class="analysis-section">
-                <h2>Most Unlucky Players</h2>
-                <p class="section-description">Players who consistently face the highest-scoring opponents</p>
-                <div class="chart-container">
-                    <canvas id="points-against-chart"></canvas>
-                </div>
-                <div id="unlucky-table"></div>
-            </section>
+                <section class="analysis-section">
+                    <h2>League Overview</h2>
+                    <div id="league-overview"></div>
+                </section>
 
-            <!-- Underachievers/Overachievers -->
-            <section class="analysis-section">
-                <h2>Underachievers & Overachievers</h2>
-                <p class="section-description">Teams that scored significantly more or less than projected</p>
-                <div class="chart-container">
-                    <canvas id="projected-vs-actual-chart"></canvas>
-                </div>
-                <div class="tables-grid">
-                    <div>
-                        <h3>Biggest Underachievers</h3>
-                        <div id="underachievers-table"></div>
+                <section class="analysis-section">
+                    <h2>Weekly Trends</h2>
+                    <p class="section-description">Average points per week by team</p>
+                    <div class="chart-container">
+                        <canvas id="weekly-trends-chart"></canvas>
                     </div>
-                    <div>
-                        <h3>Biggest Overachievers</h3>
-                        <div id="overachievers-table"></div>
+                </section>
+
+                <section class="analysis-section">
+                    <h2>Underachievers &amp; Overachievers</h2>
+                    <p class="section-description">Teams that scored significantly more or less than projected this season</p>
+                    <div class="chart-container">
+                        <canvas id="projected-vs-actual-chart"></canvas>
                     </div>
-                </div>
-            </section>
+                    <div class="tables-grid">
+                        <div>
+                            <h3>Biggest Underachievers</h3>
+                            <div id="underachievers-table"></div>
+                        </div>
+                        <div>
+                            <h3>Biggest Overachievers</h3>
+                            <div id="overachievers-table"></div>
+                        </div>
+                    </div>
+                </section>
 
-            <!-- Highest/Lowest Scores -->
-            <section class="analysis-section">
-                <h2>Highest & Lowest Scores</h2>
-                <p class="section-description">League-wide scoring records and extremes</p>
-                <div class="chart-container">
-                    <canvas id="score-extremes-chart"></canvas>
-                </div>
-                <div id="score-records-table"></div>
-            </section>
+                <section class="analysis-section">
+                    <h2>Consistency Analysis</h2>
+                    <p class="section-description">Teams ranked by score consistency (standard deviation)</p>
+                    <div class="chart-container">
+                        <canvas id="consistency-chart"></canvas>
+                    </div>
+                    <div id="consistency-table"></div>
+                </section>
 
-            <!-- Consistency Analysis -->
-            <section class="analysis-section">
-                <h2>Consistency Analysis</h2>
-                <p class="section-description">Teams ranked by score consistency (standard deviation)</p>
-                <div class="chart-container">
-                    <canvas id="consistency-chart"></canvas>
-                </div>
-                <div id="consistency-table"></div>
-            </section>
+                <section class="analysis-section">
+                    <h2>Matchup Analysis</h2>
+                    <p class="section-description">Closest games and biggest blowouts this season</p>
+                    <div id="matchup-analysis"></div>
+                </section>
 
-            <!-- Head-to-Head Records -->
-            <section class="analysis-section">
-                <h2>Head-to-Head Records</h2>
-                <p class="section-description">Win/loss records between all teams</p>
-                <div id="h2h-matrix"></div>
-            </section>
+                <section class="analysis-section">
+                    <h2>Trades This Season</h2>
+                    <p class="section-description">Executed trades in the selected season. For the all-time trade network (who trades with whom across every year), switch to <strong>League History</strong> mode.</p>
+                    <div id="trade-analyzer"></div>
+                </section>
 
-            <!-- Playoff Performance -->
-            <section class="analysis-section">
-                <h2>Playoff Performance</h2>
-                <p class="section-description">Playoff appearances and championship wins</p>
-                <div class="chart-container">
-                    <canvas id="playoff-chart"></canvas>
-                </div>
-                <div id="playoff-table"></div>
-            </section>
+                <section class="analysis-section">
+                    <h2>Positional Analysis</h2>
+                    <p class="section-description">Top performers by position this season</p>
+                    <div id="positional-tables"></div>
+                </section>
+            </div>
 
-            <!-- Transaction Analysis -->
-            <section class="analysis-section">
-                <h2>Transaction Analysis</h2>
-                <p class="section-description">Waiver claims, trades, and roster moves</p>
-                <div class="chart-container">
-                    <canvas id="transactions-chart"></canvas>
-                </div>
-                <div id="transactions-table"></div>
-            </section>
+            <div id="multi-season-view" class="view-panel hidden">
+                <p class="view-intro">League-wide trends across every season — how scoring, luck, and championships evolved over time.</p>
 
-            <!-- Positional Analysis -->
-            <section class="analysis-section">
-                <h2>Positional Analysis</h2>
-                <p class="section-description">Best performers by position</p>
-                <div id="positional-tables"></div>
-            </section>
+                <section class="analysis-section" id="section-season-comparison">
+                    <h2>Regular-Season Comparison</h2>
+                    <p class="section-description">Regular-season records by manager across completed seasons (grouped by owner, not team name). Playoff results are not included.</p>
+                    <p class="section-unavailable-notice hidden">Need at least two seasons of data for this comparison.</p>
+                    <div class="chart-container">
+                        <canvas id="season-comparison-chart"></canvas>
+                    </div>
+                    <div id="season-comparison-table"></div>
+                </section>
 
-            <!-- Weekly Trends -->
-            <section class="analysis-section">
-                <h2>Weekly Trends</h2>
-                <p class="section-description">Average points per week by team</p>
-                <div class="chart-container">
-                    <canvas id="weekly-trends-chart"></canvas>
-                </div>
-            </section>
+                <section class="analysis-section">
+                    <h2>Regular-Season Scoring Ceiling</h2>
+                    <p class="section-description">How the highest single-week regular-season score has changed over time. Hover a point to see the full box score — both lineups with player points.</p>
+                    <div class="chart-container">
+                        <canvas id="score-extremes-chart"></canvas>
+                    </div>
+                    <div id="score-records-detail" class="score-record-detail" aria-live="polite"></div>
+                </section>
 
-            <!-- Matchup Analysis -->
-            <section class="analysis-section">
-                <h2>Matchup Analysis</h2>
-                <p class="section-description">Closest games and biggest blowouts</p>
-                <div id="matchup-analysis"></div>
-            </section>
+                <section class="analysis-section">
+                    <h2>Head-to-Head Records</h2>
+                    <p class="section-description">All-time H2H as a chord diagram. Each manager has a unique color. One ribbon connects each pair — it flows from the series leader toward their opponent, and its width reflects the leader's wins. Click a manager to see their record against every opponent below.</p>
+                    <div id="h2h-matrix" class="h2h-chord-container"></div>
+                </section>
 
-            <!-- Season-by-Season Comparison -->
-            <section class="analysis-section">
-                <h2>Season-by-Season Comparison</h2>
-                <p class="section-description">Team performance across multiple seasons</p>
-                <div class="chart-container">
-                    <canvas id="season-comparison-chart"></canvas>
-                </div>
-                <div id="season-comparison-table"></div>
-            </section>
+                <section class="analysis-section">
+                    <h2>Unluckiest Players</h2>
+                    <p class="section-description">Managers who consistently face the highest-scoring opponents. The line chart shows season averages over time; the distribution chart below shows week-by-week schedule difficulty. Click a name in the table or line chart legend to show or hide them.</p>
+                    <h3 class="subsection-title">Season Trend</h3>
+                    <p class="subsection-description">Average regular-season points against per season — good for seeing whether a manager’s schedule got harder or easier year to year.</p>
+                    <div class="chart-container">
+                        <canvas id="points-against-chart"></canvas>
+                    </div>
+
+                    <h3 class="subsection-title">Schedule Difficulty Distribution</h3>
+                    <p class="subsection-description">Each violin pools every regular-season week: opponent score minus the league median that week. Width shows how often each difficulty occurred; right of zero = tougher schedule. White line = median, + = mean.</p>
+                    <div class="chart-container chart-container-violin">
+                        <canvas id="points-against-violin-chart"></canvas>
+                    </div>
+                    <ul class="violin-legend" aria-label="Distribution markers">
+                        <li><span class="violin-legend-line"></span>Median</li>
+                        <li><span class="violin-legend-cross">+</span>Mean</li>
+                        <li><span class="violin-legend-ref"></span>League-average week (0)</li>
+                    </ul>
+                    <div id="unlucky-table"></div>
+
+                    <h3 class="subsection-title">Luck Map</h3>
+                    <p class="subsection-description">Every manager-season as a dot: scoring (horizontal) vs. opponent strength (vertical). Quadrants split at league medians. Colors group dots by manager.</p>
+                    <div class="chart-container chart-container-quadrant">
+                        <canvas id="luck-quadrant-chart"></canvas>
+                    </div>
+                    <ul class="quadrant-legend" aria-label="Quadrant meanings">
+                        <li><span class="quadrant-swatch quadrant-swatch-tr"></span>Strong offense, tough matchups — unlucky?</li>
+                        <li><span class="quadrant-swatch quadrant-swatch-br"></span>Strong offense, soft matchups — fortune favors</li>
+                        <li><span class="quadrant-swatch quadrant-swatch-tl"></span>Weak offense, tough matchups — outmatched</li>
+                        <li><span class="quadrant-swatch quadrant-swatch-bl"></span>Weak offense, soft matchups — missed window</li>
+                    </ul>
+                </section>
+
+                <section class="analysis-section">
+                    <h2>Waiver Wire Specialists</h2>
+                    <p class="section-description">Waiver and free-agent claim counts by manager across seasons (each add is one claim — the paired drop is omitted since it almost always matches). Draft picks and trades are excluded. Click a manager in the table or chart legend to show or hide their line.</p>
+                    <div id="waiver-wire-notice" class="section-unavailable-notice hidden" aria-live="polite"></div>
+                    <div class="chart-container">
+                        <canvas id="waiver-claims-chart"></canvas>
+                    </div>
+                    <div id="waiver-wire-table"></div>
+                </section>
+
+                <section class="analysis-section">
+                    <h2>Trade Network</h2>
+                    <p class="section-description">All-time trading patterns across every loaded season — most leagues don't trade enough in one year for this to be meaningful, so the network aggregates the full league history. Thicker lines mean more deals between that pair; click a line for every trade between those managers.</p>
+                    <div id="league-trade-network"></div>
+                </section>
+
+                <section class="analysis-section">
+                    <h2>Playoff Performance</h2>
+                    <p class="section-description">Championship-bracket berths (top seeds by regular-season record) and titles won in the winners bracket. Consolation games are not counted.</p>
+                    <div class="chart-container">
+                        <canvas id="playoff-chart"></canvas>
+                    </div>
+                    <div id="playoff-table"></div>
+                </section>
+            </div>
         </div>
     </section>
-
-    <footer>
-        <div class="container footer-content">
-            <p>&copy; <span id="currentYear"></span> Glenn Wysen. All rights reserved.</p>
-        </div>
-    </footer>
 
     <script>
         // Backend URL Configuration
@@ -184,7 +237,6 @@
         window.BACKEND_URL = isLocal
             ? 'http://localhost:3000/api/espn'
             : 'https://clean-website.onrender.com/api/espn';
-        document.getElementById("currentYear").textContent = new Date().getFullYear();
     </script>
     <script type="module" src="fantasy-football/main.js"></script>
 </body>

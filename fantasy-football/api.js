@@ -3,21 +3,39 @@
  * Handles data fetching, caching, and error handling
  */
 
-const PROXY_BASE_URL = window.BACKEND_URL || '/api/espn';
+import {
+    KEY_PREFIX,
+    getCacheItem,
+    setCacheItem,
+    clearAllCache,
+    clearLegacyLocalStorageCache,
+} from './cache.js';
 
-const LARGE_VIEWS = ['mMatchup', 'mSchedule', 'mRoster', 'kona_player_info'];
+const PROXY_BASE_URL =
+    (typeof window !== 'undefined' && window.BACKEND_URL) || '/api/espn';
+
+/** Bump when cached payload shape changes to avoid stale entries. */
+const CACHE_VERSION = 'v4';
+
 const ALL_VIEWS = [
     'mSettings',
-    'mRoster',
-    'mMatchup',
-    'mSchedule',
-    'mStandings',
-    'mScoreboard',
     'mTeam',
-    'mDraftDetail',
+    'mStandings',
+    'mMatchup',
+    'mRoster',
     'mTransactions',
-    'kona_player_info'
+    'kona_player_info',
 ];
+
+const SEASON_FETCH_CONCURRENCY = 3;
+
+function buildCacheKey(leagueId, season, view) {
+    return `${KEY_PREFIX}${CACHE_VERSION}:${leagueId}-${season}-${view}`;
+}
+
+function isLegacyCacheKey(key) {
+    return /^\d+-\d{4}-/.test(key);
+}
 
 /**
  * Fetch data from ESPN API (via proxy if needed)
@@ -27,22 +45,28 @@ const ALL_VIEWS = [
  * @returns {Promise<Object>} League data
  */
 async function fetchESPNData(leagueId, season, view = '') {
-    const cacheKey = `${leagueId}-${season}-${view}`;
-    const skipCache = LARGE_VIEWS.includes(view);
-    
-    // Check localStorage cache
-    if (!skipCache) {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
+    const cacheKey = buildCacheKey(leagueId, season, view);
+
+    const cached = await getCacheItem(cacheKey);
+    if (cached != null) {
+        return cached;
+    }
+
+    const legacyKey = `${leagueId}-${season}-${view}`;
+    if (typeof localStorage !== 'undefined') {
+        const legacyCached = localStorage.getItem(legacyKey);
+        if (legacyCached) {
             try {
-                return JSON.parse(cached);
+                const data = JSON.parse(legacyCached);
+                await setCacheItem(cacheKey, data);
+                return data;
             } catch (e) {
-                console.warn('Failed to parse cached data', e);
+                console.warn('Failed to parse legacy cached data', e);
             }
         }
     }
 
-    const url = view 
+    const url = view
         ? `${PROXY_BASE_URL}/league/${leagueId}/${season}/${view}`
         : `${PROXY_BASE_URL}/league/${leagueId}/${season}`;
 
@@ -52,20 +76,7 @@ async function fetchESPNData(leagueId, season, view = '') {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        
-        // Cache the data
-        if (!skipCache) {
-            try {
-                localStorage.setItem(cacheKey, JSON.stringify(data));
-            } catch (e) {
-                if (e.name === 'QuotaExceededError') {
-                    console.warn(`Cache quota exceeded for ${cacheKey}, skipping cache`);
-                    clearOldCacheEntries(leagueId);
-                } else {
-                    throw e;
-                }
-            }
-        }
+        await setCacheItem(cacheKey, data);
         return data;
     } catch (error) {
         console.error(`Error fetching ${view || 'league'} data:`, error);
@@ -74,44 +85,43 @@ async function fetchESPNData(leagueId, season, view = '') {
 }
 
 /**
- * Clear old cache entries for a league
- * @param {string} leagueId - League ID
+ * Fetch all season years that have data for a league
+ * @param {string} leagueId - ESPN league ID
+ * @returns {Promise<string[]>} Season years, newest first
  */
-function clearOldCacheEntries(leagueId) {
-    try {
-        const keys = Object.keys(localStorage);
-        let cleared = 0;
-        for (let i = 0; i < Math.min(10, keys.length); i++) {
-            if (keys[i].startsWith(`${leagueId}-`)) {
-                localStorage.removeItem(keys[i]);
-                cleared++;
-            }
-        }
-        return cleared;
-    } catch (error) {
-        console.warn('Failed to clear old cache entries', error);
-        return 0;
+async function fetchAvailableSeasons(leagueId) {
+    const response = await fetch(`${PROXY_BASE_URL}/league/${leagueId}/seasons`);
+    if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.message || body.error || `HTTP error! status: ${response.status}`);
     }
+    const data = await response.json();
+    return (data.seasons || []).map(String);
 }
 
 /**
- * Fetch all views for a league/season
+ * Fetch all views for a league/season (parallel; uses cache when available)
  * @param {string} leagueId - ESPN league ID
  * @param {string} season - Season year
  * @returns {Promise<Object>} All league data views
  */
 async function fetchAllLeagueData(leagueId, season) {
-    const data = {};
-    
-    for (const view of ALL_VIEWS) {
-        try {
-            data[view] = await fetchESPNData(leagueId, season, view);
-            // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 100));
-        } catch (error) {
-            console.warn(`Failed to fetch ${view}:`, error);
-            data[view] = null;
-        }
+    const entries = await Promise.all(
+        ALL_VIEWS.map(async (view) => {
+            try {
+                const data = await fetchESPNData(leagueId, season, view);
+                return [view, data];
+            } catch (error) {
+                console.warn(`Failed to fetch ${view} for ${season}:`, error);
+                return [view, null];
+            }
+        })
+    );
+
+    const data = Object.fromEntries(entries);
+
+    if (data.mTransactions == null) {
+        console.warn(`mTransactions missing for ${season} — waiver/trade sections may be empty`);
     }
 
     return data;
@@ -121,44 +131,56 @@ async function fetchAllLeagueData(leagueId, season) {
  * Fetch data for multiple seasons
  * @param {string} leagueId - ESPN league ID
  * @param {string[]} seasons - Array of season years
+ * @param {{ onProgress?: (progress: { completed: number, total: number }) => void }} [options]
  * @returns {Promise<Object>} Data for all seasons
  */
-async function fetchAllSeasons(leagueId, seasons) {
+async function fetchAllSeasons(leagueId, seasons, options = {}) {
     const allData = {};
-    
-    for (const season of seasons) {
-        allData[season] = await fetchAllLeagueData(leagueId, season);
+    const { onProgress } = options;
+    let completed = 0;
+    const total = seasons.length;
+
+    const reportProgress = () => onProgress?.({ completed, total });
+
+    for (let i = 0; i < seasons.length; i += SEASON_FETCH_CONCURRENCY) {
+        const batch = seasons.slice(i, i + SEASON_FETCH_CONCURRENCY);
+        const batchResults = await Promise.all(
+            batch.map(async (season) => {
+                const data = await fetchAllLeagueData(leagueId, season);
+                completed += 1;
+                reportProgress();
+                return [season, data];
+            })
+        );
+
+        batchResults.forEach(([season, data]) => {
+            allData[season] = data;
+        });
     }
-    
+
     return allData;
 }
 
 /**
- * Clear localStorage cache for fantasy football data
- * @returns {number} Number of entries cleared
+ * Clear saved league data (IndexedDB, in-memory, and legacy localStorage)
+ * @returns {Promise<number>} Number of entries cleared
  */
-function clearCache() {
+async function clearCache() {
     try {
-        const keys = Object.keys(localStorage);
-        let cleared = 0;
-        keys.forEach(key => {
-            if (key.match(/^\d+-\d{4}-/)) { // Match pattern: leagueId-year-view
-                localStorage.removeItem(key);
-                cleared++;
-            }
-        });
+        const cleared = await clearAllCache();
         console.log(`Cleared ${cleared} cache entries`);
         return cleared;
     } catch (e) {
         console.error('Failed to clear cache:', e);
-        return 0;
+        return clearLegacyLocalStorageCache();
     }
 }
 
 export {
     fetchESPNData,
+    fetchAvailableSeasons,
     fetchAllLeagueData,
     fetchAllSeasons,
-    clearCache
+    clearCache,
+    isLegacyCacheKey,
 };
-

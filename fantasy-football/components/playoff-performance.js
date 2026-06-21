@@ -1,9 +1,16 @@
 /**
  * Playoff Performance Component
- * Shows playoff appearances and championship wins
+ * Shows championship-bracket berths and titles across seasons
  */
 
-import { getTeamNameFromObject, getTeams } from '../utils.js';
+import {
+    analyzeSeasonPlayoffs,
+    buildOwnerMap,
+    getActiveSeasons,
+    getOwnerKey,
+    getOwnerLabel,
+    getTeams,
+} from '../utils.js';
 import { createChart } from '../charts.js';
 
 /**
@@ -12,89 +19,113 @@ import { createChart } from '../charts.js';
  */
 function renderPlayoffPerformance(allSeasonsData) {
     const canvas = document.getElementById('playoff-chart');
-    if (!canvas) return;
-    
+    const tableEl = document.getElementById('playoff-table');
+    if (!canvas || !tableEl) return;
+
+    const ownerMap = buildOwnerMap(allSeasonsData);
     const playoffStats = {};
-    
-    Object.values(allSeasonsData).forEach(seasonData => {
-        const settings = seasonData.mSettings;
-        const standings = seasonData.mStandings;
+
+    Object.entries(allSeasonsData).forEach(([season, seasonData]) => {
+        if (!getActiveSeasons({ [season]: seasonData }).length) return;
+
+        const analysis = analyzeSeasonPlayoffs(seasonData);
+        if (!analysis) return;
+
         const teams = getTeams(seasonData);
-        
-        if (!settings || !standings) return;
-        
-        const playoffTeams = standings.entries
-            ?.sort((a, b) => (b.overallWinLossTie?.wins || 0) - (a.overallWinLossTie?.wins || 0))
-            .slice(0, settings.scheduleSettings?.playoffTeamCount || 4) || [];
-        
-        playoffTeams.forEach((entry, idx) => {
-            const team = teams.find(t => t.id === entry.teamId);
-            if (team) {
-                const name = getTeamNameFromObject(team);
-                if (!playoffStats[name]) {
-                    playoffStats[name] = { appearances: 0, championships: 0 };
-                }
-                playoffStats[name].appearances++;
-                if (idx === 0) {
-                    playoffStats[name].championships++;
-                }
+        const { seedTeamIds, championTeamId } = analysis;
+
+        seedTeamIds.forEach((teamId) => {
+            const team = teams.find((entry) => entry.id === teamId);
+            if (!team) return;
+
+            const ownerKey = getOwnerKey(team);
+            if (!playoffStats[ownerKey]) {
+                playoffStats[ownerKey] = { appearances: 0, championships: 0 };
             }
+            playoffStats[ownerKey].appearances += 1;
         });
+
+        if (championTeamId != null) {
+            const championTeam = teams.find((entry) => entry.id === championTeamId);
+            if (championTeam) {
+                const ownerKey = getOwnerKey(championTeam);
+                if (!playoffStats[ownerKey]) {
+                    playoffStats[ownerKey] = { appearances: 0, championships: 0 };
+                }
+                playoffStats[ownerKey].championships += 1;
+            }
+        }
     });
-    
+
+    Object.keys(ownerMap).forEach((ownerKey) => {
+        if (!playoffStats[ownerKey]) {
+            playoffStats[ownerKey] = { appearances: 0, championships: 0 };
+        }
+    });
+
     const sorted = Object.entries(playoffStats)
-        .map(([name, stats]) => ({ name, ...stats }))
-        .sort((a, b) => b.appearances - a.appearances);
-    
+        .map(([ownerKey, stats]) => ({
+            name: getOwnerLabel(ownerKey, ownerMap),
+            ...stats,
+        }))
+        .sort((a, b) => b.championships - a.championships || b.appearances - a.appearances || a.name.localeCompare(b.name));
+
     createChart('playoff', canvas, {
         type: 'bar',
         data: {
-            labels: sorted.map(t => t.name),
+            labels: sorted.map((team) => team.name),
             datasets: [
                 {
-                    label: 'Playoff Appearances',
-                    data: sorted.map(t => t.appearances),
+                    label: 'Championship Bracket Berths',
+                    data: sorted.map((team) => team.appearances),
                     backgroundColor: 'rgba(118, 199, 192, 0.6)',
-                    borderColor: 'rgba(118, 199, 192, 1)'
+                    borderColor: 'rgba(118, 199, 192, 1)',
                 },
                 {
                     label: 'Championships',
-                    data: sorted.map(t => t.championships),
+                    data: sorted.map((team) => team.championships),
                     backgroundColor: 'rgba(255, 193, 7, 0.6)',
-                    borderColor: 'rgba(255, 193, 7, 1)'
-                }
-            ]
+                    borderColor: 'rgba(255, 193, 7, 1)',
+                },
+            ],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: { display: true, text: 'Playoff Appearances and Championships' },
-                legend: { position: 'top' }
+                title: {
+                    display: true,
+                    text: 'Championship Bracket Berths and Titles',
+                },
+                legend: { position: 'top' },
             },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Count' } }
-            }
-        }
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 },
+                    title: { display: true, text: 'Seasons' },
+                },
+            },
+        },
     });
-    
-    document.getElementById('playoff-table').innerHTML = `
+
+    tableEl.innerHTML = `
         <table>
             <thead>
                 <tr>
-                    <th>Team</th>
-                    <th>Appearances</th>
+                    <th>Manager</th>
+                    <th>Berths</th>
                     <th>Championships</th>
-                    <th>Win %</th>
+                    <th>Title Rate</th>
                 </tr>
             </thead>
             <tbody>
-                ${sorted.map(team => `
+                ${sorted.map((team) => `
                     <tr>
                         <td>${team.name}</td>
                         <td>${team.appearances}</td>
                         <td>${team.championships}</td>
-                        <td>${team.appearances > 0 ? ((team.championships / team.appearances * 100).toFixed(0) + '%') : '0%'}</td>
+                        <td>${team.appearances > 0 ? `${((team.championships / team.appearances) * 100).toFixed(0)}%` : '—'}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -103,4 +134,3 @@ function renderPlayoffPerformance(allSeasonsData) {
 }
 
 export { renderPlayoffPerformance };
-

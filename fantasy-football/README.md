@@ -84,6 +84,23 @@ Open `fantasy-football/tests/run-tests.html` in a browser.
 node fantasy-football/tests/test-utils.js
 ```
 
+### Server view quality (requires `npm start`)
+```bash
+node fantasy-football/tests/test-server-views.js
+```
+
+## Data quality verification
+
+After changing the ESPN proxy or components, verify:
+
+1. **Server smoke test** — `node fantasy-football/tests/test-server-views.js` (7 views per season; transactions, players, projected scores)
+2. **Single season fetch** — Network tab should show 7 `/api/espn/league/.../` requests
+3. **Transaction Analysis** — chart shows waiver/trade activity (not empty)
+4. **Positional Analysis** — top players listed by position with real names
+5. **Projected vs Actual** — scatter plot spread; tables list over/underachievers
+6. **League Overview** — “Active Scoring Rules” shows a number (not N/A)
+7. **Playoff Performance** — championships reflect final-week winners, not regular-season #1 seeds
+
 ## Adding New Components
 
 1. Create a new file in `components/` (e.g., `components/my-component.js`)

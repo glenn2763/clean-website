@@ -3,6 +3,8 @@
  * Manages Chart.js instances and provides helper functions
  */
 
+import { destroyAllViolinCharts, refreshAllViolinCharts } from './violin-chart.js';
+
 const charts = {};
 
 /**
@@ -45,6 +47,18 @@ function getChart(chartKey) {
  */
 function destroyAllCharts() {
     Object.keys(charts).forEach(key => destroyChart(key));
+    destroyAllViolinCharts();
+}
+
+/**
+ * Re-measure charts after the layout becomes visible (fixes broken tooltips / hit targets).
+ */
+function refreshAllCharts() {
+    Object.values(charts).forEach((chart) => {
+        chart.resize();
+        chart.update('none');
+    });
+    refreshAllViolinCharts();
 }
 
 export {
@@ -52,6 +66,7 @@ export {
     destroyChart,
     createChart,
     getChart,
-    destroyAllCharts
+    destroyAllCharts,
+    refreshAllCharts,
 };
 

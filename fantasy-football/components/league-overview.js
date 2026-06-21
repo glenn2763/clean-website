@@ -20,6 +20,9 @@ function renderLeagueOverview(data) {
         return;
     }
     
+    const activeScoringRules = Object.values(settings.scoringSettings || {})
+        .filter((value) => typeof value === 'number' && value !== 0).length;
+
     const container = document.getElementById('league-overview');
     container.innerHTML = `
         <div class="stats-grid">
@@ -32,8 +35,8 @@ function renderLeagueOverview(data) {
                 <span class="stat-label">Teams</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">${settings.scoringSettings?.scoringItems?.length || 'N/A'}</span>
-                <span class="stat-label">Scoring Rules</span>
+                <span class="stat-value">${activeScoringRules}</span>
+                <span class="stat-label">Active Scoring Rules</span>
             </div>
         </div>
         <h3>Current Standings</h3>

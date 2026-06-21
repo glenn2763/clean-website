@@ -1,9 +1,9 @@
 /**
  * Tests for API functions
- * Note: These tests require mocking fetch/localStorage
  */
 
-import { clearCache } from '../api.js';
+import { clearCache, isLegacyCacheKey } from '../api.js';
+import { clearLegacyLocalStorageCache } from '../cache.js';
 
 /**
  * Simple test runner
@@ -21,7 +21,7 @@ class TestRunner {
 
     async run() {
         console.log('Running API tests...\n');
-        
+
         for (const { name, fn } of this.tests) {
             try {
                 await fn();
@@ -33,7 +33,7 @@ class TestRunner {
                 this.failed++;
             }
         }
-        
+
         console.log(`\nResults: ${this.passed} passed, ${this.failed} failed`);
         return this.failed === 0;
     }
@@ -41,57 +41,81 @@ class TestRunner {
 
 const runner = new TestRunner();
 
-// Mock localStorage for testing
-const mockLocalStorage = {
-    data: {},
-    getItem(key) {
-        return this.data[key] || null;
-    },
-    setItem(key, value) {
-        this.data[key] = value;
-    },
-    removeItem(key) {
-        delete this.data[key];
-    },
-    clear() {
-        this.data = {};
-    },
-    get keys() {
-        return Object.keys(this.data);
-    }
-};
+const mockLocalStorage = (() => {
+    const data = {};
+    return {
+        data,
+        getItem(key) {
+            return Object.prototype.hasOwnProperty.call(data, key) ? data[key] : null;
+        },
+        setItem(key, value) {
+            data[key] = String(value);
+        },
+        removeItem(key) {
+            delete data[key];
+        },
+        clear() {
+            Object.keys(data).forEach((key) => delete data[key]);
+        },
+        key(index) {
+            return Object.keys(data)[index] ?? null;
+        },
+        get length() {
+            return Object.keys(data).length;
+        },
+    };
+})();
 
-runner.test('clearCache removes fantasy football cache entries', () => {
-    // Setup mock localStorage
+runner.test('isLegacyCacheKey matches per-view localStorage keys', () => {
+    if (!isLegacyCacheKey('37892-2024-mSettings')) {
+        throw new Error('Expected legacy ESPN cache key to match');
+    }
+    if (isLegacyCacheKey('theme')) {
+        throw new Error('Non-cache key should not match');
+    }
+});
+
+runner.test('clearLegacyLocalStorageCache removes fantasy football entries only', () => {
     const originalStorage = global.localStorage;
     global.localStorage = mockLocalStorage;
     mockLocalStorage.clear();
-    
-    // Add some cache entries
+
     mockLocalStorage.setItem('123-2024-mSettings', '{}');
     mockLocalStorage.setItem('123-2023-mTeam', '{}');
     mockLocalStorage.setItem('other-key', 'value');
-    
-    const cleared = clearCache();
-    
-    // Restore original
+
+    const cleared = clearLegacyLocalStorageCache();
+
     global.localStorage = originalStorage;
-    
+
     if (cleared !== 2) {
         throw new Error(`Expected 2 entries cleared, got ${cleared}`);
     }
-    
+
     if (mockLocalStorage.getItem('other-key') !== 'value') {
         throw new Error('Non-cache entry should not be removed');
     }
 });
 
-// Run tests if in Node.js environment
+runner.test('clearCache clears legacy localStorage entries', async () => {
+    const originalStorage = global.localStorage;
+    global.localStorage = mockLocalStorage;
+    mockLocalStorage.clear();
+    mockLocalStorage.setItem('123-2024-mSettings', '{}');
+
+    const cleared = await clearCache();
+
+    global.localStorage = originalStorage;
+
+    if (cleared < 1) {
+        throw new Error(`Expected at least 1 entry cleared, got ${cleared}`);
+    }
+});
+
 if (typeof window === 'undefined') {
-    runner.run().then(success => {
+    runner.run().then((success) => {
         process.exit(success ? 0 : 1);
     });
 }
 
 export { runner };
-
