@@ -176,11 +176,34 @@ async function clearCache() {
     }
 }
 
+/**
+ * Enrich fantasy player IDs with ESPN birthPlace + lat/lng (server-cached).
+ * @param {Array<number|string>} playerIds
+ * @returns {Promise<Object>} Map of playerId string -> birthplace record
+ */
+async function fetchPlayerBirthplaces(playerIds) {
+    const ids = [...new Set((playerIds || []).map((id) => Number(id)).filter((id) => id > 0))];
+    if (ids.length === 0) return {};
+
+    const response = await fetch(`${PROXY_BASE_URL}/athletes/birthplaces`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.message || body.error || `HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.players || {};
+}
+
 export {
     fetchESPNData,
     fetchAvailableSeasons,
     fetchAllLeagueData,
     fetchAllSeasons,
+    fetchPlayerBirthplaces,
     clearCache,
     isLegacyCacheKey,
 };

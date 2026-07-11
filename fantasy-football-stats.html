@@ -6,7 +6,9 @@
     <title>Fantasy Football Stats Analysis</title>
     <link rel="stylesheet" href="fantasy-football-stats.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
     <section class="container">
@@ -153,7 +155,7 @@
 
                 <section class="analysis-section">
                     <h2>Regular-Season Scoring Ceiling</h2>
-                    <p class="section-description">How the highest single-week regular-season score has changed over time. Hover a point to see the full box score — both lineups with player points.</p>
+                    <p class="section-description">How the highest single-week regular-season score has changed over time. Click a point to see the full box score — both lineups with player points.</p>
                     <div class="chart-container">
                         <canvas id="score-extremes-chart"></canvas>
                     </div>
@@ -208,6 +210,34 @@
                         <canvas id="waiver-claims-chart"></canvas>
                     </div>
                     <div id="waiver-wire-table"></div>
+                </section>
+
+                <section class="analysis-section" id="section-wins-correlation">
+                    <h2>Metric Correlator</h2>
+                    <p class="section-description">Pick metrics to see how strongly each one correlates with regular-season wins or total points scored across every loaded season. Points scored is opponent-independent — useful for separating roster quality from schedule luck. Each dot is one manager-season.</p>
+                    <p class="section-unavailable-notice hidden">Need more season data for meaningful correlation.</p>
+                    <fieldset id="correlation-target-picker" class="correlation-target-picker" aria-label="Correlation outcome"></fieldset>
+                    <div id="correlation-metric-picker" class="correlation-metric-picker"></div>
+                    <div id="correlation-results-table"></div>
+                    <div class="chart-container chart-container-correlation">
+                        <label class="correlation-scatter-label" for="correlation-scatter-metric">Scatter plot metric</label>
+                        <select id="correlation-scatter-metric" class="correlation-scatter-select"></select>
+                        <canvas id="wins-correlation-scatter"></canvas>
+                    </div>
+                    <p id="correlation-sample-note" class="subsection-description"></p>
+                </section>
+
+                <section class="analysis-section" id="section-birthplace-map">
+                    <h2>Roster Origins</h2>
+                    <p class="section-description">Where every player ever rostered in this league was born or went to college (per ESPN). Toggle between birthplace and college, then select a manager to light up their dots. The map opens on the contiguous U.S.</p>
+                    <p id="birthplace-map-notice" class="section-unavailable-notice hidden" aria-live="polite"></p>
+                    <div id="birthplace-location-mode" class="birthplace-mode-picker" role="radiogroup" aria-label="Map location type"></div>
+                    <p id="birthplace-map-summary" class="subsection-description"></p>
+                    <div id="birthplace-manager-picker" class="birthplace-manager-picker" role="toolbar" aria-label="Filter map by manager"></div>
+                    <div class="birthplace-map-layout">
+                        <div id="birthplace-map" class="birthplace-map" role="img" aria-label="Map of player locations"></div>
+                        <div id="birthplace-player-list" class="birthplace-player-panel" aria-live="polite"></div>
+                    </div>
                 </section>
 
                 <section class="analysis-section">

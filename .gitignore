@@ -12,3 +12,6 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
+# API field explorer output
+fantasy-football/scripts/output/
+

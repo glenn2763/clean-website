@@ -2,6 +2,12 @@
  * Tests for utility functions
  */
 
+import {
+    buildTeamSeasonRows,
+    computeCorrelations,
+    linearRegression,
+    pearsonCorrelation,
+} from '../metrics.js';
 import { 
     getTeamNameFromObject,
     getOwnerDisplayName,
@@ -541,6 +547,125 @@ runner.test('buildTradeSociogramData aggregates trades between manager pairs', (
     const aliceBob = graph.links.find((link) => link.id === buildTradePairKey('alice', 'bob'));
     if (!aliceBob || aliceBob.count !== 2 || aliceBob.trades.length !== 2) {
         throw new Error('Expected Alice-Bob link with 2 trades');
+    }
+});
+
+runner.test('pearsonCorrelation returns perfect positive correlation', () => {
+    const xs = [1, 2, 3, 4, 5];
+    const result = pearsonCorrelation(xs, xs);
+    if (!result || Math.abs(result.r - 1) > 0.0001 || result.n !== 5) {
+        throw new Error(`Expected r=1, n=5, got ${JSON.stringify(result)}`);
+    }
+});
+
+runner.test('pearsonCorrelation returns perfect negative correlation', () => {
+    const xs = [1, 2, 3, 4, 5];
+    const ys = [5, 4, 3, 2, 1];
+    const result = pearsonCorrelation(xs, ys);
+    if (!result || Math.abs(result.r + 1) > 0.0001) {
+        throw new Error(`Expected r=-1, got ${JSON.stringify(result)}`);
+    }
+});
+
+runner.test('pearsonCorrelation skips invalid pairs', () => {
+    const result = pearsonCorrelation([1, null, 3], [2, 4, 6]);
+    if (!result || result.n !== 2) {
+        throw new Error(`Expected n=2, got ${JSON.stringify(result)}`);
+    }
+});
+
+runner.test('linearRegression fits a line through y = 2x + 1', () => {
+    const xs = [1, 2, 3, 4];
+    const ys = [3, 5, 7, 9];
+    const fit = linearRegression(xs, ys);
+    if (!fit || Math.abs(fit.slope - 2) > 0.0001 || Math.abs(fit.intercept - 1) > 0.0001) {
+        throw new Error(`Expected slope 2 intercept 1, got ${JSON.stringify(fit)}`);
+    }
+});
+
+runner.test('buildTeamSeasonRows computes regular-season wins per manager-season', () => {
+    const allSeasonsData = {
+        2024: {
+            mSettings: {
+                scheduleSettings: {
+                    numberOfRegularSeasonMatchups: 2,
+                    numberOfPlayoffTeams: 2,
+                    numberOfPlayoffMatchups: 1,
+                },
+            },
+            mStandings: {
+                entries: [{ overallWinLossTie: { wins: 1, losses: 1 } }],
+            },
+            mTeam: [
+                { id: 1, ownerName: 'Alice Manager' },
+                { id: 2, ownerName: 'Bob Manager' },
+            ],
+            mMatchup: {
+                schedule: [
+                    { matchupPeriodId: 1, homeTeamId: 1, awayTeamId: 2, homeScore: 110, awayScore: 90 },
+                    { matchupPeriodId: 2, homeTeamId: 2, awayTeamId: 1, homeScore: 100, awayScore: 95 },
+                ],
+            },
+            mRoster: { rosters: [{ entries: [] }, { entries: [] }] },
+            mTransactions: { transactions: [] },
+            kona_player_info: { players: [] },
+        },
+    };
+
+    const rows = buildTeamSeasonRows(allSeasonsData);
+    if (rows.length !== 2) {
+        throw new Error(`Expected 2 rows, got ${rows.length}`);
+    }
+
+    const alice = rows.find((row) => row.manager === 'Alice Manager');
+    const bob = rows.find((row) => row.manager === 'Bob Manager');
+    if (!alice || alice.wins !== 1 || !bob || bob.wins !== 1) {
+        throw new Error(`Expected 1 win each, got ${JSON.stringify(rows.map((row) => [row.manager, row.wins]))}`);
+    }
+    if (alice.metrics.avgPointsFor == null || bob.metrics.avgPointsFor == null) {
+        throw new Error('Expected avgPointsFor to be computed');
+    }
+    if (Math.abs(alice.pointsFor - 205) > 0.01 || Math.abs(bob.pointsFor - 190) > 0.01) {
+        throw new Error(`Expected pointsFor totals, got ${JSON.stringify(rows.map((row) => [row.manager, row.pointsFor]))}`);
+    }
+});
+
+runner.test('computeCorrelations excludes tautological metrics for points target', () => {
+    const rows = [
+        { wins: 10, pointsFor: 1500, metrics: { avgPointsFor: 107.1, totalPointsFor: 1500, wireAdds: 2 } },
+        { wins: 8, pointsFor: 1400, metrics: { avgPointsFor: 100, totalPointsFor: 1400, wireAdds: 5 } },
+        { wins: 6, pointsFor: 1300, metrics: { avgPointsFor: 92.9, totalPointsFor: 1300, wireAdds: 8 } },
+        { wins: 4, pointsFor: 1200, metrics: { avgPointsFor: 85.7, totalPointsFor: 1200, wireAdds: 10 } },
+        { wins: 2, pointsFor: 1100, metrics: { avgPointsFor: 78.6, totalPointsFor: 1100, wireAdds: 12 } },
+    ];
+    const results = computeCorrelations(rows, ['avgPointsFor', 'totalPointsFor', 'wireAdds'], 'pointsFor');
+    const avgPf = results.find((entry) => entry.id === 'avgPointsFor');
+    const totalPf = results.find((entry) => entry.id === 'totalPointsFor');
+    const wire = results.find((entry) => entry.id === 'wireAdds');
+    if (!avgPf?.excluded || !totalPf?.excluded) {
+        throw new Error('Expected scoring outcome metrics to be excluded for points target');
+    }
+    if (!wire?.valid || wire.r >= 0) {
+        throw new Error(`Expected negative correlation for wireAdds vs points, got ${JSON.stringify(wire)}`);
+    }
+});
+
+runner.test('computeCorrelations ranks scoring metrics against wins', () => {
+    const rows = [
+        { wins: 10, metrics: { avgPointsFor: 120, wireAdds: 2 } },
+        { wins: 8, metrics: { avgPointsFor: 110, wireAdds: 5 } },
+        { wins: 6, metrics: { avgPointsFor: 100, wireAdds: 8 } },
+        { wins: 4, metrics: { avgPointsFor: 90, wireAdds: 10 } },
+        { wins: 2, metrics: { avgPointsFor: 80, wireAdds: 12 } },
+    ];
+    const results = computeCorrelations(rows, ['avgPointsFor', 'wireAdds'], 'wins');
+    const pf = results.find((entry) => entry.id === 'avgPointsFor');
+    const wire = results.find((entry) => entry.id === 'wireAdds');
+    if (!pf?.valid || pf.r <= 0) {
+        throw new Error(`Expected positive correlation for avgPointsFor, got ${JSON.stringify(pf)}`);
+    }
+    if (!wire?.valid || wire.r >= 0) {
+        throw new Error(`Expected negative correlation for wireAdds, got ${JSON.stringify(wire)}`);
     }
 });
 

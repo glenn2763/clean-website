@@ -17,7 +17,9 @@ import { renderWeeklyTrends } from './weekly-trends.js';
 import { renderMatchupAnalysis } from './matchup-analysis.js';
 import { renderSeasonComparison } from './season-comparison.js';
 import { renderWaiverWireSpecialist } from './waiver-wire-specialist.js';
+import { renderWinsCorrelation } from './wins-correlation.js';
 import { renderTradeAnalyzer, renderLeagueTradeNetwork } from './trade-analyzer.js';
+import { renderBirthplaceMap } from './birthplace-map.js';
 import { destroyAllCharts } from '../charts.js';
 
 /**
@@ -55,6 +57,15 @@ function renderMultiSeasonVisualizations(allSeasonsData) {
     renderUnluckyPlayersChart(allSeasonsData);
     renderLuckQuadrantChart(allSeasonsData);
     renderWaiverWireSpecialist(allSeasonsData);
+    renderWinsCorrelation(allSeasonsData);
+    Promise.resolve(renderBirthplaceMap(allSeasonsData)).catch((error) => {
+        console.warn('Birthplace map failed:', error);
+        const notice = document.getElementById('birthplace-map-notice');
+        if (notice) {
+            notice.textContent = `Could not render birthplace map: ${error.message}`;
+            notice.classList.remove('hidden');
+        }
+    });
     renderLeagueTradeNetwork(allSeasonsData);
     renderPlayoffPerformance(allSeasonsData);
 
@@ -98,6 +109,7 @@ export {
     renderWeeklyTrends,
     renderMatchupAnalysis,
     renderSeasonComparison,
+    renderBirthplaceMap,
     renderSingleSeasonVisualizations,
     renderMultiSeasonVisualizations,
     renderVisualizations

@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const { Client } = require('espn-fantasy-football-api/node');
+const { getBirthplacesForIds } = require('./fantasy-football/birthplace-service');
 
 const ESPN_BASE = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons';
 
@@ -432,6 +433,33 @@ app.get('/api/espn/league/:leagueId/:season/:view?', rateLimit, async (req, res)
         res.status(500).json({ 
             error: 'Failed to fetch data from ESPN API',
             message: error.message 
+        });
+    }
+});
+
+/**
+ * Enrich ESPN fantasy player IDs with birthPlace + lat/lng (cached).
+ * Body: { ids: number[] }  — capped to avoid abuse.
+ */
+app.post('/api/espn/athletes/birthplaces', rateLimit, async (req, res) => {
+    try {
+        const rawIds = Array.isArray(req.body?.ids) ? req.body.ids : [];
+        const ids = rawIds
+            .map((id) => Number(id))
+            .filter((id) => Number.isFinite(id) && id > 0)
+            .slice(0, 2500);
+
+        if (ids.length === 0) {
+            return res.status(400).json({ error: 'Provide a non-empty ids array' });
+        }
+
+        const players = await getBirthplacesForIds(ids);
+        res.json({ players });
+    } catch (error) {
+        console.error('Birthplace enrichment error:', error.message);
+        res.status(500).json({
+            error: 'Failed to enrich player birthplaces',
+            message: error.message,
         });
     }
 });

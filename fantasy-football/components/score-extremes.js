@@ -255,12 +255,7 @@ function renderScoreExtremesChart(allSeasonsData) {
             maintainAspectRatio: false,
             interaction: {
                 mode: 'nearest',
-                intersect: false,
-            },
-            onHover(_event, elements) {
-                if (elements[0]?.index != null) {
-                    selectRecord(elements[0].index);
-                }
+                intersect: true,
             },
             onClick(_event, elements) {
                 if (elements[0]?.index != null) {
