@@ -390,13 +390,14 @@ app.get('/api/espn/league/:leagueId/:season/:view?', rateLimit, async (req, res)
                 case 'mRoster':
                     try {
                         const teams = await client.getTeamsAtWeek({ seasonId, scoringPeriodId: currentScoringPeriod });
-                        data = { rosters: teams.map(t => ({ 
+                        data = { rosters: teams.map(t => ({
+                            teamId: t.id,
                             entries: (t.roster || []).map(p => ({
-                                playerId: p.player?.id,
+                                playerId: p.id ?? p.player?.id,
                                 playerPoolEntry: {
-                                    appliedStatTotal: p.totalPoints || 0
-                                }
-                            }))
+                                    appliedStatTotal: p.totalPoints || 0,
+                                },
+                            })),
                         })) };
                     } catch (e) {
                         data = { rosters: [] };

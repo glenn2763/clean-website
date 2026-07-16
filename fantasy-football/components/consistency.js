@@ -56,8 +56,8 @@ function renderConsistencyChart(allSeasonsData) {
             datasets: [{
                 label: 'Standard Deviation (Lower = More Consistent)',
                 data: consistencyData.map(t => t.stdDev),
-                backgroundColor: 'rgba(118, 199, 192, 0.6)',
-                borderColor: 'rgba(118, 199, 192, 1)'
+                backgroundColor: 'rgba(10, 122, 106, 0.65)',
+                borderColor: 'rgba(10, 122, 106, 1)'
             }]
         },
         options: {

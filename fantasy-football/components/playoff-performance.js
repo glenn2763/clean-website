@@ -78,8 +78,8 @@ function renderPlayoffPerformance(allSeasonsData) {
                 {
                     label: 'Championship Bracket Berths',
                     data: sorted.map((team) => team.appearances),
-                    backgroundColor: 'rgba(118, 199, 192, 0.6)',
-                    borderColor: 'rgba(118, 199, 192, 1)',
+                    backgroundColor: 'rgba(10, 122, 106, 0.65)',
+                    borderColor: 'rgba(10, 122, 106, 1)',
                 },
                 {
                     label: 'Championships',

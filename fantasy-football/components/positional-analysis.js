@@ -3,6 +3,8 @@
  * Shows best performers by position
  */
 
+import { buildSeasonRosterPointsByTeam } from '../utils.js';
+
 /**
  * Render positional analysis tables
  * @param {Object} allSeasonsData - Data for all seasons
@@ -15,42 +17,48 @@ function renderPositionalAnalysis(allSeasonsData) {
         WR: [],
         TE: [],
         K: [],
-        DST: []
+        DST: [],
     };
-    
-    Object.values(allSeasonsData).forEach(seasonData => {
-        const rosters = seasonData?.mRoster?.rosters || [];
+
+    const POSITION_BY_ID = {
+        1: 'QB',
+        2: 'RB',
+        3: 'WR',
+        4: 'TE',
+        5: 'K',
+        16: 'DST',
+    };
+
+    Object.values(allSeasonsData).forEach((seasonData) => {
         const playerInfo = seasonData?.kona_player_info?.players || [];
-        
-        if (!Array.isArray(rosters)) return;
-        
-        rosters.forEach(roster => {
-            roster.entries?.forEach(entry => {
-                const player = playerInfo.find(p => p.id === entry.playerId);
-                if (player) {
-                    const position = player.defaultPositionId;
-                    const posName = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'][position - 1] || 'UNK';
-                    if (positionalStats[posName]) {
-                        const existing = positionalStats[posName].find(p => p.id === player.id);
-                        if (existing) {
-                            existing.points += entry.playerPoolEntry?.appliedStatTotal || 0;
-                        } else {
-                            positionalStats[posName].push({
-                                id: player.id,
-                                name: player.fullName,
-                                points: entry.playerPoolEntry?.appliedStatTotal || 0
-                            });
-                        }
-                    }
+        const rosterByTeam = buildSeasonRosterPointsByTeam(seasonData);
+
+        rosterByTeam.forEach((playerMap) => {
+            playerMap.forEach(({ playerId, points }) => {
+                const player = playerInfo.find((p) => p.id === playerId);
+                if (!player) return;
+
+                const posName = POSITION_BY_ID[player.defaultPositionId];
+                if (!posName || !positionalStats[posName]) return;
+
+                const existing = positionalStats[posName].find((p) => p.id === player.id);
+                if (existing) {
+                    existing.points += points;
+                } else {
+                    positionalStats[posName].push({
+                        id: player.id,
+                        name: player.fullName,
+                        points,
+                    });
                 }
             });
         });
     });
-    
+
     container.innerHTML = Object.entries(positionalStats).map(([pos, players]) => {
         const sorted = players.sort((a, b) => b.points - a.points).slice(0, 5);
         if (sorted.length === 0) return '';
-        
+
         return `
             <div class="position-group">
                 <h4>Top ${pos}s</h4>
@@ -76,4 +84,3 @@ function renderPositionalAnalysis(allSeasonsData) {
 }
 
 export { renderPositionalAnalysis };
-

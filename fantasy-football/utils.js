@@ -972,6 +972,43 @@ function analyzeTradePointsOverReplacement(_trade, _seasonData) {
     return null;
 }
 
+/**
+ * Sum each player's fantasy points from weekly boxscore rosters.
+ * ESPN's mRoster view does not include season totals; matchups do (totalPoints per week).
+ * @param {Object} seasonData
+ * @returns {Map<number, Map<number, { playerId: number, points: number }>>} teamId → playerId → stats
+ */
+function buildSeasonRosterPointsByTeam(seasonData) {
+    const byTeam = new Map();
+    const matchups = getMatchups(seasonData);
+
+    matchups.forEach((matchup) => {
+        [
+            { teamId: matchup.homeTeamId, roster: matchup.homeRoster },
+            { teamId: matchup.awayTeamId, roster: matchup.awayRoster },
+        ].forEach(({ teamId, roster }) => {
+            if (teamId == null || !Array.isArray(roster)) return;
+
+            if (!byTeam.has(teamId)) {
+                byTeam.set(teamId, new Map());
+            }
+            const teamPlayers = byTeam.get(teamId);
+
+            roster.forEach((entry) => {
+                const playerId = entry?.id ?? entry?.playerId ?? entry?.player?.id;
+                const weekPoints = entry?.totalPoints;
+                if (playerId == null || !Number.isFinite(weekPoints)) return;
+
+                const existing = teamPlayers.get(playerId) || { playerId, points: 0 };
+                existing.points += weekPoints;
+                teamPlayers.set(playerId, existing);
+            });
+        });
+    });
+
+    return byTeam;
+}
+
 export {
     getTeamName,
     getTeamNameFromObject,
@@ -1010,5 +1047,6 @@ export {
     buildTradePairKey,
     buildTradeSociogramData,
     analyzeTradePointsOverReplacement,
+    buildSeasonRosterPointsByTeam,
 };
 

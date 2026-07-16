@@ -13,7 +13,7 @@ import {
     getTransactions,
     hasTransactionView,
 } from '../utils.js';
-import { createChart } from '../charts.js';
+import { createChart, seriesColor, seriesFill } from '../charts.js';
 
 function fadeHslColor(hslColor, alpha) {
     if (hslColor.startsWith('hsla(')) {
@@ -176,8 +176,8 @@ function buildWireChart({
     const datasets = ownerList.map((ownerKey, idx) => ({
         label: getOwnerLabel(ownerKey, ownerMap),
         data: seasons.map((season) => ownerSeasons[ownerKey][season]?.[metric] ?? null),
-        borderColor: `hsl(${idx * 33}, 65%, 45%)`,
-        backgroundColor: `hsla(${idx * 33}, 65%, 45%, 0.08)`,
+        borderColor: seriesColor(idx),
+        backgroundColor: seriesFill(idx, 0.08),
         borderWidth: 1.5,
         pointRadius: 2,
         pointHoverRadius: 5,

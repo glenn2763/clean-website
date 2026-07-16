@@ -432,6 +432,24 @@
       "collegeLng": -84.28073,
       "collegeGeoSource": "open-meteo"
     },
+    "12471": {
+      "playerId": 12471,
+      "fullName": "Chase Daniel",
+      "city": "Southlake",
+      "state": "TX",
+      "country": "USA",
+      "lat": 32.94124,
+      "lng": -97.13418,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.825Z",
+      "collegeName": "Missouri",
+      "collegeCity": "Columbia",
+      "collegeState": "MO",
+      "collegeCountry": "USA",
+      "collegeLat": 34.00071,
+      "collegeLng": -81.03481,
+      "collegeGeoSource": "open-meteo"
+    },
     "12483": {
       "playerId": 12483,
       "fullName": "Matthew Stafford",
@@ -736,6 +754,24 @@
       "collegeCountry": "USA",
       "collegeLat": 38.89657,
       "collegeLng": -121.07689,
+      "collegeGeoSource": "open-meteo"
+    },
+    "14012": {
+      "playerId": 14012,
+      "fullName": "Andy Dalton",
+      "city": "Katy",
+      "state": "TX",
+      "country": "USA",
+      "lat": 29.78579,
+      "lng": -95.8244,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.781Z",
+      "collegeName": "TCU",
+      "collegeCity": "Fort Worth",
+      "collegeState": "TX",
+      "collegeCountry": "USA",
+      "collegeLat": 32.72541,
+      "collegeLng": -97.32085,
       "collegeGeoSource": "open-meteo"
     },
     "14054": {
@@ -1296,6 +1332,24 @@
       "collegeLng": -84.28073,
       "collegeGeoSource": "open-meteo"
     },
+    "15971": {
+      "playerId": 15971,
+      "fullName": "Rex Burkhead",
+      "city": "Plano",
+      "state": "TX",
+      "country": "USA",
+      "lat": 33.01984,
+      "lng": -96.69889,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.058Z",
+      "collegeName": "Nebraska",
+      "collegeCity": "Lincoln",
+      "collegeState": "NE",
+      "collegeCountry": "USA",
+      "collegeLat": 40.8,
+      "collegeLng": -96.66696,
+      "collegeGeoSource": "open-meteo"
+    },
     "16020": {
       "playerId": 16020,
       "fullName": "Spencer Ware",
@@ -1420,6 +1474,24 @@
       "collegeCountry": "USA",
       "collegeLat": 34.68344,
       "collegeLng": -82.83737,
+      "collegeGeoSource": "open-meteo"
+    },
+    "16728": {
+      "playerId": 16728,
+      "fullName": "Teddy Bridgewater",
+      "city": "Miami",
+      "state": "FL",
+      "country": "USA",
+      "lat": 25.77427,
+      "lng": -80.19366,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.390Z",
+      "collegeName": "Louisville",
+      "collegeCity": "Louisville",
+      "collegeState": "KY",
+      "collegeCountry": "USA",
+      "collegeLat": 38.25424,
+      "collegeLng": -85.75941,
       "collegeGeoSource": "open-meteo"
     },
     "16731": {
@@ -1854,6 +1926,42 @@
       "collegeLng": -96.79839,
       "collegeGeoSource": "open-meteo"
     },
+    "2565969": {
+      "playerId": 2565969,
+      "fullName": "Taylor Heinicke",
+      "city": "Lawrenceville",
+      "state": "GA",
+      "country": "USA",
+      "lat": 33.95621,
+      "lng": -83.98796,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.706Z",
+      "collegeName": "Old Dominion",
+      "collegeCity": "Norfolk",
+      "collegeState": "VA",
+      "collegeCountry": "USA",
+      "collegeLat": 36.84681,
+      "collegeLng": -76.28522,
+      "collegeGeoSource": "open-meteo"
+    },
+    "2570986": {
+      "playerId": 2570986,
+      "fullName": "Malcolm Brown",
+      "city": "Cibolo",
+      "state": "TX",
+      "country": "USA",
+      "lat": 29.56162,
+      "lng": -98.22696,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.088Z",
+      "collegeName": "Texas",
+      "collegeCity": "Austin",
+      "collegeState": "TX",
+      "collegeCountry": "USA",
+      "collegeLat": 30.26715,
+      "collegeLng": -97.74306,
+      "collegeGeoSource": "open-meteo"
+    },
     "2572861": {
       "playerId": 2572861,
       "fullName": "J.D. McKissic",
@@ -1908,6 +2016,24 @@
       "collegeLng": -86.4436,
       "collegeGeoSource": "open-meteo"
     },
+    "2574576": {
+      "playerId": 2574576,
+      "fullName": "C.J. Uzomah",
+      "city": "Suwanee",
+      "state": "GA",
+      "country": "USA",
+      "lat": 34.05149,
+      "lng": -84.0713,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.174Z",
+      "collegeName": "Auburn",
+      "collegeCity": "Auburn",
+      "collegeState": "AL",
+      "collegeCountry": "USA",
+      "collegeLat": 38.89657,
+      "collegeLng": -121.07689,
+      "collegeGeoSource": "open-meteo"
+    },
     "2574808": {
       "playerId": 2574808,
       "fullName": "Robbie Chosen",
@@ -1924,6 +2050,24 @@
       "collegeCountry": "USA",
       "collegeLat": 39.95238,
       "collegeLng": -75.16362,
+      "collegeGeoSource": "open-meteo"
+    },
+    "2576336": {
+      "playerId": 2576336,
+      "fullName": "Ameer Abdullah",
+      "city": "Homewood",
+      "state": "AL",
+      "country": "USA",
+      "lat": 39.08685,
+      "lng": -120.16019,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.005Z",
+      "collegeName": "Nebraska",
+      "collegeCity": "Lincoln",
+      "collegeState": "NE",
+      "collegeCountry": "USA",
+      "collegeLat": 40.8,
+      "collegeLng": -96.66696,
       "collegeGeoSource": "open-meteo"
     },
     "2576399": {
@@ -2122,6 +2266,24 @@
       "collegeCountry": "USA",
       "collegeLat": 33.45049,
       "collegeLng": -88.81961,
+      "collegeGeoSource": "open-meteo"
+    },
+    "2577667": {
+      "playerId": 2577667,
+      "fullName": "Damiere Byrd",
+      "city": "Sicklerville",
+      "state": "NJ",
+      "country": "USA",
+      "lat": 39.71734,
+      "lng": -74.96933,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.061Z",
+      "collegeName": "South Carolina",
+      "collegeCity": "Columbia",
+      "collegeState": "SC",
+      "collegeCountry": "USA",
+      "collegeLat": 34.00071,
+      "collegeLng": -81.03481,
       "collegeGeoSource": "open-meteo"
     },
     "2578570": {
@@ -2538,6 +2700,24 @@
       "collegeLng": -111.65853,
       "collegeGeoSource": "open-meteo"
     },
+    "2983509": {
+      "playerId": 2983509,
+      "fullName": "Dare Ogunbowale",
+      "city": "Milwaukee",
+      "state": "WI",
+      "country": "USA",
+      "lat": 43.0389,
+      "lng": -87.90647,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.470Z",
+      "collegeName": "Wisconsin",
+      "collegeCity": "Madison",
+      "collegeState": "WI",
+      "collegeCountry": "USA",
+      "collegeLat": 43.07305,
+      "collegeLng": -89.40123,
+      "collegeGeoSource": "open-meteo"
+    },
     "2985659": {
       "playerId": 2985659,
       "fullName": "Wil Lutz",
@@ -2591,6 +2771,24 @@
       "collegeLat": 30.62798,
       "collegeLng": -96.33441,
       "collegeGeoSource": "open-meteo"
+    },
+    "2998565": {
+      "playerId": 2998565,
+      "fullName": "Mo Alie-Cox",
+      "city": "Alexandria",
+      "state": "VA",
+      "country": "USA",
+      "lat": 38.80484,
+      "lng": -77.04692,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.099Z",
+      "collegeName": "VCU",
+      "collegeCity": null,
+      "collegeState": null,
+      "collegeCountry": null,
+      "collegeLat": null,
+      "collegeLng": null,
+      "collegeGeoSource": null
     },
     "3025433": {
       "playerId": 3025433,
@@ -2698,6 +2896,24 @@
       "collegeCountry": "USA",
       "collegeLat": 42.29171,
       "collegeLng": -85.58723,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3042910": {
+      "playerId": 3042910,
+      "fullName": "Rashard Higgins",
+      "city": "Dallas",
+      "state": "TX",
+      "country": "USA",
+      "lat": 32.78306,
+      "lng": -96.80667,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.137Z",
+      "collegeName": "Colorado State",
+      "collegeCity": "Fort Collins",
+      "collegeState": "CO",
+      "collegeCountry": "USA",
+      "collegeLat": 40.58526,
+      "collegeLng": -105.08442,
       "collegeGeoSource": "open-meteo"
     },
     "3043078": {
@@ -2860,6 +3076,24 @@
       "collegeCountry": "USA",
       "collegeLat": 43.07305,
       "collegeLng": -89.40123,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3045523": {
+      "playerId": 3045523,
+      "fullName": "Kendrick Bourne",
+      "city": "Portland",
+      "state": "OR",
+      "country": "USA",
+      "lat": 45.52345,
+      "lng": -122.67621,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.434Z",
+      "collegeName": "Eastern Washington",
+      "collegeCity": "Cheney",
+      "collegeState": "WA",
+      "collegeCountry": "USA",
+      "collegeLat": 47.48739,
+      "collegeLng": -117.57576,
       "collegeGeoSource": "open-meteo"
     },
     "3046409": {
@@ -3366,6 +3600,24 @@
       "collegeLng": -87.11333,
       "collegeGeoSource": "open-meteo"
     },
+    "3115306": {
+      "playerId": 3115306,
+      "fullName": "Josh Reynolds",
+      "city": "San Antonio",
+      "state": "TX",
+      "country": "USA",
+      "lat": 29.42412,
+      "lng": -98.49363,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.428Z",
+      "collegeName": "Texas A&M",
+      "collegeCity": "College Station",
+      "collegeState": "TX",
+      "collegeCountry": "USA",
+      "collegeLat": 30.62798,
+      "collegeLng": -96.33441,
+      "collegeGeoSource": "open-meteo"
+    },
     "3115364": {
       "playerId": 3115364,
       "fullName": "Leonard Fournette",
@@ -3672,6 +3924,24 @@
       "collegeLng": -118.24368,
       "collegeGeoSource": "open-meteo"
     },
+    "3120590": {
+      "playerId": 3120590,
+      "fullName": "Easton Stick",
+      "city": "Omaha",
+      "state": "NE",
+      "country": "USA",
+      "lat": 41.25626,
+      "lng": -95.94043,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.681Z",
+      "collegeName": "North Dakota State",
+      "collegeCity": "Fargo",
+      "collegeState": "ND",
+      "collegeCountry": "USA",
+      "collegeLat": 38.40006,
+      "collegeLng": -86.48332,
+      "collegeGeoSource": "open-meteo"
+    },
     "3121023": {
       "playerId": 3121023,
       "fullName": "Dallas Goedert",
@@ -3688,6 +3958,24 @@
       "collegeCountry": "USA",
       "collegeLat": 44.31136,
       "collegeLng": -96.79839,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3121409": {
+      "playerId": 3121409,
+      "fullName": "Noah Brown",
+      "city": "Flanders",
+      "state": "NJ",
+      "country": "USA",
+      "lat": 40.84565,
+      "lng": -74.69488,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.933Z",
+      "collegeName": "Ohio State",
+      "collegeCity": "Columbus",
+      "collegeState": "OH",
+      "collegeCountry": "USA",
+      "collegeLat": 39.96118,
+      "collegeLng": -82.99879,
       "collegeGeoSource": "open-meteo"
     },
     "3121410": {
@@ -3742,6 +4030,24 @@
       "collegeCountry": "USA",
       "collegeLat": 39.96118,
       "collegeLng": -82.99879,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3122449": {
+      "playerId": 3122449,
+      "fullName": "James Washington",
+      "city": "Stamford",
+      "state": "TX",
+      "country": "USA",
+      "lat": 41.05343,
+      "lng": -73.53873,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.628Z",
+      "collegeName": "Oklahoma State",
+      "collegeCity": "Stillwater",
+      "collegeState": "OK",
+      "collegeCountry": "USA",
+      "collegeLat": 36.11561,
+      "collegeLng": -97.05837,
       "collegeGeoSource": "open-meteo"
     },
     "3122672": {
@@ -3814,6 +4120,24 @@
       "collegeCountry": "USA",
       "collegeLat": 33.21484,
       "collegeLng": -97.13307,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3123052": {
+      "playerId": 3123052,
+      "fullName": "Michael Badgley",
+      "city": "Summit",
+      "state": "NJ",
+      "country": "USA",
+      "lat": 40.71562,
+      "lng": -74.36468,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.087Z",
+      "collegeName": "Miami",
+      "collegeCity": "Miami Gardens",
+      "collegeState": "FL",
+      "collegeCountry": "USA",
+      "collegeLat": 25.94204,
+      "collegeLng": -80.2456,
       "collegeGeoSource": "open-meteo"
     },
     "3123076": {
@@ -4032,6 +4356,24 @@
       "collegeLng": -122.33207,
       "collegeGeoSource": "open-meteo"
     },
+    "3127586": {
+      "playerId": 3127586,
+      "fullName": "Jeremy McNichols",
+      "city": "Long Beach",
+      "state": "CA",
+      "country": "USA",
+      "lat": 33.76696,
+      "lng": -118.18923,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.321Z",
+      "collegeName": "Boise State",
+      "collegeCity": "Boise",
+      "collegeState": "ID",
+      "collegeCountry": "USA",
+      "collegeLat": 43.6135,
+      "collegeLng": -116.20345,
+      "collegeGeoSource": "open-meteo"
+    },
     "3128390": {
       "playerId": 3128390,
       "fullName": "Allen Lazard",
@@ -4066,6 +4408,24 @@
       "collegeCountry": "USA",
       "collegeLat": 32.78306,
       "collegeLng": -96.80667,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3128444": {
+      "playerId": 3128444,
+      "fullName": "Matthew Wright",
+      "city": "Lancaster",
+      "state": "PA",
+      "country": "USA",
+      "lat": 34.69804,
+      "lng": -118.13674,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.696Z",
+      "collegeName": "UCF",
+      "collegeCity": "Orlando",
+      "collegeState": "FL",
+      "collegeCountry": "USA",
+      "collegeLat": 28.53834,
+      "collegeLng": -81.37924,
       "collegeGeoSource": "open-meteo"
     },
     "3128451": {
@@ -4302,6 +4662,24 @@
       "collegeLng": -84.47772,
       "collegeGeoSource": "open-meteo"
     },
+    "3728262": {
+      "playerId": 3728262,
+      "fullName": "Ray-Ray McCloud III",
+      "city": "Tampa",
+      "state": "FL",
+      "country": "USA",
+      "lat": 27.94752,
+      "lng": -82.45843,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.267Z",
+      "collegeName": "Clemson",
+      "collegeCity": "Clemson",
+      "collegeState": "SC",
+      "collegeCountry": "USA",
+      "collegeLat": 34.68344,
+      "collegeLng": -82.83737,
+      "collegeGeoSource": "open-meteo"
+    },
     "3843750": {
       "playerId": 3843750,
       "fullName": "Derrius Guice",
@@ -4410,6 +4788,24 @@
       "collegeLng": -97.43948,
       "collegeGeoSource": "open-meteo"
     },
+    "3894912": {
+      "playerId": 3894912,
+      "fullName": "Tyron Billy-Johnson",
+      "city": "New Orleans",
+      "state": "LA",
+      "country": "USA",
+      "lat": 29.95465,
+      "lng": -90.07507,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.153Z",
+      "collegeName": "Oklahoma State",
+      "collegeCity": "Stillwater",
+      "collegeState": "OK",
+      "collegeCountry": "USA",
+      "collegeLat": 36.11561,
+      "collegeLng": -97.05837,
+      "collegeGeoSource": "open-meteo"
+    },
     "3895856": {
       "playerId": 3895856,
       "fullName": "Christian Kirk",
@@ -4426,6 +4822,24 @@
       "collegeCountry": "USA",
       "collegeLat": 30.62798,
       "collegeLng": -96.33441,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3910544": {
+      "playerId": 3910544,
+      "fullName": "Joshua Kelley",
+      "city": "Lancaster",
+      "state": "CA",
+      "country": "USA",
+      "lat": 34.69804,
+      "lng": -118.13674,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.762Z",
+      "collegeName": "UCLA",
+      "collegeCity": "Pasadena",
+      "collegeState": "CA",
+      "collegeCountry": "USA",
+      "collegeLat": 34.14778,
+      "collegeLng": -118.14452,
       "collegeGeoSource": "open-meteo"
     },
     "3912547": {
@@ -4662,6 +5076,24 @@
       "collegeLng": -78.63861,
       "collegeGeoSource": "open-meteo"
     },
+    "3916566": {
+      "playerId": 3916566,
+      "fullName": "K.J. Osborn",
+      "city": "Ypsilanti",
+      "state": "MI",
+      "country": "USA",
+      "lat": 42.24115,
+      "lng": -83.61299,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.472Z",
+      "collegeName": "Miami",
+      "collegeCity": "Miami Gardens",
+      "collegeState": "FL",
+      "collegeCountry": "USA",
+      "collegeLat": 25.94204,
+      "collegeLng": -80.2456,
+      "collegeGeoSource": "open-meteo"
+    },
     "3916925": {
       "playerId": 3916925,
       "fullName": "Kerryon Johnson",
@@ -4672,6 +5104,24 @@
       "lng": -86.58594,
       "geoSource": "open-meteo",
       "fetchedAt": "2026-07-11T16:25:30.982Z",
+      "collegeName": "Auburn",
+      "collegeCity": "Auburn",
+      "collegeState": "AL",
+      "collegeCountry": "USA",
+      "collegeLat": 38.89657,
+      "collegeLng": -121.07689,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3916945": {
+      "playerId": 3916945,
+      "fullName": "Darius Slayton",
+      "city": "Norcross",
+      "state": "GA",
+      "country": "USA",
+      "lat": 33.94121,
+      "lng": -84.21353,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.889Z",
       "collegeName": "Auburn",
       "collegeCity": "Auburn",
       "collegeState": "AL",
@@ -4788,6 +5238,42 @@
       "collegeLng": -97.05837,
       "collegeGeoSource": "open-meteo"
     },
+    "3924327": {
+      "playerId": 3924327,
+      "fullName": "Drew Lock",
+      "city": "Lee's Summit",
+      "state": "MO",
+      "country": "USA",
+      "lat": 38.91084,
+      "lng": -94.38217,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.138Z",
+      "collegeName": "Missouri",
+      "collegeCity": "Columbia",
+      "collegeState": "MO",
+      "collegeCountry": "USA",
+      "collegeLat": 34.00071,
+      "collegeLng": -81.03481,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3924365": {
+      "playerId": 3924365,
+      "fullName": "Hayden Hurst",
+      "city": "Jacksonville",
+      "state": "FL",
+      "country": "USA",
+      "lat": 30.33218,
+      "lng": -81.65565,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.448Z",
+      "collegeName": "South Carolina",
+      "collegeCity": "Columbia",
+      "collegeState": "SC",
+      "collegeCountry": "USA",
+      "collegeLat": 34.00071,
+      "collegeLng": -81.03481,
+      "collegeGeoSource": "open-meteo"
+    },
     "3925347": {
       "playerId": 3925347,
       "fullName": "Damien Harris",
@@ -4824,6 +5310,24 @@
       "collegeLng": -87.56917,
       "collegeGeoSource": "open-meteo"
     },
+    "3928925": {
+      "playerId": 3928925,
+      "fullName": "JaMycal Hasty",
+      "city": "Longview",
+      "state": "TX",
+      "country": "USA",
+      "lat": 32.5007,
+      "lng": -94.74049,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.392Z",
+      "collegeName": "Baylor",
+      "collegeCity": "Waco",
+      "collegeState": "TX",
+      "collegeCountry": "USA",
+      "collegeLat": 31.54933,
+      "collegeLng": -97.14667,
+      "collegeGeoSource": "open-meteo"
+    },
     "3929630": {
       "playerId": 3929630,
       "fullName": "Saquon Barkley",
@@ -4840,6 +5344,24 @@
       "collegeCountry": "USA",
       "collegeLat": 37.44188,
       "collegeLng": -122.14302,
+      "collegeGeoSource": "open-meteo"
+    },
+    "3929645": {
+      "playerId": 3929645,
+      "fullName": "Juwan Johnson",
+      "city": "Glassboro",
+      "state": "NJ",
+      "country": "USA",
+      "lat": 39.70289,
+      "lng": -75.11184,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.558Z",
+      "collegeName": "Oregon",
+      "collegeCity": "Eugene",
+      "collegeState": "OR",
+      "collegeCountry": "USA",
+      "collegeLat": 44.05207,
+      "collegeLng": -123.08675,
       "collegeGeoSource": "open-meteo"
     },
     "3929785": {
@@ -5004,6 +5526,24 @@
       "collegeLng": -82.32483,
       "collegeGeoSource": "open-meteo"
     },
+    "4035004": {
+      "playerId": 4035004,
+      "fullName": "Mecole Hardman Jr.",
+      "city": "Bowman",
+      "state": "GA",
+      "country": "USA",
+      "lat": 46.18306,
+      "lng": -103.39491,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.773Z",
+      "collegeName": "Georgia",
+      "collegeCity": "Athens",
+      "collegeState": "GA",
+      "collegeCountry": "USA",
+      "collegeLat": 33.96095,
+      "collegeLng": -83.37794,
+      "collegeGeoSource": "open-meteo"
+    },
     "4035072": {
       "playerId": 4035072,
       "fullName": "Benny Snell Jr.",
@@ -5020,6 +5560,42 @@
       "collegeCountry": "USA",
       "collegeLat": 37.98869,
       "collegeLng": -84.47772,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4035170": {
+      "playerId": 4035170,
+      "fullName": "Marquez Callaway",
+      "city": "Warner Robins",
+      "state": "GA",
+      "country": "USA",
+      "lat": 32.61574,
+      "lng": -83.62664,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.451Z",
+      "collegeName": "Tennessee",
+      "collegeCity": "Knoxville",
+      "collegeState": "TN",
+      "collegeCountry": "USA",
+      "collegeLat": 35.96064,
+      "collegeLng": -83.92074,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4035403": {
+      "playerId": 4035403,
+      "fullName": "Denzel Mims",
+      "city": "Daingerfield",
+      "state": "TX",
+      "country": "USA",
+      "lat": 33.03179,
+      "lng": -94.72187,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.435Z",
+      "collegeName": "Baylor",
+      "collegeCity": "Waco",
+      "collegeState": "TX",
+      "collegeCountry": "USA",
+      "collegeLat": 31.54933,
+      "collegeLng": -97.14667,
       "collegeGeoSource": "open-meteo"
     },
     "4035538": {
@@ -5166,6 +5742,24 @@
       "collegeLng": -111.83439,
       "collegeGeoSource": "open-meteo"
     },
+    "4038441": {
+      "playerId": 4038441,
+      "fullName": "Justice Hill",
+      "city": "Tulsa",
+      "state": "OK",
+      "country": "USA",
+      "lat": 36.15398,
+      "lng": -95.99277,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.880Z",
+      "collegeName": "Oklahoma State",
+      "collegeCity": "Stillwater",
+      "collegeState": "OK",
+      "collegeCountry": "USA",
+      "collegeLat": 36.11561,
+      "collegeLng": -97.05837,
+      "collegeGeoSource": "open-meteo"
+    },
     "4038524": {
       "playerId": 4038524,
       "fullName": "Gardner Minshew II",
@@ -5236,6 +5830,24 @@
       "collegeCountry": "USA",
       "collegeLat": 30.26715,
       "collegeLng": -97.74306,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4039358": {
+      "playerId": 4039358,
+      "fullName": "Patrick Taylor Jr.",
+      "city": "Humble",
+      "state": "TX",
+      "country": "USA",
+      "lat": 29.99883,
+      "lng": -95.26216,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.102Z",
+      "collegeName": "Memphis",
+      "collegeCity": "Memphis",
+      "collegeState": "TN",
+      "collegeCountry": "USA",
+      "collegeLat": 35.14953,
+      "collegeLng": -90.04898,
       "collegeGeoSource": "open-meteo"
     },
     "4039359": {
@@ -5326,6 +5938,24 @@
       "collegeCountry": "USA",
       "collegeLat": 26.35869,
       "collegeLng": -80.0831,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4040980": {
+      "playerId": 4040980,
+      "fullName": "Irv Smith Jr.",
+      "city": "New Orleans",
+      "state": "LA",
+      "country": "USA",
+      "lat": 29.95465,
+      "lng": -90.07507,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.133Z",
+      "collegeName": "Alabama",
+      "collegeCity": "Tuscaloosa",
+      "collegeState": "AL",
+      "collegeCountry": "USA",
+      "collegeLat": 33.20984,
+      "collegeLng": -87.56917,
       "collegeGeoSource": "open-meteo"
     },
     "4045163": {
@@ -5434,6 +6064,24 @@
       "collegeCountry": "USA",
       "collegeLat": 34.3665,
       "collegeLng": -89.51925,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4047839": {
+      "playerId": 4047839,
+      "fullName": "N'Keal Harry",
+      "city": "Chandler",
+      "state": "AZ",
+      "country": "USA",
+      "lat": 33.30616,
+      "lng": -111.84125,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.495Z",
+      "collegeName": "Arizona State",
+      "collegeCity": "Tempe",
+      "collegeState": "AZ",
+      "collegeCountry": "USA",
+      "collegeLat": 33.41477,
+      "collegeLng": -111.90931,
       "collegeGeoSource": "open-meteo"
     },
     "4048244": {
@@ -5562,6 +6210,24 @@
       "collegeLng": -84.28073,
       "collegeGeoSource": "open-meteo"
     },
+    "4240600": {
+      "playerId": 4240600,
+      "fullName": "Kadarius Toney",
+      "city": "Mobile",
+      "state": "AL",
+      "country": "USA",
+      "lat": 30.69436,
+      "lng": -88.04305,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.206Z",
+      "collegeName": "Florida",
+      "collegeCity": "Gainesville",
+      "collegeState": "FL",
+      "collegeCountry": "USA",
+      "collegeLat": 29.65163,
+      "collegeLng": -82.32483,
+      "collegeGeoSource": "open-meteo"
+    },
     "4240657": {
       "playerId": 4240657,
       "fullName": "Michael Carter",
@@ -5614,6 +6280,24 @@
       "collegeCountry": "USA",
       "collegeLat": 35.22257,
       "collegeLng": -97.43948,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4241401": {
+      "playerId": 4241401,
+      "fullName": "Trey Sermon",
+      "city": "Marietta",
+      "state": "GA",
+      "country": "USA",
+      "lat": 33.9526,
+      "lng": -84.54993,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.813Z",
+      "collegeName": "Ohio State",
+      "collegeCity": "Columbus",
+      "collegeState": "OH",
+      "collegeCountry": "USA",
+      "collegeLat": 39.96118,
+      "collegeLng": -82.99879,
       "collegeGeoSource": "open-meteo"
     },
     "4241416": {
@@ -5688,6 +6372,24 @@
       "collegeLng": -87.56917,
       "collegeGeoSource": "open-meteo"
     },
+    "4241475": {
+      "playerId": 4241475,
+      "fullName": "Henry Ruggs III",
+      "city": "Montgomery",
+      "state": "AL",
+      "country": "USA",
+      "lat": 32.36681,
+      "lng": -86.29997,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.363Z",
+      "collegeName": "Alabama",
+      "collegeCity": "Tuscaloosa",
+      "collegeState": "AL",
+      "collegeCountry": "USA",
+      "collegeLat": 33.20984,
+      "collegeLng": -87.56917,
+      "collegeGeoSource": "open-meteo"
+    },
     "4241478": {
       "playerId": 4241478,
       "fullName": "DeVonta Smith",
@@ -5740,6 +6442,24 @@
       "collegeCountry": "USA",
       "collegeLat": 33.68455,
       "collegeLng": -87.83085,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4241802": {
+      "playerId": 4241802,
+      "fullName": "Jalen Reagor",
+      "city": "Waxahachie",
+      "state": "TX",
+      "country": "USA",
+      "lat": 32.38653,
+      "lng": -96.84833,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.813Z",
+      "collegeName": "TCU",
+      "collegeCity": "Fort Worth",
+      "collegeState": "TX",
+      "collegeCountry": "USA",
+      "collegeLat": 32.72541,
+      "collegeLng": -97.32085,
       "collegeGeoSource": "open-meteo"
     },
     "4241985": {
@@ -5850,6 +6570,24 @@
       "collegeLng": -83.92074,
       "collegeGeoSource": "open-meteo"
     },
+    "4242519": {
+      "playerId": 4242519,
+      "fullName": "Anders Carlson",
+      "city": "Colorado Springs",
+      "state": "CO",
+      "country": "USA",
+      "lat": 38.83388,
+      "lng": -104.82136,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.752Z",
+      "collegeName": "Auburn",
+      "collegeCity": "Auburn",
+      "collegeState": "AL",
+      "collegeCountry": "USA",
+      "collegeLat": 38.89657,
+      "collegeLng": -121.07689,
+      "collegeGeoSource": "open-meteo"
+    },
     "4242557": {
       "playerId": 4242557,
       "fullName": "Colby Parkinson",
@@ -5868,6 +6606,24 @@
       "collegeLng": -77.9261,
       "collegeGeoSource": "open-meteo"
     },
+    "4243315": {
+      "playerId": 4243315,
+      "fullName": "Salvon Ahmed",
+      "city": "Kirkland",
+      "state": "WA",
+      "country": "USA",
+      "lat": 47.68149,
+      "lng": -122.20874,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:16.808Z",
+      "collegeName": "Washington",
+      "collegeCity": "Seattle",
+      "collegeState": "WA",
+      "collegeCountry": "USA",
+      "collegeLat": 47.60621,
+      "collegeLng": -122.33207,
+      "collegeGeoSource": "open-meteo"
+    },
     "4243331": {
       "playerId": 4243331,
       "fullName": "Cade Otton",
@@ -5884,6 +6640,24 @@
       "collegeCountry": "USA",
       "collegeLat": 47.60621,
       "collegeLng": -122.33207,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4243371": {
+      "playerId": 4243371,
+      "fullName": "Riley Patterson",
+      "city": "Edwardsville",
+      "state": "IL",
+      "country": "USA",
+      "lat": 38.81144,
+      "lng": -89.95316,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.744Z",
+      "collegeName": "Memphis",
+      "collegeCity": "Memphis",
+      "collegeState": "TN",
+      "collegeCountry": "USA",
+      "collegeLat": 35.14953,
+      "collegeLng": -90.04898,
       "collegeGeoSource": "open-meteo"
     },
     "4243537": {
@@ -5958,6 +6732,24 @@
       "collegeLng": -83.74088,
       "collegeGeoSource": "open-meteo"
     },
+    "4258195": {
+      "playerId": 4258195,
+      "fullName": "Donovan Peoples-Jones",
+      "city": "Detroit",
+      "state": "MI",
+      "country": "USA",
+      "lat": 42.33143,
+      "lng": -83.04575,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.324Z",
+      "collegeName": "Michigan",
+      "collegeCity": "Ann Arbor",
+      "collegeState": "MI",
+      "collegeCountry": "USA",
+      "collegeLat": 42.27756,
+      "collegeLng": -83.74088,
+      "collegeGeoSource": "open-meteo"
+    },
     "4258595": {
       "playerId": 4258595,
       "fullName": "Cole Kmet",
@@ -5992,6 +6784,24 @@
       "collegeCountry": "USA",
       "collegeLat": 33.96095,
       "collegeLng": -83.37794,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4259979": {
+      "playerId": 4259979,
+      "fullName": "Lynn Bowden Jr.",
+      "city": "Youngstown",
+      "state": "OH",
+      "country": "USA",
+      "lat": 41.09978,
+      "lng": -80.64952,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.101Z",
+      "collegeName": "Kentucky",
+      "collegeCity": "Lexington",
+      "collegeState": "KY",
+      "collegeCountry": "USA",
+      "collegeLat": 37.98869,
+      "collegeLng": -84.47772,
       "collegeGeoSource": "open-meteo"
     },
     "4262921": {
@@ -6120,6 +6930,24 @@
       "collegeLng": -82.83737,
       "collegeGeoSource": "open-meteo"
     },
+    "4360423": {
+      "playerId": 4360423,
+      "fullName": "Michael Penix Jr.",
+      "city": "Tampa",
+      "state": "FL",
+      "country": "USA",
+      "lat": 27.94752,
+      "lng": -82.45843,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.779Z",
+      "collegeName": "Washington",
+      "collegeCity": "Seattle",
+      "collegeState": "WA",
+      "collegeCountry": "USA",
+      "collegeLat": 47.60621,
+      "collegeLng": -122.33207,
+      "collegeGeoSource": "open-meteo"
+    },
     "4360438": {
       "playerId": 4360438,
       "fullName": "Brandon Aiyuk",
@@ -6190,6 +7018,24 @@
       "collegeCountry": "USA",
       "collegeLat": 38.98067,
       "collegeLng": -76.93692,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4360689": {
+      "playerId": 4360689,
+      "fullName": "Tyler Shough",
+      "city": "Chandler",
+      "state": "AZ",
+      "country": "USA",
+      "lat": 33.30616,
+      "lng": -111.84125,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.165Z",
+      "collegeName": "Louisville",
+      "collegeCity": "Louisville",
+      "collegeState": "KY",
+      "collegeCountry": "USA",
+      "collegeLat": 38.25424,
+      "collegeLng": -85.75941,
       "collegeGeoSource": "open-meteo"
     },
     "4360761": {
@@ -6462,6 +7308,42 @@
       "collegeLng": -78.87837,
       "collegeGeoSource": "open-meteo"
     },
+    "4362478": {
+      "playerId": 4362478,
+      "fullName": "Emari Demercado",
+      "city": "Inglewood",
+      "state": "CA",
+      "country": "USA",
+      "lat": 33.96168,
+      "lng": -118.35313,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.563Z",
+      "collegeName": "TCU",
+      "collegeCity": "Fort Worth",
+      "collegeState": "TX",
+      "collegeCountry": "USA",
+      "collegeLat": 32.72541,
+      "collegeLng": -97.32085,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4362504": {
+      "playerId": 4362504,
+      "fullName": "Brevin Jordan",
+      "city": "Las Vegas",
+      "state": "NV",
+      "country": "USA",
+      "lat": 36.17497,
+      "lng": -115.13722,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.697Z",
+      "collegeName": "Miami",
+      "collegeCity": "Miami Gardens",
+      "collegeState": "FL",
+      "collegeCountry": "USA",
+      "collegeLat": 25.94204,
+      "collegeLng": -80.2456,
+      "collegeGeoSource": "open-meteo"
+    },
     "4362619": {
       "playerId": 4362619,
       "fullName": "Chris Rodriguez Jr.",
@@ -6660,6 +7542,24 @@
       "collegeLng": -83.74088,
       "collegeGeoSource": "open-meteo"
     },
+    "4372071": {
+      "playerId": 4372071,
+      "fullName": "Hassan Haskins",
+      "city": "St. Louis",
+      "state": "MO",
+      "country": "USA",
+      "lat": 38.62727,
+      "lng": -90.19789,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.521Z",
+      "collegeName": "Michigan",
+      "collegeCity": "Ann Arbor",
+      "collegeState": "MI",
+      "collegeCountry": "USA",
+      "collegeLat": 42.27756,
+      "collegeLng": -83.74088,
+      "collegeGeoSource": "open-meteo"
+    },
     "4372414": {
       "playerId": 4372414,
       "fullName": "Elijah Moore",
@@ -6750,6 +7650,24 @@
       "collegeLng": -116.20345,
       "collegeGeoSource": "open-meteo"
     },
+    "4373684": {
+      "playerId": 4373684,
+      "fullName": "Scott Matlock",
+      "city": "Homedale",
+      "state": "ID",
+      "country": "USA",
+      "lat": 43.61766,
+      "lng": -116.93376,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.175Z",
+      "collegeName": "Boise State",
+      "collegeCity": "Boise",
+      "collegeState": "ID",
+      "collegeCountry": "USA",
+      "collegeLat": 43.6135,
+      "collegeLng": -116.20345,
+      "collegeGeoSource": "open-meteo"
+    },
     "4374302": {
       "playerId": 4374302,
       "fullName": "Amon-Ra St. Brown",
@@ -6784,6 +7702,24 @@
       "collegeCountry": "USA",
       "collegeLat": 33.96095,
       "collegeLng": -83.37794,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4383351": {
+      "playerId": 4383351,
+      "fullName": "Trey Lance",
+      "city": "Marshall",
+      "state": "MN",
+      "country": "USA",
+      "lat": 32.54487,
+      "lng": -94.36742,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.410Z",
+      "collegeName": "North Dakota State",
+      "collegeCity": "Fargo",
+      "collegeState": "ND",
+      "collegeCountry": "USA",
+      "collegeLat": 38.40006,
+      "collegeLng": -86.48332,
       "collegeGeoSource": "open-meteo"
     },
     "4385690": {
@@ -6894,6 +7830,24 @@
       "collegeLng": -118.14452,
       "collegeGeoSource": "open-meteo"
     },
+    "4426386": {
+      "playerId": 4426386,
+      "fullName": "Roschon Johnson",
+      "city": "Port Neches",
+      "state": "TX",
+      "country": "USA",
+      "lat": 29.99132,
+      "lng": -93.95851,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.810Z",
+      "collegeName": "Texas",
+      "collegeCity": "Austin",
+      "collegeState": "TX",
+      "collegeCountry": "USA",
+      "collegeLat": 30.26715,
+      "collegeLng": -97.74306,
+      "collegeGeoSource": "open-meteo"
+    },
     "4426388": {
       "playerId": 4426388,
       "fullName": "Jameson Williams",
@@ -6910,6 +7864,24 @@
       "collegeCountry": "USA",
       "collegeLat": 33.20984,
       "collegeLng": -87.56917,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4426485": {
+      "playerId": 4426485,
+      "fullName": "Jonathan Mingo",
+      "city": "Brandon",
+      "state": "MS",
+      "country": "USA",
+      "lat": 27.9378,
+      "lng": -82.28592,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.620Z",
+      "collegeName": "Ole Miss",
+      "collegeCity": "Oxford",
+      "collegeState": "MS",
+      "collegeCountry": "USA",
+      "collegeLat": 34.3665,
+      "collegeLng": -89.51925,
       "collegeGeoSource": "open-meteo"
     },
     "4426502": {
@@ -7020,6 +7992,24 @@
       "collegeLng": -78.63861,
       "collegeGeoSource": "open-meteo"
     },
+    "4428085": {
+      "playerId": 4428085,
+      "fullName": "Luke Musgrave",
+      "city": "Bend",
+      "state": "OR",
+      "country": "USA",
+      "lat": 44.05817,
+      "lng": -121.31531,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.635Z",
+      "collegeName": "Oregon State",
+      "collegeCity": "Corvallis",
+      "collegeState": "OR",
+      "collegeCountry": "USA",
+      "collegeLat": 33.90224,
+      "collegeLng": -118.08173,
+      "collegeGeoSource": "open-meteo"
+    },
     "4428209": {
       "playerId": 4428209,
       "fullName": "Ricky Pearsall",
@@ -7110,6 +8100,24 @@
       "collegeLng": -121.07689,
       "collegeGeoSource": "open-meteo"
     },
+    "4429022": {
+      "playerId": 4429022,
+      "fullName": "Kayshon Boutte",
+      "city": "New Iberia",
+      "state": "LA",
+      "country": "USA",
+      "lat": 30.00354,
+      "lng": -91.81873,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.473Z",
+      "collegeName": "LSU",
+      "collegeCity": "Baton Rouge",
+      "collegeState": "LA",
+      "collegeCountry": "USA",
+      "collegeLat": 30.44332,
+      "collegeLng": -91.18747,
+      "collegeGeoSource": "open-meteo"
+    },
     "4429025": {
       "playerId": 4429025,
       "fullName": "Quentin Johnston",
@@ -7144,6 +8152,24 @@
       "collegeCountry": "USA",
       "collegeLat": 34.05223,
       "collegeLng": -118.24368,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4429084": {
+      "playerId": 4429084,
+      "fullName": "Anthony Richardson Sr.",
+      "city": "Gainesville",
+      "state": "FL",
+      "country": "USA",
+      "lat": 29.65163,
+      "lng": -82.32483,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.878Z",
+      "collegeName": "Florida",
+      "collegeCity": "Gainesville",
+      "collegeState": "FL",
+      "collegeCountry": "USA",
+      "collegeLat": 29.65163,
+      "collegeLng": -82.32483,
       "collegeGeoSource": "open-meteo"
     },
     "4429096": {
@@ -7216,6 +8242,42 @@
       "collegeCountry": "USA",
       "collegeLat": 34.05223,
       "collegeLng": -118.24368,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4429275": {
+      "playerId": 4429275,
+      "fullName": "Trey Benson",
+      "city": "Greenville",
+      "state": "MS",
+      "country": "USA",
+      "lat": 35.61266,
+      "lng": -77.36635,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.327Z",
+      "collegeName": "Florida State",
+      "collegeCity": "Tallahassee",
+      "collegeState": "FL",
+      "collegeCountry": "USA",
+      "collegeLat": 30.43826,
+      "collegeLng": -84.28073,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4429501": {
+      "playerId": 4429501,
+      "fullName": "Ray Davis",
+      "city": "San Francisco",
+      "state": "CA",
+      "country": "USA",
+      "lat": 37.77493,
+      "lng": -122.41942,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.043Z",
+      "collegeName": "Kentucky",
+      "collegeCity": "Lexington",
+      "collegeState": "KY",
+      "collegeCountry": "USA",
+      "collegeLat": 37.98869,
+      "collegeLng": -84.47772,
       "collegeGeoSource": "open-meteo"
     },
     "4429615": {
@@ -7578,6 +8640,24 @@
       "collegeLng": -82.99879,
       "collegeGeoSource": "open-meteo"
     },
+    "4432620": {
+      "playerId": 4432620,
+      "fullName": "Parker Washington",
+      "city": "Sugar Land",
+      "state": "TX",
+      "country": "USA",
+      "lat": 29.61968,
+      "lng": -95.63495,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.291Z",
+      "collegeName": "Penn State",
+      "collegeCity": "University Park",
+      "collegeState": "PA",
+      "collegeCountry": "USA",
+      "collegeLat": 37.44188,
+      "collegeLng": -122.14302,
+      "collegeGeoSource": "open-meteo"
+    },
     "4432665": {
       "playerId": 4432665,
       "fullName": "Brock Bowers",
@@ -7704,6 +8784,24 @@
       "collegeLng": -87.56917,
       "collegeGeoSource": "open-meteo"
     },
+    "4567156": {
+      "playerId": 4567156,
+      "fullName": "Treylon Burks",
+      "city": "Warren",
+      "state": "AR",
+      "country": "USA",
+      "lat": 33.61261,
+      "lng": -92.06458,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:17.746Z",
+      "collegeName": "Arkansas",
+      "collegeCity": "Fayetteville",
+      "collegeState": "AR",
+      "collegeCountry": "USA",
+      "collegeLat": 35.05266,
+      "collegeLng": -78.87836,
+      "collegeGeoSource": "open-meteo"
+    },
     "4567750": {
       "playerId": 4567750,
       "fullName": "Emeka Egbuka",
@@ -7792,6 +8890,24 @@
       "collegeCountry": "USA",
       "collegeLat": 39.96118,
       "collegeLng": -82.99879,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4569682": {
+      "playerId": 4569682,
+      "fullName": "Audric Estime",
+      "city": "Nyack",
+      "state": "NY",
+      "country": "USA",
+      "lat": 41.09065,
+      "lng": -73.91791,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.474Z",
+      "collegeName": "Notre Dame",
+      "collegeCity": "Notre Dame",
+      "collegeState": "IN",
+      "collegeCountry": "USA",
+      "collegeLat": 41.70019,
+      "collegeLng": -86.23793,
       "collegeGeoSource": "open-meteo"
     },
     "4569923": {
@@ -8244,6 +9360,24 @@
       "collegeLng": -78.87836,
       "collegeGeoSource": "open-meteo"
     },
+    "4686472": {
+      "playerId": 4686472,
+      "fullName": "Marvin Mims Jr.",
+      "city": "Frisco",
+      "state": "TX",
+      "country": "USA",
+      "lat": 33.15067,
+      "lng": -96.82361,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.275Z",
+      "collegeName": "Oklahoma",
+      "collegeCity": "Norman",
+      "collegeState": "OK",
+      "collegeCountry": "USA",
+      "collegeLat": 35.22257,
+      "collegeLng": -97.43948,
+      "collegeGeoSource": "open-meteo"
+    },
     "4688813": {
       "playerId": 4688813,
       "fullName": "Josh Downs",
@@ -8298,6 +9432,42 @@
       "collegeLng": -78.87836,
       "collegeGeoSource": "open-meteo"
     },
+    "4695404": {
+      "playerId": 4695404,
+      "fullName": "Isaiah Davis",
+      "city": "Joplin",
+      "state": "MO",
+      "country": "USA",
+      "lat": 48.56082,
+      "lng": -110.77246,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.231Z",
+      "collegeName": "South Dakota State",
+      "collegeCity": "Brookings",
+      "collegeState": "SD",
+      "collegeCountry": "USA",
+      "collegeLat": 44.31136,
+      "collegeLng": -96.79839,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4695883": {
+      "playerId": 4695883,
+      "fullName": "Jalen Coker",
+      "city": "Sterling",
+      "state": "VA",
+      "country": "USA",
+      "lat": 40.62554,
+      "lng": -103.20771,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.232Z",
+      "collegeName": "Holy Cross",
+      "collegeCity": "Worcester",
+      "collegeState": "MA",
+      "collegeCountry": "USA",
+      "collegeLat": 42.26259,
+      "collegeLng": -71.80229,
+      "collegeGeoSource": "open-meteo"
+    },
     "4697745": {
       "playerId": 4697745,
       "fullName": "Tyler Loop",
@@ -8334,6 +9504,24 @@
       "collegeLng": -111.90931,
       "collegeGeoSource": "open-meteo"
     },
+    "4722893": {
+      "playerId": 4722893,
+      "fullName": "Jaleel McLaughlin",
+      "city": "Marshville",
+      "state": "NC",
+      "country": "USA",
+      "lat": 47.04491,
+      "lng": -122.90169,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.046Z",
+      "collegeName": "Youngstown State",
+      "collegeCity": "Youngstown",
+      "collegeState": "OH",
+      "collegeCountry": "USA",
+      "collegeLat": 41.09978,
+      "collegeLng": -80.64952,
+      "collegeGeoSource": "open-meteo"
+    },
     "4723086": {
       "playerId": 4723086,
       "fullName": "Colston Loveland",
@@ -8350,6 +9538,24 @@
       "collegeCountry": "USA",
       "collegeLat": 42.27756,
       "collegeLng": -83.74088,
+      "collegeGeoSource": "open-meteo"
+    },
+    "4877706": {
+      "playerId": 4877706,
+      "fullName": "Jayden Higgins",
+      "city": "South Miami",
+      "state": "FL",
+      "country": "USA",
+      "lat": 25.7076,
+      "lng": -80.29338,
+      "geoSource": "open-meteo",
+      "fetchedAt": "2026-07-16T01:32:18.337Z",
+      "collegeName": "Iowa State",
+      "collegeCity": "Ames",
+      "collegeState": "IA",
+      "collegeCountry": "USA",
+      "collegeLat": 42.03471,
+      "collegeLng": -93.61994,
       "collegeGeoSource": "open-meteo"
     },
     "4882093": {
@@ -10762,6 +11968,216 @@
     "bowling green|OH|USA": {
       "lat": 41.37477,
       "lng": -83.65132,
+      "source": "open-meteo"
+    },
+    "lancaster|CA|USA": {
+      "lat": 34.69804,
+      "lng": -118.13674,
+      "source": "open-meteo"
+    },
+    "bowman|GA|USA": {
+      "lat": 46.18306,
+      "lng": -103.39491,
+      "source": "open-meteo"
+    },
+    "waxahachie|TX|USA": {
+      "lat": 32.38653,
+      "lng": -96.84833,
+      "source": "open-meteo"
+    },
+    "katy|TX|USA": {
+      "lat": 29.78579,
+      "lng": -95.8244,
+      "source": "open-meteo"
+    },
+    "southlake|TX|USA": {
+      "lat": 32.94124,
+      "lng": -97.13418,
+      "source": "open-meteo"
+    },
+    "kirkland|WA|USA": {
+      "lat": 47.68149,
+      "lng": -122.20874,
+      "source": "open-meteo"
+    },
+    "plano|TX|USA": {
+      "lat": 33.01984,
+      "lng": -96.69889,
+      "source": "open-meteo"
+    },
+    "sicklerville|NJ|USA": {
+      "lat": 39.71734,
+      "lng": -74.96933,
+      "source": "open-meteo"
+    },
+    "summit|NJ|USA": {
+      "lat": 40.71562,
+      "lng": -74.36468,
+      "source": "open-meteo"
+    },
+    "cibolo|TX|USA": {
+      "lat": 29.56162,
+      "lng": -98.22696,
+      "source": "open-meteo"
+    },
+    "youngstown|OH|USA": {
+      "lat": 41.09978,
+      "lng": -80.64952,
+      "source": "open-meteo"
+    },
+    "alexandria|VA|USA": {
+      "lat": 38.80484,
+      "lng": -77.04692,
+      "source": "open-meteo"
+    },
+    "lee's summit|MO|USA": {
+      "lat": 38.91084,
+      "lng": -94.38217,
+      "source": "open-meteo"
+    },
+    "daingerfield|TX|USA": {
+      "lat": 33.03179,
+      "lng": -94.72187,
+      "source": "open-meteo"
+    },
+    "longview|TX|USA": {
+      "lat": 32.5007,
+      "lng": -94.74049,
+      "source": "open-meteo"
+    },
+    "marshall|MN|USA": {
+      "lat": 32.54487,
+      "lng": -94.36742,
+      "source": "open-meteo"
+    },
+    "portland|OR|USA": {
+      "lat": 45.52345,
+      "lng": -122.67621,
+      "source": "open-meteo"
+    },
+    "warner robins|GA|USA": {
+      "lat": 32.61574,
+      "lng": -83.62664,
+      "source": "open-meteo"
+    },
+    "ypsilanti|MI|USA": {
+      "lat": 42.24115,
+      "lng": -83.61299,
+      "source": "open-meteo"
+    },
+    "waco|TX|USA": {
+      "lat": 31.54933,
+      "lng": -97.14667,
+      "source": "open-meteo"
+    },
+    "milwaukee|WI|USA": {
+      "lat": 43.0389,
+      "lng": -87.90647,
+      "source": "open-meteo"
+    },
+    "stamford|TX|USA": {
+      "lat": 41.05343,
+      "lng": -73.53873,
+      "source": "open-meteo"
+    },
+    "lancaster|PA|USA": {
+      "lat": 34.69804,
+      "lng": -118.13674,
+      "source": "open-meteo"
+    },
+    "lawrenceville|GA|USA": {
+      "lat": 33.95621,
+      "lng": -83.98796,
+      "source": "open-meteo"
+    },
+    "warren|AR|USA": {
+      "lat": 33.61261,
+      "lng": -92.06458,
+      "source": "open-meteo"
+    },
+    "edwardsville|IL|USA": {
+      "lat": 38.81144,
+      "lng": -89.95316,
+      "source": "open-meteo"
+    },
+    "port neches|TX|USA": {
+      "lat": 29.99132,
+      "lng": -93.95851,
+      "source": "open-meteo"
+    },
+    "flanders|NJ|USA": {
+      "lat": 40.84565,
+      "lng": -74.69488,
+      "source": "open-meteo"
+    },
+    "homewood|AL|USA": {
+      "lat": 39.08685,
+      "lng": -120.16019,
+      "source": "open-meteo"
+    },
+    "sterling|VA|USA": {
+      "lat": 40.62554,
+      "lng": -103.20771,
+      "source": "open-meteo"
+    },
+    "san francisco|CA|USA": {
+      "lat": 37.77493,
+      "lng": -122.41942,
+      "source": "open-meteo"
+    },
+    "marshville|NC|USA": {
+      "lat": 47.04491,
+      "lng": -122.90169,
+      "source": "open-meteo"
+    },
+    "humble|TX|USA": {
+      "lat": 29.99883,
+      "lng": -95.26216,
+      "source": "open-meteo"
+    },
+    "homedale|ID|USA": {
+      "lat": 43.61766,
+      "lng": -116.93376,
+      "source": "open-meteo"
+    },
+    "joplin|MO|USA": {
+      "lat": 48.56082,
+      "lng": -110.77246,
+      "source": "open-meteo"
+    },
+    "worcester|MA|USA": {
+      "lat": 42.26259,
+      "lng": -71.80229,
+      "source": "open-meteo"
+    },
+    "frisco|TX|USA": {
+      "lat": 33.15067,
+      "lng": -96.82361,
+      "source": "open-meteo"
+    },
+    "sugar land|TX|USA": {
+      "lat": 29.61968,
+      "lng": -95.63495,
+      "source": "open-meteo"
+    },
+    "greenville|MS|USA": {
+      "lat": 35.61266,
+      "lng": -77.36635,
+      "source": "open-meteo"
+    },
+    "south miami|FL|USA": {
+      "lat": 25.7076,
+      "lng": -80.29338,
+      "source": "open-meteo"
+    },
+    "nyack|NY|USA": {
+      "lat": 41.09065,
+      "lng": -73.91791,
+      "source": "open-meteo"
+    },
+    "new iberia|LA|USA": {
+      "lat": 30.00354,
+      "lng": -91.81873,
       "source": "open-meteo"
     }
   }

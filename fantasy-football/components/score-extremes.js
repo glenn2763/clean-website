@@ -238,9 +238,9 @@ function renderScoreExtremesChart(allSeasonsData) {
             datasets: [{
                 label: 'Highest Weekly Score',
                 data: scores,
-                borderColor: 'rgba(118, 199, 192, 1)',
-                backgroundColor: 'rgba(118, 199, 192, 0.18)',
-                pointBackgroundColor: 'rgba(118, 199, 192, 1)',
+                borderColor: 'rgba(10, 122, 106, 1)',
+                backgroundColor: 'rgba(10, 122, 106, 0.18)',
+                pointBackgroundColor: 'rgba(10, 122, 106, 1)',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
                 pointRadius: 7,

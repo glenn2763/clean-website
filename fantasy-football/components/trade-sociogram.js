@@ -195,7 +195,7 @@ function renderTradeSociogram(container, trades, renderTradeDetail) {
     linkGroups
         .append('line')
         .attr('class', 'trade-sociogram-link-visible')
-        .attr('stroke', '#76c7c0')
+        .attr('stroke', '#0a7a6a')
         .attr('stroke-width', (link) => 1.5 + (link.count / maxCount) * 7)
         .attr('stroke-opacity', 0.85);
 

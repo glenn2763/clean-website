@@ -20,6 +20,7 @@ import {
     getTeams,
     getTransactions,
     parseExecutedTrades,
+    buildSeasonRosterPointsByTeam,
 } from './utils.js';
 
 const POSITION_IDS = {
@@ -156,7 +157,15 @@ function collectMatchupOutcomes(teamId, matchups) {
     return { closeGames, winMargins };
 }
 
-function getTeamRosterEntries(team, seasonData, teamIndex) {
+function getTeamRosterEntries(team, seasonData, teamIndex, rosterByTeam) {
+    const fromMatchups = rosterByTeam?.get(team.id);
+    if (fromMatchups?.size) {
+        return [...fromMatchups.values()].map(({ playerId, points }) => ({
+            playerId,
+            points,
+        }));
+    }
+
     if (Array.isArray(team?.roster) && team.roster.length > 0) {
         return team.roster.map((entry) => ({
             playerId: entry.player?.id ?? entry.id,
@@ -168,7 +177,7 @@ function getTeamRosterEntries(team, seasonData, teamIndex) {
     if (!rosterBucket?.entries) return [];
 
     return rosterBucket.entries.map((entry) => ({
-        playerId: entry.playerId,
+        playerId: entry.playerId ?? entry.playerPoolEntry?.player?.id,
         points: entry.playerPoolEntry?.appliedStatTotal ?? 0,
     }));
 }
@@ -348,7 +357,8 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest QB season points on roster.',
         compute(team, seasonData, ctx) {
-            return ctx.rosterMetrics.topQBPoints || null;
+            const value = ctx.rosterMetrics.topQBPoints;
+            return value > 0 ? value : null;
         },
     },
     {
@@ -357,7 +367,8 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest RB season points on roster.',
         compute(team, seasonData, ctx) {
-            return ctx.rosterMetrics.topRBPoints || null;
+            const value = ctx.rosterMetrics.topRBPoints;
+            return value > 0 ? value : null;
         },
     },
     {
@@ -366,7 +377,8 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest WR season points on roster.',
         compute(team, seasonData, ctx) {
-            return ctx.rosterMetrics.topWRPoints || null;
+            const value = ctx.rosterMetrics.topWRPoints;
+            return value > 0 ? value : null;
         },
     },
     {
@@ -375,7 +387,8 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest TE season points on roster.',
         compute(team, seasonData, ctx) {
-            return ctx.rosterMetrics.topTEPoints || null;
+            const value = ctx.rosterMetrics.topTEPoints;
+            return value > 0 ? value : null;
         },
     },
     {
@@ -384,7 +397,8 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest kicker season points on roster.',
         compute(team, seasonData, ctx) {
-            return ctx.rosterMetrics.topKPoints || null;
+            const value = ctx.rosterMetrics.topKPoints;
+            return value > 0 ? value : null;
         },
     },
     {
@@ -393,7 +407,8 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest D/ST season points on roster.',
         compute(team, seasonData, ctx) {
-            return ctx.rosterMetrics.topDSTPoints || null;
+            const value = ctx.rosterMetrics.topDSTPoints;
+            return value > 0 ? value : null;
         },
     },
 ];
@@ -453,12 +468,13 @@ function buildTeamSeasonRows(allSeasonsData) {
             ])
         );
         const positionMap = buildPlayerPositionMap(seasonData);
+        const rosterByTeam = buildSeasonRosterPointsByTeam(seasonData);
 
         teams.forEach((team, teamIndex) => {
             const record = recordByTeamId.get(team.id);
             if (!record || (record.wins === 0 && record.losses === 0 && record.ties === 0)) return;
 
-            const rosterEntries = getTeamRosterEntries(team, seasonData, teamIndex);
+            const rosterEntries = getTeamRosterEntries(team, seasonData, teamIndex, rosterByTeam);
             const rosterMetrics = rosterMetricsFromEntries(rosterEntries, positionMap);
             const ctx = {
                 matchups,
@@ -502,11 +518,42 @@ function getCorrelationTarget(targetKey = 'wins') {
     return CORRELATION_TARGETS[targetKey] || CORRELATION_TARGETS.wins;
 }
 
+/**
+ * Sort correlation rows by |r| (strongest first). Excluded and missing r sink to the bottom.
+ * @param {{ excluded?: boolean, valid?: boolean, r: number|null, label?: string }} a
+ * @param {{ excluded?: boolean, valid?: boolean, r: number|null, label?: string }} b
+ * @returns {number}
+ */
+function compareCorrelationResults(a, b) {
+    if (a.excluded !== b.excluded) return a.excluded ? 1 : -1;
+
+    const aHasR = a.r != null && Number.isFinite(a.r);
+    const bHasR = b.r != null && Number.isFinite(b.r);
+    if (aHasR !== bHasR) return aHasR ? -1 : 1;
+
+    if (aHasR && bHasR) {
+        const absDiff = Math.abs(b.r) - Math.abs(a.r);
+        if (absDiff !== 0) return absDiff;
+        const signedDiff = b.r - a.r;
+        if (signedDiff !== 0) return signedDiff;
+    }
+
+    return (a.label || '').localeCompare(b.label || '');
+}
+
+/**
+ * @param {Array<{ excluded?: boolean, valid?: boolean, r: number|null, label?: string }>} results
+ * @returns {Array}
+ */
+function sortCorrelationResults(results) {
+    return [...results].sort(compareCorrelationResults);
+}
+
 function computeCorrelations(rows, metricIds, targetKey = 'wins') {
     const target = getCorrelationTarget(targetKey);
     const targetValues = rows.map((row) => row[target.key]);
 
-    return metricIds.map((id) => {
+    const results = metricIds.map((id) => {
         const metric = METRICS_BY_ID[id];
         if (!metric) {
             return {
@@ -558,6 +605,8 @@ function computeCorrelations(rows, metricIds, targetKey = 'wins') {
             excluded: false,
         };
     });
+
+    return sortCorrelationResults(results);
 }
 
 function getMetricCategories() {
@@ -575,4 +624,6 @@ export {
     computeCorrelations,
     getCorrelationTarget,
     getMetricCategories,
+    sortCorrelationResults,
+    compareCorrelationResults,
 };

@@ -669,6 +669,101 @@ runner.test('computeCorrelations ranks scoring metrics against wins', () => {
     }
 });
 
+runner.test('buildTeamSeasonRows aggregates roster metrics from matchup boxscores', () => {
+    const allSeasonsData = {
+        2024: {
+            mSettings: {
+                scheduleSettings: {
+                    numberOfRegularSeasonMatchups: 2,
+                    numberOfPlayoffTeams: 2,
+                    numberOfPlayoffMatchups: 1,
+                },
+            },
+            mStandings: {
+                entries: [
+                    { teamId: 1, overallWinLossTie: { wins: 1, losses: 1 } },
+                    { teamId: 2, overallWinLossTie: { wins: 1, losses: 1 } },
+                ],
+            },
+            mTeam: [
+                { id: 1, ownerName: 'Alice Manager' },
+                { id: 2, ownerName: 'Bob Manager' },
+            ],
+            mMatchup: {
+                schedule: [
+                    {
+                        matchupPeriodId: 1,
+                        homeTeamId: 1,
+                        awayTeamId: 2,
+                        homeScore: 110,
+                        awayScore: 90,
+                        homeRoster: [
+                            { id: 101, totalPoints: 25, rosteredPosition: 'QB' },
+                            { id: 102, totalPoints: 15, rosteredPosition: 'RB' },
+                        ],
+                        awayRoster: [
+                            { id: 201, totalPoints: 20, rosteredPosition: 'QB' },
+                            { id: 202, totalPoints: 10, rosteredPosition: 'WR' },
+                        ],
+                    },
+                    {
+                        matchupPeriodId: 2,
+                        homeTeamId: 2,
+                        awayTeamId: 1,
+                        homeScore: 100,
+                        awayScore: 95,
+                        homeRoster: [
+                            { id: 201, totalPoints: 22, rosteredPosition: 'QB' },
+                            { id: 203, totalPoints: 12, rosteredPosition: 'TE' },
+                        ],
+                        awayRoster: [
+                            { id: 101, totalPoints: 18, rosteredPosition: 'QB' },
+                            { id: 102, totalPoints: 14, rosteredPosition: 'RB' },
+                        ],
+                    },
+                ],
+            },
+            mRoster: { rosters: [{ entries: [] }, { entries: [] }] },
+            mTransactions: { transactions: [] },
+            kona_player_info: {
+                players: [
+                    { id: 101, fullName: 'QB One', defaultPositionId: 1 },
+                    { id: 102, fullName: 'RB One', defaultPositionId: 2 },
+                    { id: 201, fullName: 'QB Two', defaultPositionId: 1 },
+                    { id: 202, fullName: 'WR One', defaultPositionId: 3 },
+                    { id: 203, fullName: 'TE One', defaultPositionId: 4 },
+                ],
+            },
+        },
+    };
+
+    const rows = buildTeamSeasonRows(allSeasonsData);
+    const alice = rows.find((row) => row.manager === 'Alice Manager');
+    const bob = rows.find((row) => row.manager === 'Bob Manager');
+
+    if (!alice || !bob) {
+        throw new Error(`Expected both managers, got ${JSON.stringify(rows.map((row) => row.manager))}`);
+    }
+    if (alice.metrics.rosterTotalPoints !== 72 || bob.metrics.rosterTotalPoints !== 64) {
+        throw new Error(`Unexpected roster totals: ${JSON.stringify({
+            alice: alice.metrics.rosterTotalPoints,
+            bob: bob.metrics.rosterTotalPoints,
+        })}`);
+    }
+    if (alice.metrics.topQBPoints !== 43 || bob.metrics.topQBPoints !== 42) {
+        throw new Error(`Unexpected QB totals: ${JSON.stringify({
+            alice: alice.metrics.topQBPoints,
+            bob: bob.metrics.topQBPoints,
+        })}`);
+    }
+    if (alice.metrics.topPlayerPoints !== 43 || bob.metrics.topPlayerPoints !== 42) {
+        throw new Error(`Unexpected best-player totals: ${JSON.stringify({
+            alice: alice.metrics.topPlayerPoints,
+            bob: bob.metrics.topPlayerPoints,
+        })}`);
+    }
+});
+
 // Run tests if in Node.js environment
 if (typeof window === 'undefined') {
     runner.run().then(success => {

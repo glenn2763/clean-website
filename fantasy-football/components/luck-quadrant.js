@@ -16,13 +16,13 @@ import {
     getMatchups,
     getTeams,
 } from '../utils.js';
-import { createChart } from '../charts.js';
+import { createChart, seriesColor, seriesFill } from '../charts.js';
 
 const QUADRANT_COLORS = {
     topLeft: 'rgba(255, 193, 7, 0.22)',
     topRight: 'rgba(76, 175, 80, 0.22)',
     bottomLeft: 'rgba(244, 67, 54, 0.18)',
-    bottomRight: 'rgba(118, 199, 192, 0.22)',
+    bottomRight: 'rgba(10, 122, 106, 0.22)',
 };
 
 const QUADRANT_LABELS = {
@@ -194,8 +194,8 @@ function renderLuckQuadrantChart(allSeasonsData) {
             manager: entry.manager,
             record: entry.record,
         })),
-        borderColor: `hsl(${idx * 33}, 65%, 42%)`,
-        backgroundColor: `hsla(${idx * 33}, 65%, 42%, 0.85)`,
+        borderColor: seriesColor(idx),
+        backgroundColor: seriesFill(idx, 0.85),
         pointStyle: 'rectRot',
         pointRadius: 6,
         pointHoverRadius: 8,

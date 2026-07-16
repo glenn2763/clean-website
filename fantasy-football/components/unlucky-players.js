@@ -13,7 +13,7 @@ import {
     getMatchups,
     getTeams,
 } from '../utils.js';
-import { createChart } from '../charts.js';
+import { createChart, seriesColor, seriesFill } from '../charts.js';
 import { createViolinChart, syncViolinFromLineChart } from '../violin-chart.js';
 
 function fadeHslColor(hslColor, alpha) {
@@ -193,8 +193,8 @@ function renderUnluckyPlayersChart(allSeasonsData) {
     const datasets = owners.map((owner, idx) => ({
         label: owner.name,
         data: seasons.map((season) => owner.data[season] ?? null),
-        borderColor: `hsl(${idx * 33}, 65%, 45%)`,
-        backgroundColor: `hsla(${idx * 33}, 65%, 45%, 0.08)`,
+        borderColor: seriesColor(idx),
+        backgroundColor: seriesFill(idx, 0.08),
         borderWidth: 1.5,
         pointRadius: 2,
         pointHoverRadius: 5,
@@ -276,7 +276,7 @@ function renderUnluckyPlayersChart(allSeasonsData) {
             categories: owners.map((owner, idx) => ({
                 label: owner.name,
                 values: owner.relativeWeeklyValues,
-                color: `hsl(${idx * 33}, 65%, 45%)`,
+                color: seriesColor(idx),
             })),
         });
         syncViolinFromLineChart('pointsAgainstViolin', chart);

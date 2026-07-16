@@ -1,27 +1,15 @@
 /**
- * Main Entry Point
- * Initializes the fantasy football stats page
+ * Main Entry Point — Field Report
+ * Scope filter + thematic hub navigation
  */
 
 import { fetchAllLeagueData, fetchAllSeasons, fetchAvailableSeasons, clearCache } from './api.js';
 import { getActiveSeasons } from './utils.js';
-import { renderVisualizations } from './components/index.js';
+import { renderHub, destroyAllCharts } from './components/index.js';
 import { refreshAllCharts } from './charts.js';
 
-const ANALYSIS_MODES = {
-    single: {
-        label: 'Single Season',
-        description: 'Deep dive into one season — weekly trends, matchups, and roster activity.',
-        actionLabel: 'Analyze Season',
-        loadingLabel: 'Loading season data…',
-    },
-    multi: {
-        label: 'League History',
-        description: 'Compare trends across every available season — playoffs, luck, and scoring over time.',
-        actionLabel: 'Analyze All Seasons',
-        loadingLabel: 'Loading all seasons…',
-    },
-};
+const HUBS = ['pulse', 'scoring', 'luck', 'matchups', 'wire', 'roster', 'lab'];
+const DEFAULT_HUB = 'pulse';
 
 const LEAGUE_PRESETS = {
     37892: 'Domination League',
@@ -37,23 +25,25 @@ function init() {
     const leagueIdInput = document.getElementById('league-id');
     const customLeaguePanel = document.getElementById('custom-league-panel');
     const seasonSelect = document.getElementById('season-select');
+    const scopeSelect = document.getElementById('scope-select');
+    const seasonScopePanel = document.getElementById('season-scope-panel');
+    const allScopePanel = document.getElementById('all-scope-panel');
     const loadingEl = document.getElementById('loading');
     const loadingTextEl = document.getElementById('loading-text');
     const errorEl = document.getElementById('error');
     const contentEl = document.getElementById('content');
     const resultsBannerEl = document.getElementById('results-banner');
-    const modeDescriptionEl = document.getElementById('mode-description');
     const multiSeasonSummaryEl = document.getElementById('multi-season-summary');
-    const modeToggle = document.getElementById('mode-toggle');
+    const hubNav = document.getElementById('hub-nav');
 
     let availableSeasons = [];
     let seasonsForLeagueId = null;
     let seasonLoadToken = 0;
-    let analysisMode = 'single';
-
-    function getSelectedMode() {
-        return modeToggle.querySelector('input[name="analysis-mode"]:checked')?.value || 'single';
-    }
+    let activeHub = DEFAULT_HUB;
+    let currentData = null;
+    /** @type {'season'|'all'|null} */
+    let currentScopeType = null;
+    const renderedHubs = new Set();
 
     function getLeagueId() {
         if (leagueSelect.value === 'custom') {
@@ -70,6 +60,10 @@ function init() {
         return leagueSelect.value === 'custom';
     }
 
+    function getScopeType() {
+        return scopeSelect.value === 'all' ? 'all' : 'season';
+    }
+
     function updateLeagueUI() {
         const custom = isCustomLeagueSelected();
         customLeaguePanel.classList.toggle('hidden', !custom);
@@ -78,20 +72,14 @@ function init() {
         }
     }
 
-    function updateModeUI() {
-        analysisMode = getSelectedMode();
-        const config = ANALYSIS_MODES[analysisMode];
-
-        document.body.dataset.analysisMode = analysisMode;
-        modeDescriptionEl.textContent = config.description;
-        analyzeBtn.textContent = config.actionLabel;
-
-        const singlePanel = document.getElementById('single-season-panel');
-        const multiPanel = document.getElementById('multi-season-panel');
-        if (singlePanel) singlePanel.classList.toggle('hidden', analysisMode !== 'single');
-        if (multiPanel) multiPanel.classList.toggle('hidden', analysisMode !== 'multi');
-
+    function updateScopeUI() {
+        const scopeType = getScopeType();
+        document.body.dataset.scope = scopeType;
+        seasonScopePanel.classList.toggle('hidden', scopeType !== 'season');
+        allScopePanel.classList.toggle('hidden', scopeType !== 'all');
+        analyzeBtn.textContent = scopeType === 'all' ? 'Analyze All Seasons' : 'Analyze Season';
         updateMultiSeasonSummary();
+        applyScopeVisibility();
     }
 
     function updateMultiSeasonSummary() {
@@ -108,7 +96,7 @@ function init() {
         const newest = availableSeasons[0];
         multiSeasonSummaryEl.textContent = availableSeasons.length === 1
             ? `Only ${newest} is available for this league.`
-            : `${availableSeasons.length} seasons (${oldest}–${newest}) will be compared. Data is saved locally after the first load.`;
+            : `${availableSeasons.length} seasons (${oldest}–${newest}). Data is saved locally after the first load.`;
     }
 
     function populateSeasonSelect(seasons) {
@@ -125,21 +113,21 @@ function init() {
         });
     }
 
-    function showResultsBanner(mode, seasons, leagueId) {
+    function showResultsBanner(scopeType, seasons, leagueId) {
         const sorted = [...seasons].sort();
         const leagueLabel = getLeagueLabel(leagueId);
         let message;
 
-        if (mode === 'single') {
+        if (scopeType === 'season') {
             message = sorted.length === 1
-                ? `${leagueLabel} — ${sorted[0]} season analysis`
-                : `${leagueLabel} — single-season analysis`;
+                ? `${leagueLabel} — ${sorted[0]}`
+                : `${leagueLabel} — season analysis`;
         } else if (sorted.length < 2) {
             message = sorted.length === 1
-                ? `${leagueLabel} — ${sorted[0]} only (season comparison needs 2+ seasons)`
-                : `${leagueLabel} — league history analysis`;
+                ? `${leagueLabel} — ${sorted[0]} only (some hubs need 2+ seasons)`
+                : `${leagueLabel} — all seasons`;
         } else {
-            message = `${leagueLabel} — comparing ${sorted.length} seasons (${sorted[0]}–${sorted[sorted.length - 1]})`;
+            message = `${leagueLabel} — ${sorted.length} seasons (${sorted[0]}–${sorted[sorted.length - 1]})`;
         }
 
         resultsBannerEl.textContent = message;
@@ -165,11 +153,98 @@ function init() {
         return seasons;
     }
 
-    function showViewPanels(mode) {
-        const singleView = document.getElementById('single-season-view');
-        const multiView = document.getElementById('multi-season-view');
-        if (singleView) singleView.classList.toggle('hidden', mode !== 'single');
-        if (multiView) multiView.classList.toggle('hidden', mode !== 'multi');
+    /**
+     * Show/hide sections by data-scope and empty-state CTAs based on loaded data.
+     */
+    function applyScopeVisibility() {
+        const scopeType = currentScopeType || getScopeType();
+        const seasonCount = currentData ? getActiveSeasons(currentData).length : 0;
+        const hasMulti = seasonCount >= 2;
+        const hasAnyData = Boolean(currentData);
+
+        document.querySelectorAll('.hub-panel .analysis-section[data-scope]').forEach((section) => {
+            const sectionScope = section.getAttribute('data-scope');
+            let visible = false;
+            if (!hasAnyData) {
+                visible = false;
+            } else if (sectionScope === 'season') {
+                visible = scopeType === 'season';
+            } else if (sectionScope === 'all') {
+                visible = scopeType === 'all' && hasMulti;
+            } else {
+                visible = sectionScope === 'both';
+            }
+            section.classList.toggle('hidden', !visible);
+        });
+
+        // Empty states when multi-year data is required but unavailable
+        document.querySelectorAll('.scope-empty').forEach((el) => {
+            const key = el.getAttribute('data-empty-for');
+            let show = false;
+
+            if (!hasAnyData) {
+                show = false;
+            } else if (key === 'luck' || key === 'lab') {
+                show = scopeType === 'season' || (scopeType === 'all' && !hasMulti);
+            } else if (key.endsWith('-all')) {
+                show = scopeType === 'all' && !hasMulti;
+            }
+
+            const panel = el.closest('.hub-panel');
+            const inActiveHub = panel && !panel.classList.contains('hidden');
+            el.hidden = !(show && inActiveHub);
+        });
+    }
+
+    function setActiveHub(hubId, { updateHash = true } = {}) {
+        if (!HUBS.includes(hubId)) hubId = DEFAULT_HUB;
+        activeHub = hubId;
+
+        document.querySelectorAll('.hub-panel').forEach((panel) => {
+            const isActive = panel.getAttribute('data-hub-panel') === hubId;
+            panel.classList.toggle('hidden', !isActive);
+            if (isActive) {
+                panel.classList.remove('hub-panel-enter');
+                // Retrigger enter animation
+                void panel.offsetWidth;
+                panel.classList.add('hub-panel-enter');
+            }
+        });
+
+        hubNav.querySelectorAll('.hub-btn').forEach((btn) => {
+            const isCurrent = btn.dataset.hub === hubId;
+            btn.setAttribute('aria-current', isCurrent ? 'page' : 'false');
+            btn.classList.toggle('is-active', isCurrent);
+        });
+
+        if (updateHash) {
+            const url = new URL(window.location.href);
+            url.hash = hubId;
+            history.replaceState(null, '', url);
+        }
+
+        applyScopeVisibility();
+        ensureHubRendered(hubId);
+    }
+
+    function ensureHubRendered(hubId) {
+        if (!currentData || !currentScopeType) return;
+
+        if (!renderedHubs.has(hubId)) {
+            renderHub(hubId, currentScopeType, currentData);
+            renderedHubs.add(hubId);
+        }
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                refreshAllCharts();
+            });
+        });
+    }
+
+    function hubFromHash() {
+        const hash = window.location.hash.replace(/^#/, '');
+        return HUBS.includes(hash) ? hash : DEFAULT_HUB;
     }
 
     async function loadAvailableSeasons() {
@@ -228,10 +303,17 @@ function init() {
         }
     }
 
-    async function runAnalysis() {
+    /**
+     * @param {{ forceAll?: boolean }} [opts]
+     */
+    async function runAnalysis(opts = {}) {
         const leagueId = getLeagueId();
-        const mode = getSelectedMode();
-        const config = ANALYSIS_MODES[mode];
+        const scopeType = opts.forceAll ? 'all' : getScopeType();
+
+        if (opts.forceAll) {
+            scopeSelect.value = 'all';
+            updateScopeUI();
+        }
 
         if (!leagueId) {
             errorEl.textContent = isCustomLeagueSelected()
@@ -241,7 +323,7 @@ function init() {
             return;
         }
 
-        loadingTextEl.textContent = config.loadingLabel;
+        loadingTextEl.textContent = scopeType === 'all' ? 'Loading all seasons…' : 'Loading season data…';
         loadingEl.classList.remove('hidden');
         errorEl.classList.add('hidden');
         contentEl.classList.add('hidden');
@@ -250,7 +332,7 @@ function init() {
         try {
             let allSeasonsData;
 
-            if (mode === 'multi') {
+            if (scopeType === 'all') {
                 loadingTextEl.textContent = 'Loading season list…';
                 const seasons = await ensureSeasonsForLeague(leagueId);
                 if (!seasons.length) {
@@ -271,18 +353,20 @@ function init() {
                 allSeasonsData = { [season]: data };
             }
 
-            showViewPanels(mode);
-            contentEl.classList.remove('hidden');
-            const bannerSeasons = mode === 'multi' ? getActiveSeasons(allSeasonsData) : Object.keys(allSeasonsData);
-            showResultsBanner(mode, bannerSeasons, leagueId);
+            currentData = allSeasonsData;
+            currentScopeType = scopeType;
+            renderedHubs.clear();
+            destroyAllCharts();
 
-            // Wait for layout so canvases have real dimensions before Chart.js measures them.
+            contentEl.classList.remove('hidden');
+            const bannerSeasons = getActiveSeasons(allSeasonsData);
+            showResultsBanner(scopeType, bannerSeasons, leagueId);
+
             await new Promise((resolve) => {
                 requestAnimationFrame(() => requestAnimationFrame(resolve));
             });
 
-            renderVisualizations(mode, allSeasonsData);
-            refreshAllCharts();
+            setActiveHub(activeHub || hubFromHash(), { updateHash: true });
         } catch (error) {
             errorEl.textContent = `Error: ${error.message}. Make sure the server is running and the league ID is correct.`;
             errorEl.classList.remove('hidden');
@@ -291,8 +375,24 @@ function init() {
         }
     }
 
-    analyzeBtn.addEventListener('click', runAnalysis);
-    modeToggle.addEventListener('change', updateModeUI);
+    analyzeBtn.addEventListener('click', () => runAnalysis());
+
+    hubNav.addEventListener('click', (event) => {
+        const btn = event.target.closest('.hub-btn');
+        if (!btn) return;
+        setActiveHub(btn.dataset.hub);
+    });
+
+    document.addEventListener('click', (event) => {
+        const loadBtn = event.target.closest('.load-all-seasons-btn');
+        if (!loadBtn) return;
+        runAnalysis({ forceAll: true });
+    });
+
+    window.addEventListener('hashchange', () => {
+        if (!currentData) return;
+        setActiveHub(hubFromHash(), { updateHash: false });
+    });
 
     const clearCacheBtn = document.getElementById('clear-cache-btn');
     if (clearCacheBtn) {
@@ -307,6 +407,14 @@ function init() {
         loadAvailableSeasons();
     });
 
+    scopeSelect.addEventListener('change', () => {
+        updateScopeUI();
+        // If data already loaded and user switches scope, re-fetch for the new scope
+        if (currentData) {
+            runAnalysis();
+        }
+    });
+
     leagueIdInput.addEventListener('input', scheduleSeasonLoad);
     leagueIdInput.addEventListener('change', loadAvailableSeasons);
 
@@ -316,9 +424,17 @@ function init() {
         }
     });
 
-    updateModeUI();
+    activeHub = hubFromHash();
+    updateScopeUI();
     updateLeagueUI();
     loadAvailableSeasons();
+
+    // Sync hub button state before first analyze
+    hubNav.querySelectorAll('.hub-btn').forEach((btn) => {
+        const isCurrent = btn.dataset.hub === activeHub;
+        btn.setAttribute('aria-current', isCurrent ? 'page' : 'false');
+        btn.classList.toggle('is-active', isCurrent);
+    });
 }
 
 if (document.readyState === 'loading') {

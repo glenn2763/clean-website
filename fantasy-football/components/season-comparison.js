@@ -4,7 +4,104 @@
  */
 
 import { buildOwnerMap, getActiveSeasons, getOwnerKey, getOwnerLabel, getTeams } from '../utils.js';
-import { createChart } from '../charts.js';
+import { createChart, seriesColor, seriesFill } from '../charts.js';
+
+/**
+ * Build owner → per-season records for comparison views.
+ * @param {Object} allSeasonsData
+ * @returns {{ seasons: number[], ownerMap: Object, ownerSeasons: Object, ownerList: string[] }}
+ */
+function buildSeasonComparisonModel(allSeasonsData) {
+    const seasons = getActiveSeasons(allSeasonsData);
+    const ownerMap = buildOwnerMap(allSeasonsData);
+    const ownerSeasons = {};
+
+    seasons.forEach((season) => {
+        const data = allSeasonsData[season];
+        const standings = data?.mStandings;
+        const teams = getTeams(data);
+
+        if (!standings || !Array.isArray(standings.entries)) return;
+
+        standings.entries.forEach((entry) => {
+            const team = teams.find((t) => t.id === entry.teamId);
+            if (!team) return;
+
+            const ownerKey = getOwnerKey(team);
+            if (!ownerSeasons[ownerKey]) {
+                ownerSeasons[ownerKey] = {};
+            }
+            ownerSeasons[ownerKey][season] = {
+                wins: entry.overallWinLossTie?.wins || 0,
+                losses: entry.overallWinLossTie?.losses || 0,
+                pointsFor: entry.overallPointsFor || 0,
+            };
+        });
+    });
+
+    const ownerList = Object.keys(ownerSeasons).sort((a, b) => {
+        const totalA = seasons.reduce((sum, season) => sum + (ownerSeasons[a][season]?.wins || 0), 0);
+        const totalB = seasons.reduce((sum, season) => sum + (ownerSeasons[b][season]?.wins || 0), 0);
+        return totalB - totalA;
+    });
+
+    return { seasons, ownerMap, ownerSeasons, ownerList };
+}
+
+/**
+ * Compact career W-L totals for the Pulse hub.
+ * @param {Object} allSeasonsData
+ */
+function renderCareerSnapshot(allSeasonsData) {
+    const snapshotEl = document.getElementById('pulse-career-snapshot');
+    if (!snapshotEl) return;
+
+    const { seasons, ownerMap, ownerSeasons, ownerList } = buildSeasonComparisonModel(allSeasonsData);
+    if (!seasons.length) {
+        snapshotEl.innerHTML = '<p class="empty-copy">No completed seasons with game data yet.</p>';
+        return;
+    }
+
+    snapshotEl.innerHTML = `
+        <table class="career-snapshot-table">
+            <thead>
+                <tr>
+                    <th>Manager</th>
+                    <th>Seasons</th>
+                    <th>Record</th>
+                    <th>Win %</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${ownerList.map((ownerKey) => {
+                    const name = getOwnerLabel(ownerKey, ownerMap);
+                    const totals = seasons.reduce(
+                        (acc, season) => {
+                            const record = ownerSeasons[ownerKey][season];
+                            if (!record) return acc;
+                            return {
+                                wins: acc.wins + record.wins,
+                                losses: acc.losses + record.losses,
+                                seasons: acc.seasons + 1,
+                            };
+                        },
+                        { wins: 0, losses: 0, seasons: 0 }
+                    );
+                    const games = totals.wins + totals.losses;
+                    const winPct = games ? ((totals.wins / games) * 100).toFixed(1) : '—';
+                    return `
+                        <tr>
+                            <td>${name}</td>
+                            <td class="mono">${totals.seasons}</td>
+                            <td class="mono">${totals.wins}-${totals.losses}</td>
+                            <td class="mono">${winPct}${games ? '%' : ''}</td>
+                        </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
 
 function fadeHslColor(hslColor, alpha) {
     if (hslColor.startsWith('hsla(')) {
@@ -110,49 +207,17 @@ function renderSeasonComparison(allSeasonsData) {
     const tableEl = document.getElementById('season-comparison-table');
     if (!canvas || !tableEl) return;
 
-    const seasons = getActiveSeasons(allSeasonsData);
+    const { seasons, ownerMap, ownerSeasons, ownerList } = buildSeasonComparisonModel(allSeasonsData);
     if (seasons.length === 0) {
         tableEl.innerHTML = '<p>No completed seasons with game data yet.</p>';
         return;
     }
 
-    const ownerMap = buildOwnerMap(allSeasonsData);
-    const ownerSeasons = {};
-
-    seasons.forEach((season) => {
-        const data = allSeasonsData[season];
-        const standings = data?.mStandings;
-        const teams = getTeams(data);
-
-        if (!standings || !Array.isArray(standings.entries)) return;
-
-        standings.entries.forEach((entry) => {
-            const team = teams.find((t) => t.id === entry.teamId);
-            if (!team) return;
-
-            const ownerKey = getOwnerKey(team);
-            if (!ownerSeasons[ownerKey]) {
-                ownerSeasons[ownerKey] = {};
-            }
-            ownerSeasons[ownerKey][season] = {
-                wins: entry.overallWinLossTie?.wins || 0,
-                losses: entry.overallWinLossTie?.losses || 0,
-                pointsFor: entry.overallPointsFor || 0,
-            };
-        });
-    });
-
-    const ownerList = Object.keys(ownerSeasons).sort((a, b) => {
-        const totalA = seasons.reduce((sum, season) => sum + (ownerSeasons[a][season]?.wins || 0), 0);
-        const totalB = seasons.reduce((sum, season) => sum + (ownerSeasons[b][season]?.wins || 0), 0);
-        return totalB - totalA;
-    });
-
     const datasets = ownerList.map((ownerKey, idx) => ({
         label: getOwnerLabel(ownerKey, ownerMap),
         data: seasons.map((season) => ownerSeasons[ownerKey][season]?.wins ?? null),
-        borderColor: `hsl(${idx * 33}, 65%, 45%)`,
-        backgroundColor: `hsla(${idx * 33}, 65%, 45%, 0.08)`,
+        borderColor: seriesColor(idx),
+        backgroundColor: seriesFill(idx, 0.08),
         borderWidth: 1.5,
         pointRadius: 2,
         pointHoverRadius: 5,
@@ -270,4 +335,4 @@ function renderSeasonComparison(allSeasonsData) {
     };
 }
 
-export { renderSeasonComparison };
+export { renderSeasonComparison, renderCareerSnapshot };
