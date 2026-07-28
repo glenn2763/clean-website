@@ -44,8 +44,6 @@ body.dark-mode {
   --primary-color: var(--accent-primary); /* Added for icon project item */
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&display=swap');
-
 /* Basic Reset */
 * {
   margin: 0;
@@ -82,11 +80,18 @@ header .container {
     align-items: center;
 }
 
-header h1 {
+header .site-title {
   font-family: 'Montserrat', sans-serif;
-  /* margin-bottom: 0.5rem; */ /* Removed for better flex alignment */
   font-size: 2.2rem;
-  flex-shrink: 0; /* Prevent h1 from shrinking */
+  font-weight: 700;
+  flex-shrink: 0;
+  color: var(--text-on-dark-bg);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+header .site-title:hover {
+  color: var(--accent-primary);
 }
 
 nav ul {
@@ -118,6 +123,16 @@ nav a:hover {
   text-decoration: none;
 }
 
+nav a:focus-visible,
+header .site-title:focus-visible,
+.btn:focus-visible,
+.about-text a:focus-visible,
+.hobby-item a:focus-visible,
+.contact-resume-link a:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
 /* Footer Styles for positioning switch */
 footer .container.footer-content {
     display: flex;
@@ -128,22 +143,35 @@ footer .container.footer-content {
 /* New Theme Switch Styles for Footer */
 .theme-switch-footer {
   display: inline-block;
+  position: relative;
   cursor: pointer;
   user-select: none; /* Prevent text selection on click */
   /* margin-left: auto; */ /* Pushes to the right if footer content is simple */
 }
 
 .theme-switch-footer input {
-  display: none; /* Hide the actual checkbox */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.theme-switch-footer input:focus-visible + .icon-container {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
 }
 
 .theme-switch-footer .icon-container {
   display: flex; /* Align icons if needed, or use single icon */
   align-items: center;
   justify-content: center;
-  width: 40px;  /* Adjust size as needed */
-  height: 40px; /* Adjust size as needed */
-  font-size: 1.5rem; /* Icon size */
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background-color: var(--bg-secondary); /* Use a contrasting background */
   color: var(--text-primary);
@@ -157,6 +185,8 @@ footer .container.footer-content {
 
 .theme-switch-footer .sun-icon,
 .theme-switch-footer .moon-icon {
+  width: 1.5rem;
+  height: 1.5rem;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -190,71 +220,10 @@ section h2 {
   font-size: 2rem;
 }
 
-.project-grid, .experience-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-.project-item, .experience-item {
-  background: var(--bg-secondary);
-  padding: 1.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 4px 8px var(--shadow-color-light);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-}
-
-.experience-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.experience-item-title-role {
-  flex-grow: 1;
-}
-
-.experience-item-logo {
-  max-width: 80px;
-  max-height: 80px;
-  object-fit: contain;
-  border-radius: 5px;
-  align-self: flex-start;
-  flex-shrink: 0;
-}
-
-.project-item:hover, .experience-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px var(--shadow-color-medium);
-}
-
-.project-item h3, .experience-item h3 {
-  font-family: 'Montserrat', sans-serif;
-  color: var(--text-primary);
-  margin-bottom: 0.75rem;
-}
-
-.project-item a, .experience-item a {
-  color: var(--link-color);
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.project-item a:hover, .experience-item a:hover {
-  text-decoration: underline;
-}
-
-/* Ensure buttons within project items retain button styling */
-.project-item a.btn {
-  color: var(--text-on-dark-bg); /* Override teal link color for buttons */
-}
-
-.project-item a.btn:hover {
-  text-decoration: none; /* Override general link hover underline for buttons */
-  /* Background color change is handled by .btn:hover */
+.project-featured-card:focus-visible,
+.project-coursework-row:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
 }
 
 footer {
@@ -267,7 +236,7 @@ footer {
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(var(--hero-overlay-start), var(--hero-overlay-end)), url('images/Citi Field.JPG');
+  background: linear-gradient(var(--hero-overlay-start), var(--hero-overlay-end)), url('images/citi-field.jpg');
   background-size: cover;
   background-position: center;
   color: var(--text-on-dark-bg);
@@ -313,7 +282,7 @@ footer {
 
 .hero p {
   font-size: 1.2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   max-width: 550px;
   margin-left: 0;
   margin-right: 0;
@@ -323,7 +292,8 @@ footer {
 
 .hero .btn {
   animation: slideInUp 0.8s ease-out 0.4s forwards;
-  opacity:0;
+  opacity: 0;
+  margin-bottom: 1.5rem;
 }
 
 .mets-tagline {
@@ -351,6 +321,23 @@ footer {
 @keyframes slideInUp {
   from { opacity: 0; transform: translateY(50px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-content,
+  .hero-profile-image,
+  .hero h1,
+  .hero p,
+  .hero .btn,
+  .mets-tagline {
+    animation: none;
+    opacity: 1;
+  }
+
+  .project-featured-card,
+  .theme-switch-footer .icon-container {
+    transition: none;
+  }
 }
 
 /* About Me Section */
@@ -400,6 +387,18 @@ footer {
   margin-bottom: 0.75rem;
 }
 
+.about-text a,
+.hobby-item a {
+  color: var(--link-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.about-text a:hover,
+.hobby-item a:hover {
+  color: var(--accent-primary-darker);
+}
+
 .hobby-item img {
   width: 100%;
   max-height: 220px;
@@ -413,26 +412,131 @@ footer {
   object-position: center 30%;
 }
 
-/* Experience Section */
-.experience-item h4 {
-  font-family: 'Open Sans', sans-serif;
-  font-weight: bold;
-  color: var(--text-secondary);
-  margin-bottom: 0;
-  font-size: 1rem;
+/* Experience Section — vertical timeline */
+.experience-timeline {
+  position: relative;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
-.experience-item ul, .experience-item-details {
+.experience-timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2px;
+  background: var(--border-color);
+}
+
+.experience-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 1.5rem;
+  padding-bottom: 2.5rem;
+}
+
+.experience-entry:last-child {
+  padding-bottom: 0;
+}
+
+.experience-entry-marker {
+  display: flex;
+  justify-content: center;
+}
+
+.experience-entry-dot {
+  width: 16px;
+  height: 16px;
+  margin-top: 0.4rem;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 0 4px var(--bg-primary);
+  position: relative;
+  z-index: 1;
+}
+
+.experience-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.experience-entry-company {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin-bottom: 0.15rem;
+}
+
+.experience-entry-location {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.experience-entry-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.experience-role {
+  margin-bottom: 0.75rem;
+}
+
+.experience-role-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.experience-entry-title {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.experience-entry-title--prior {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.experience-date-pill {
+  display: inline-block;
+  flex-shrink: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  white-space: nowrap;
+}
+
+.experience-entry-details {
   list-style-position: outside;
   padding-left: 1.2rem;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   color: var(--text-primary);
-  clear: both;
 }
 
-.experience-item ul li, .experience-item-details li {
+.experience-entry-details li {
   margin-bottom: 0.5rem;
   line-height: 1.6;
+}
+
+.experience-entry-details li:last-child {
+  margin-bottom: 0;
 }
 
 /* Projects Section */
@@ -443,32 +547,140 @@ footer {
   color: var(--text-primary);
 }
 
-.project-item img {
-  width: 100%;
-  /* height: 180px; */ /* Removing fixed height, let it be auto */
-  object-fit: cover; /* Ensures the image covers the area, might crop */
-  border-bottom: 1px solid var(--border-color); /* Changed to use theme variable */
-  border-radius: 8px 8px 0 0; /* Rounded corners only at the top */
+.projects-featured {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 960px;
+  margin: 0 auto 3rem;
 }
 
-/* Styling for project items that use an icon instead of an image */
-.project-item-icon-bg {
-  background-color: var(--card-bg); /* Match card background or choose a specific one */
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* Center content vertically */
-  align-items: center; /* Center content horizontally */
-  /* height: 200px; */ /* Removed fixed height, let content define it */
-  min-height: 150px; /* Added a min-height to ensure it doesn't collapse if there's no icon */
-  padding: 1.5rem; /* Add some padding for the icon area */
+.project-featured-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px var(--shadow-color-light);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.project-featured-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px var(--shadow-color-medium);
+  border-color: var(--accent-primary);
+}
+
+.project-featured-media {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
-  border-radius: 8px 8px 0 0;
 }
 
-.project-icon-container {
-  font-size: 4rem; /* Adjust icon size as needed */
-  color: var(--primary-color); /* Use primary color for the icon, or a specific color */
-  margin-bottom: 1rem; /* Space between icon and title */
+.project-featured-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.project-featured-media--empty {
+  background: linear-gradient(135deg, var(--bg-primary), var(--border-color));
+}
+
+.project-featured-body {
+  padding: 1.25rem;
+}
+
+.project-featured-body h3 {
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text-primary);
+  font-size: 1.15rem;
+  margin-bottom: 0.35rem;
+}
+
+.project-featured-tagline {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0.85rem;
+}
+
+.project-featured-link {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--link-color);
+}
+
+.projects-subheading {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: left;
+  max-width: 760px;
+  margin: 0 auto 1rem;
+  color: var(--text-secondary);
+}
+
+.project-coursework-list {
+  list-style: none;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.project-coursework-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto auto;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: color 0.2s ease;
+}
+
+.project-coursework-row:hover {
+  color: var(--link-color);
+}
+
+.project-coursework-row:hover .project-coursework-action {
+  color: var(--accent-primary);
+}
+
+.project-coursework-index {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.project-coursework-title {
+  font-weight: 600;
+}
+
+.project-coursework-meta {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  white-space: nowrap;
+}
+
+.project-coursework-action {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* Contact Section */
@@ -526,8 +738,8 @@ footer {
     flex-direction: column;
   }
 
-  header h1 {
-    margin-bottom: 1rem; /* Add space below title on mobile */
+  header .site-title {
+    margin-bottom: 1rem;
   }
 
   nav ul {
@@ -544,14 +756,8 @@ footer {
       margin-bottom: 0;
   }
 
-  .theme-switch {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-  }
-
-  header h1 {
-    font-size: 1.8rem; /* Smaller font size for mobile */
+  header .site-title {
+    font-size: 1.8rem;
   }
 
   .hero h1 {
@@ -597,20 +803,42 @@ footer {
     grid-template-columns: 1fr;
   }
 
-  .experience-item-header {
-    flex-direction: column-reverse;
-    align-items: center;
-    text-align: center;
+  .experience-role-heading {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .experience-item-logo {
-    margin-bottom: 1rem;
-  }
-
-  .experience-item-details {
-    padding-left: 0;
-    list-style-position: inside;
+  .experience-entry-header {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
     text-align: left;
+  }
+
+  .project-coursework-row {
+    grid-template-columns: 2rem 1fr;
+    grid-template-areas:
+      "index title"
+      "index meta"
+      "action action";
+    row-gap: 0.35rem;
+  }
+
+  .project-coursework-index {
+    grid-area: index;
+  }
+
+  .project-coursework-title {
+    grid-area: title;
+  }
+
+  .project-coursework-meta {
+    grid-area: meta;
+    justify-self: start;
+  }
+
+  .project-coursework-action {
+    grid-area: action;
+    padding-left: 2.75rem;
   }
 
   footer .container.footer-content {
