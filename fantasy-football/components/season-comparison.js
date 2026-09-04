@@ -4,7 +4,50 @@
  */
 
 import { buildOwnerMap, getActiveSeasons, getOwnerKey, getOwnerLabel, getTeams } from '../utils.js';
-import { createChart, seriesColor, seriesFill } from '../charts.js';
+import { createChart, getChart, seriesColor, seriesFill } from '../charts.js';
+
+const METRICS = {
+    points: {
+        key: 'points',
+        chartTitle: 'Regular-Season Points by Manager',
+        yAxisTitle: 'Regular-Season Points',
+        tableSeasonHeader: (season) => `${season} PF`,
+        tableTotalHeader: 'Total PF',
+        getValue: (record) => (record ? record.pointsFor : null),
+        formatSeasonCell: (record) => (record ? record.pointsFor.toFixed(0) : '-'),
+        formatTotal: (totals) => totals.pointsFor.toFixed(0),
+        tooltipLabel: (season, record) => {
+            if (!record) return `${season}: no data`;
+            return `${season}: ${record.pointsFor.toFixed(0)} pts (${record.wins}-${record.losses})`;
+        },
+        accumulateTotal: (totals, record) => ({
+            wins: totals.wins + (record?.wins || 0),
+            losses: totals.losses + (record?.losses || 0),
+            pointsFor: totals.pointsFor + (record?.pointsFor || 0),
+        }),
+        emptyTotal: () => ({ wins: 0, losses: 0, pointsFor: 0 }),
+    },
+    wins: {
+        key: 'wins',
+        chartTitle: 'Regular-Season Wins by Manager',
+        yAxisTitle: 'Regular-Season Wins',
+        tableSeasonHeader: (season) => `${season} W-L`,
+        tableTotalHeader: 'Total Record',
+        getValue: (record) => (record ? record.wins : null),
+        formatSeasonCell: (record) => (record ? `${record.wins}-${record.losses}` : '-'),
+        formatTotal: (totals) => `${totals.wins}-${totals.losses}`,
+        tooltipLabel: (season, record) => {
+            if (!record) return `${season}: no data`;
+            return `${season}: ${record.wins}-${record.losses} · ${record.pointsFor.toFixed(0)} pts`;
+        },
+        accumulateTotal: (totals, record) => ({
+            wins: totals.wins + (record?.wins || 0),
+            losses: totals.losses + (record?.losses || 0),
+            pointsFor: totals.pointsFor + (record?.pointsFor || 0),
+        }),
+        emptyTotal: () => ({ wins: 0, losses: 0, pointsFor: 0 }),
+    },
+};
 
 /**
  * Build owner → per-season records for comparison views.
@@ -40,67 +83,69 @@ function buildSeasonComparisonModel(allSeasonsData) {
     });
 
     const ownerList = Object.keys(ownerSeasons).sort((a, b) => {
-        const totalA = seasons.reduce((sum, season) => sum + (ownerSeasons[a][season]?.wins || 0), 0);
-        const totalB = seasons.reduce((sum, season) => sum + (ownerSeasons[b][season]?.wins || 0), 0);
-        return totalB - totalA;
+        const totalPfA = seasons.reduce((sum, season) => sum + (ownerSeasons[a][season]?.pointsFor || 0), 0);
+        const totalPfB = seasons.reduce((sum, season) => sum + (ownerSeasons[b][season]?.pointsFor || 0), 0);
+        return totalPfB - totalPfA || a.localeCompare(b);
     });
 
     return { seasons, ownerMap, ownerSeasons, ownerList };
 }
 
-/**
- * Compact career W-L totals for the Pulse hub.
- * @param {Object} allSeasonsData
- */
-function renderCareerSnapshot(allSeasonsData) {
-    const snapshotEl = document.getElementById('pulse-career-snapshot');
-    if (!snapshotEl) return;
+function formatPoints(value) {
+    return Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
 
-    const { seasons, ownerMap, ownerSeasons, ownerList } = buildSeasonComparisonModel(allSeasonsData);
-    if (!seasons.length) {
-        snapshotEl.innerHTML = '<p class="empty-copy">No completed seasons with game data yet.</p>';
+function buildPointLeaderStats(model) {
+    const { seasons, ownerMap, ownerSeasons, ownerList } = model;
+
+    const careerTotals = ownerList
+        .map((ownerKey) => ({
+            name: getOwnerLabel(ownerKey, ownerMap),
+            total: seasons.reduce((sum, season) => sum + (ownerSeasons[ownerKey][season]?.pointsFor || 0), 0),
+        }))
+        .filter((entry) => entry.total > 0)
+        .sort((a, b) => b.total - a.total);
+
+    let bestSeason = null;
+    seasons.forEach((season) => {
+        ownerList.forEach((ownerKey) => {
+            const record = ownerSeasons[ownerKey][season];
+            if (!record || record.pointsFor <= 0) return;
+            if (!bestSeason || record.pointsFor > bestSeason.pointsFor) {
+                bestSeason = {
+                    name: getOwnerLabel(ownerKey, ownerMap),
+                    pointsFor: record.pointsFor,
+                    season,
+                };
+            }
+        });
+    });
+
+    return {
+        careerTop: careerTotals.slice(0, 3),
+        bestSeason,
+    };
+}
+
+function renderPointLeaderStrip(model) {
+    const container = document.getElementById('season-comparison-leaders');
+    if (!container) return;
+
+    const { careerTop, bestSeason } = buildPointLeaderStats(model);
+    if (!careerTop.length && !bestSeason) {
+        container.innerHTML = '';
         return;
     }
 
-    snapshotEl.innerHTML = `
-        <table class="career-snapshot-table">
-            <thead>
-                <tr>
-                    <th>Manager</th>
-                    <th>Seasons</th>
-                    <th>Record</th>
-                    <th>Win %</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${ownerList.map((ownerKey) => {
-                    const name = getOwnerLabel(ownerKey, ownerMap);
-                    const totals = seasons.reduce(
-                        (acc, season) => {
-                            const record = ownerSeasons[ownerKey][season];
-                            if (!record) return acc;
-                            return {
-                                wins: acc.wins + record.wins,
-                                losses: acc.losses + record.losses,
-                                seasons: acc.seasons + 1,
-                            };
-                        },
-                        { wins: 0, losses: 0, seasons: 0 }
-                    );
-                    const games = totals.wins + totals.losses;
-                    const winPct = games ? ((totals.wins / games) * 100).toFixed(1) : '—';
-                    return `
-                        <tr>
-                            <td>${name}</td>
-                            <td class="mono">${totals.seasons}</td>
-                            <td class="mono">${totals.wins}-${totals.losses}</td>
-                            <td class="mono">${winPct}${games ? '%' : ''}</td>
-                        </tr>
-                    `;
-                }).join('')}
-            </tbody>
-        </table>
-    `;
+    const careerLine = careerTop.length
+        ? `<span><strong>Career PF</strong> ${careerTop.map((entry) => `${entry.name} ${formatPoints(entry.total)}`).join(' · ')}</span>`
+        : '';
+
+    const seasonLine = bestSeason
+        ? `<span><strong>Best season</strong> ${bestSeason.name} ${formatPoints(bestSeason.pointsFor)} (${bestSeason.season})</span>`
+        : '';
+
+    container.innerHTML = [careerLine, seasonLine].filter(Boolean).join('<span class="season-comp-leaders-divider">|</span>');
 }
 
 function fadeHslColor(hslColor, alpha) {
@@ -182,6 +227,38 @@ function createLineHighlightHandlers() {
     };
 }
 
+function computeYAxisBounds(chart, metricKey) {
+    const values = chart.data.datasets.flatMap((dataset, index) => {
+        if (!chart.isDatasetVisible(index)) return [];
+        return dataset.data.filter((value) => value != null && Number.isFinite(value));
+    });
+    if (!values.length) return { min: 0, max: 1 };
+
+    const dataMin = Math.min(...values);
+    const dataMax = Math.max(...values);
+    const span = Math.max(dataMax - dataMin, 1);
+    const padding = span * 0.06;
+
+    if (metricKey === 'points') {
+        return {
+            min: Math.floor((dataMin - padding) / 25) * 25,
+            max: Math.ceil((dataMax + padding) / 25) * 25,
+        };
+    }
+
+    return {
+        min: Math.max(0, Math.floor(dataMin - padding)),
+        max: Math.ceil(dataMax + padding),
+    };
+}
+
+function applyYAxisBounds(chart, metricKey) {
+    const { min, max } = computeYAxisBounds(chart, metricKey);
+    chart.options.scales.y.min = min;
+    chart.options.scales.y.max = max;
+    chart.options.scales.y.beginAtZero = false;
+}
+
 function syncTableLineVisibility(chart, tableEl) {
     tableEl.querySelectorAll('[data-dataset-index]').forEach((row) => {
         const index = Number(row.dataset.datasetIndex);
@@ -194,8 +271,87 @@ function toggleDatasetLine(chart, datasetIndex) {
     const handlers = chart.$lineHighlightHandlers;
     handlers?.resetHighlight(chart);
     chart.setDatasetVisibility(datasetIndex, !chart.isDatasetVisible(datasetIndex));
+    applyYAxisBounds(chart, chart.$seasonCompMetric || 'points');
     chart.update();
     syncTableLineVisibility(chart, chart.$seasonCompTable);
+}
+
+function buildComparisonTable(model, metricKey) {
+    const metric = METRICS[metricKey];
+    const { seasons, ownerMap, ownerSeasons, ownerList } = model;
+
+    return `
+        <table class="season-comp-table">
+            <thead>
+                <tr>
+                    <th>Manager</th>
+                    ${seasons.map((season) => `<th>${metric.tableSeasonHeader(season)}</th>`).join('')}
+                    <th>${metric.tableTotalHeader}</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${ownerList.map((ownerKey, datasetIndex) => {
+                    const name = getOwnerLabel(ownerKey, ownerMap);
+                    const total = seasons.reduce(
+                        (totals, season) => metric.accumulateTotal(totals, ownerSeasons[ownerKey][season]),
+                        metric.emptyTotal()
+                    );
+                    return `
+                        <tr data-dataset-index="${datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this line">
+                            <td>${name}</td>
+                            ${seasons.map((season) => {
+                                const record = ownerSeasons[ownerKey][season];
+                                return `<td>${metric.formatSeasonCell(record)}</td>`;
+                            }).join('')}
+                            <td><strong>${metric.formatTotal(total)}</strong></td>
+                        </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function applyComparisonMetric(chart, model, metricKey, tableEl) {
+    const metric = METRICS[metricKey];
+    const { seasons, ownerSeasons, ownerList } = model;
+
+    chart.data.datasets.forEach((dataset, index) => {
+        const ownerKey = ownerList[index];
+        dataset.data = seasons.map((season) => metric.getValue(ownerSeasons[ownerKey][season]));
+    });
+
+    chart.options.plugins.title.text = metric.chartTitle;
+    chart.options.scales.y.title.text = metric.yAxisTitle;
+    chart.$seasonCompMetric = metricKey;
+    applyYAxisBounds(chart, metricKey);
+    chart.update();
+
+    if (tableEl) {
+        tableEl.innerHTML = buildComparisonTable(model, metricKey);
+        syncTableLineVisibility(chart, tableEl);
+    }
+
+    document.querySelectorAll('.season-comp-metric-btn').forEach((button) => {
+        const active = button.dataset.metric === metricKey;
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+function setupMetricToggle(section, tableEl) {
+    if (section.dataset.metricToggleBound === 'true') return;
+    section.dataset.metricToggleBound = 'true';
+
+    section.addEventListener('click', (event) => {
+        const button = event.target.closest('.season-comp-metric-btn');
+        if (!button || button.getAttribute('aria-pressed') === 'true') return;
+
+        const chart = getChart('seasonComparison');
+        const model = chart?.$seasonCompModel;
+        if (!chart || !model) return;
+
+        applyComparisonMetric(chart, model, button.dataset.metric, tableEl);
+    });
 }
 
 /**
@@ -205,17 +361,24 @@ function toggleDatasetLine(chart, datasetIndex) {
 function renderSeasonComparison(allSeasonsData) {
     const canvas = document.getElementById('season-comparison-chart');
     const tableEl = document.getElementById('season-comparison-table');
+    const section = document.getElementById('section-season-comparison');
     if (!canvas || !tableEl) return;
 
-    const { seasons, ownerMap, ownerSeasons, ownerList } = buildSeasonComparisonModel(allSeasonsData);
+    const model = buildSeasonComparisonModel(allSeasonsData);
+    const { seasons, ownerMap, ownerSeasons, ownerList } = model;
+
     if (seasons.length === 0) {
         tableEl.innerHTML = '<p>No completed seasons with game data yet.</p>';
+        renderPointLeaderStrip(model);
         return;
     }
 
+    renderPointLeaderStrip(model);
+
+    const defaultMetric = METRICS.points;
     const datasets = ownerList.map((ownerKey, idx) => ({
         label: getOwnerLabel(ownerKey, ownerMap),
-        data: seasons.map((season) => ownerSeasons[ownerKey][season]?.wins ?? null),
+        data: seasons.map((season) => defaultMetric.getValue(ownerSeasons[ownerKey][season])),
         borderColor: seriesColor(idx),
         backgroundColor: seriesFill(idx, 0.08),
         borderWidth: 1.5,
@@ -242,7 +405,7 @@ function renderSeasonComparison(allSeasonsData) {
             },
             onHover: highlightHandlers.onHover,
             plugins: {
-                title: { display: true, text: 'Regular-Season Wins by Manager' },
+                title: { display: true, text: defaultMetric.chartTitle },
                 legend: {
                     position: 'bottom',
                     onClick: highlightHandlers.legend.onClick,
@@ -265,60 +428,30 @@ function renderSeasonComparison(allSeasonsData) {
                         label(context) {
                             const ownerKey = ownerList[context.datasetIndex];
                             const record = ownerSeasons[ownerKey][context.label];
-                            if (!record) return `${context.label}: no data`;
-                            return `${context.label}: ${record.wins}-${record.losses}`;
+                            const metric = METRICS[context.chart.$seasonCompMetric || 'points'];
+                            return metric.tooltipLabel(context.label, record);
                         },
                     },
                 },
             },
             scales: {
                 x: { title: { display: true, text: 'Season' } },
-                y: { beginAtZero: true, title: { display: true, text: 'Regular-Season Wins' } },
+                y: {
+                    beginAtZero: false,
+                    title: { display: true, text: defaultMetric.yAxisTitle },
+                },
             },
         },
     });
+    applyYAxisBounds(chart, 'points');
+    chart.update();
     highlightHandlers.attachLeaveReset(chart);
     chart.$lineHighlightHandlers = highlightHandlers;
     chart.$seasonCompTable = tableEl;
+    chart.$seasonCompModel = model;
+    chart.$seasonCompMetric = 'points';
 
-    tableEl.innerHTML = `
-        <table class="season-comp-table">
-            <thead>
-                <tr>
-                    <th>Manager</th>
-                    ${seasons.map((s) => `<th>${s} W-L</th>`).join('')}
-                    <th>Total Record</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${ownerList.map((ownerKey, datasetIndex) => {
-                    const name = getOwnerLabel(ownerKey, ownerMap);
-                    const totalRecord = seasons.reduce(
-                        (totals, season) => {
-                            const record = ownerSeasons[ownerKey][season];
-                            if (!record) return totals;
-                            return {
-                                wins: totals.wins + record.wins,
-                                losses: totals.losses + record.losses,
-                            };
-                        },
-                        { wins: 0, losses: 0 }
-                    );
-                    const totalRecordLabel = `${totalRecord.wins}-${totalRecord.losses}`;
-                    return `
-                        <tr data-dataset-index="${datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this line">
-                            <td>${name}</td>
-                            ${seasons.map((season) => {
-                                const record = ownerSeasons[ownerKey][season];
-                                return `<td>${record ? `${record.wins}-${record.losses}` : '-'}</td>`;
-                            }).join('')}
-                            <td><strong>${totalRecordLabel}</strong></td>
-                        </tr>
-                    `;
-                }).join('')}
-            </tbody>
-        </table>
-    `;
+    tableEl.innerHTML = buildComparisonTable(model, 'points');
 
     tableEl.onclick = (event) => {
         const row = event.target.closest('[data-dataset-index]');
@@ -333,6 +466,10 @@ function renderSeasonComparison(allSeasonsData) {
         event.preventDefault();
         toggleDatasetLine(chart, Number(row.dataset.datasetIndex));
     };
+
+    if (section) {
+        setupMetricToggle(section, tableEl);
+    }
 }
 
-export { renderSeasonComparison, renderCareerSnapshot };
+export { buildSeasonComparisonModel, renderSeasonComparison };

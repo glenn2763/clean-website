@@ -5,6 +5,9 @@
 import {
     buildTeamSeasonRows,
     computeCorrelations,
+    computeCombinedSignalCorrelations,
+    getLabMetricIds,
+    interpretSignalVerdict,
     linearRegression,
     pearsonCorrelation,
 } from '../metrics.js';
@@ -761,6 +764,100 @@ runner.test('buildTeamSeasonRows aggregates roster metrics from matchup boxscore
             alice: alice.metrics.topPlayerPoints,
             bob: bob.metrics.topPlayerPoints,
         })}`);
+    }
+});
+
+runner.test('getLabMetricIds excludes tautological roster and luck metrics', () => {
+    const labIds = getLabMetricIds();
+    const excluded = [
+        'rosterTotalPoints',
+        'topPlayerPoints',
+        'closeGameWinPct',
+        'avgPointsFor',
+    ];
+    excluded.forEach((id) => {
+        if (labIds.includes(id)) {
+            throw new Error(`Expected ${id} to be excluded from Lab metrics`);
+        }
+    });
+    if (!labIds.includes('projectedVsActual') || !labIds.includes('wireAdds')) {
+        throw new Error('Expected actionable metrics to remain in Lab set');
+    }
+});
+
+runner.test('interpretSignalVerdict labels stable same-season metrics as real signal', () => {
+    const verdict = interpretSignalVerdict(0.5, 0.45, 0.1);
+    if (verdict.label !== 'Real signal') {
+        throw new Error(`Expected Real signal, got ${verdict.label}`);
+    }
+});
+
+runner.test('interpretSignalVerdict labels weak metrics as likely noise', () => {
+    const verdict = interpretSignalVerdict(0.1, 0.05, 0.08);
+    if (verdict.label !== 'Likely noise') {
+        throw new Error(`Expected Likely noise, got ${verdict.label}`);
+    }
+});
+
+runner.test('computeCombinedSignalCorrelations returns all three modes per lab metric', () => {
+    const allSeasonsData = {
+        2023: {
+            mSettings: {
+                scheduleSettings: {
+                    numberOfRegularSeasonMatchups: 4,
+                    numberOfPlayoffTeams: 2,
+                    numberOfPlayoffMatchups: 1,
+                },
+            },
+            mStandings: { entries: [{ overallWinLossTie: { wins: 1, losses: 1 } }] },
+            mTeam: [
+                { id: 1, ownerName: 'Alice Manager' },
+                { id: 2, ownerName: 'Bob Manager' },
+            ],
+            mMatchup: {
+                schedule: [
+                    { matchupPeriodId: 1, homeTeamId: 1, awayTeamId: 2, homeScore: 110, awayScore: 90, homeProjectedScore: 100, awayProjectedScore: 95 },
+                    { matchupPeriodId: 2, homeTeamId: 2, awayTeamId: 1, homeScore: 100, awayScore: 95, homeProjectedScore: 98, awayProjectedScore: 97 },
+                    { matchupPeriodId: 3, homeTeamId: 1, awayTeamId: 2, homeScore: 120, awayScore: 85, homeProjectedScore: 105, awayProjectedScore: 90 },
+                    { matchupPeriodId: 4, homeTeamId: 2, awayTeamId: 1, homeScore: 105, awayScore: 100, homeProjectedScore: 100, awayProjectedScore: 99 },
+                ],
+            },
+            mRoster: { rosters: [{ entries: [] }, { entries: [] }] },
+            mTransactions: { transactions: [] },
+        },
+        2024: {
+            mSettings: {
+                scheduleSettings: {
+                    numberOfRegularSeasonMatchups: 4,
+                    numberOfPlayoffTeams: 2,
+                    numberOfPlayoffMatchups: 1,
+                },
+            },
+            mStandings: { entries: [{ overallWinLossTie: { wins: 1, losses: 1 } }] },
+            mTeam: [
+                { id: 1, ownerName: 'Alice Manager' },
+                { id: 2, ownerName: 'Bob Manager' },
+            ],
+            mMatchup: {
+                schedule: [
+                    { matchupPeriodId: 1, homeTeamId: 1, awayTeamId: 2, homeScore: 115, awayScore: 88, homeProjectedScore: 102, awayProjectedScore: 94 },
+                    { matchupPeriodId: 2, homeTeamId: 2, awayTeamId: 1, homeScore: 98, awayScore: 96, homeProjectedScore: 97, awayProjectedScore: 96 },
+                    { matchupPeriodId: 3, homeTeamId: 1, awayTeamId: 2, homeScore: 125, awayScore: 80, homeProjectedScore: 108, awayProjectedScore: 88 },
+                    { matchupPeriodId: 4, homeTeamId: 2, awayTeamId: 1, homeScore: 102, awayScore: 99, homeProjectedScore: 99, awayProjectedScore: 98 },
+                ],
+            },
+            mRoster: { rosters: [{ entries: [] }, { entries: [] }] },
+            mTransactions: { transactions: [] },
+        },
+    };
+
+    const results = computeCombinedSignalCorrelations(allSeasonsData);
+    if (!results.length) {
+        throw new Error('Expected combined signal results');
+    }
+    const projected = results.find((entry) => entry.id === 'projectedVsActual');
+    if (!projected?.sameSeason || !projected?.yoy || !projected?.splitHalf || !projected?.verdict?.label) {
+        throw new Error(`Expected full signal row for projectedVsActual, got ${JSON.stringify(projected)}`);
     }
 });
 

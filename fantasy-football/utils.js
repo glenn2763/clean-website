@@ -422,12 +422,12 @@ function getMatchupWinnerTeamId(matchup) {
 }
 
 /**
- * Read the champion from ESPN's winners-bracket championship game when available.
+ * Find ESPN's tagged winners-bracket championship game when available.
  * @param {Array} matchups
  * @param {{ regularSeasonWeeks: number, playoffWeekCount: number }} config
- * @returns {number|null}
+ * @returns {Object|null}
  */
-function getChampionFromWinnersBracketGame(matchups, config) {
+function findWinnersBracketChampionshipGame(matchups, config) {
     const firstPlayoffWeek = config.regularSeasonWeeks + 1;
     const lastPlayoffWeek = config.regularSeasonWeeks + config.playoffWeekCount;
 
@@ -441,11 +441,22 @@ function getChampionFromWinnersBracketGame(matchups, config) {
 
         if (championshipGames.length !== 1) continue;
 
-        const winnerId = getMatchupWinnerTeamId(championshipGames[0]);
-        if (winnerId != null) return winnerId;
+        return championshipGames[0];
     }
 
     return null;
+}
+
+/**
+ * Read the champion from ESPN's winners-bracket championship game when available.
+ * @param {Array} matchups
+ * @param {{ regularSeasonWeeks: number, playoffWeekCount: number }} config
+ * @returns {number|null}
+ */
+function getChampionFromWinnersBracketGame(matchups, config) {
+    const championshipGame = findWinnersBracketChampionshipGame(matchups, config);
+    if (!championshipGame) return null;
+    return getMatchupWinnerTeamId(championshipGame);
 }
 
 /**
@@ -455,9 +466,16 @@ function getChampionFromWinnersBracketGame(matchups, config) {
  * @param {number[]} seedTeamIds
  * @returns {number|null}
  */
-function simulateWinnersBracketChampion(matchups, config, seedTeamIds) {
+/**
+ * Simulate the winners bracket and identify the final championship game when possible.
+ * @param {Array} matchups
+ * @param {{ regularSeasonWeeks: number, playoffWeekCount: number }} config
+ * @param {number[]} seedTeamIds
+ * @returns {{ championshipGame: Object|null, bracketTeams: Set<number> }}
+ */
+function simulateWinnersBracket(matchups, config, seedTeamIds) {
     let bracketTeams = new Set(seedTeamIds);
-    let championId = null;
+    let championshipGame = null;
     const firstWeek = config.regularSeasonWeeks + 1;
     const lastWeek = config.regularSeasonWeeks + config.playoffWeekCount;
 
@@ -479,16 +497,30 @@ function simulateWinnersBracketChampion(matchups, config, seedTeamIds) {
         });
 
         bracketTeams = roundWinners;
-        if (roundWinners.size === 1) {
-            championId = [...roundWinners][0];
+        if (winnersGames.length === 1 && roundWinners.size === 1) {
+            championshipGame = winnersGames[0];
         }
     }
 
-    if (!championId && bracketTeams.size === 1) {
-        championId = [...bracketTeams][0];
-    }
+    return { championshipGame, bracketTeams };
+}
 
-    return championId;
+function simulateWinnersBracketChampion(matchups, config, seedTeamIds) {
+    const { championshipGame, bracketTeams } = simulateWinnersBracket(matchups, config, seedTeamIds);
+    if (championshipGame) return getMatchupWinnerTeamId(championshipGame);
+    if (bracketTeams.size === 1) return [...bracketTeams][0];
+    return null;
+}
+
+/**
+ * Fallback: infer the championship game by simulating the winners bracket.
+ * @param {Array} matchups
+ * @param {{ regularSeasonWeeks: number, playoffWeekCount: number }} config
+ * @param {number[]} seedTeamIds
+ * @returns {Object|null}
+ */
+function findSimulatedChampionshipGame(matchups, config, seedTeamIds) {
+    return simulateWinnersBracket(matchups, config, seedTeamIds).championshipGame;
 }
 
 /**
@@ -522,6 +554,26 @@ function analyzeSeasonPlayoffs(seasonData) {
     const championTeamId = getWinnersBracketChampion(matchups, config, seedTeamIds);
 
     return { config, seedTeamIds, championTeamId };
+}
+
+/**
+ * Resolve the completed championship game for a season, if one exists.
+ * @param {Object} seasonData - Single season data
+ * @returns {Object|null}
+ */
+function getSeasonChampionshipGame(seasonData) {
+    const matchups = getMatchups(seasonData);
+    if (!Array.isArray(matchups) || !matchups.length || !seasonData?.mSettings) {
+        return null;
+    }
+
+    const config = getPlayoffConfig(seasonData.mSettings);
+    const taggedGame = findWinnersBracketChampionshipGame(matchups, config);
+    if (taggedGame) return taggedGame;
+
+    const records = computeRegularSeasonRecords(matchups, config.regularSeasonWeeks);
+    const seedTeamIds = records.slice(0, config.playoffTeamCount).map((record) => record.teamId);
+    return findSimulatedChampionshipGame(matchups, config, seedTeamIds);
 }
 
 const WIRE_TRANSACTION_TYPES = new Set(['WAIVER', 'WAIVER_ERROR', 'FREEAGENT']);
@@ -1033,6 +1085,7 @@ export {
     getPlayoffConfig,
     computeRegularSeasonRecords,
     getWinnersBracketChampion,
+    getSeasonChampionshipGame,
     analyzeSeasonPlayoffs,
     getTransactions,
     hasTransactionView,

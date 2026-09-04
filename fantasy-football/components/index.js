@@ -14,7 +14,8 @@ import { renderPlayoffPerformance } from './playoff-performance.js';
 import { renderPositionalAnalysis } from './positional-analysis.js';
 import { renderWeeklyTrends } from './weekly-trends.js';
 import { renderMatchupAnalysis } from './matchup-analysis.js';
-import { renderSeasonComparison, renderCareerSnapshot } from './season-comparison.js';
+import { renderSeasonComparison } from './season-comparison.js';
+import { renderLeagueSnapshot } from './league-snapshot.js';
 import { renderWaiverWireSpecialist } from './waiver-wire-specialist.js';
 import { renderWinsCorrelation } from './wins-correlation.js';
 import { renderTradeAnalyzer, renderLeagueTradeNetwork } from './trade-analyzer.js';
@@ -33,7 +34,7 @@ function renderPulseHub(scopeType, allSeasonsData) {
 
     const seasons = getActiveSeasons(allSeasonsData);
     if (seasons.length >= 2) {
-        renderCareerSnapshot(allSeasonsData);
+        renderLeagueSnapshot(allSeasonsData);
         renderPlayoffPerformance(allSeasonsData);
     }
 }

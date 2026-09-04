@@ -88,7 +88,7 @@
             <div class="fr-stage">
                 <!-- PULSE -->
                 <div id="hub-pulse" class="hub-panel" data-hub-panel="pulse">
-                    <p class="hub-intro">League snapshot — standings for a season, or championship history across years.</p>
+                    <p class="hub-intro">League snapshot — standings for a season, or all-time highlights and championship history.</p>
 
                     <section class="analysis-section" data-scope="season">
                         <div class="section-chrome">
@@ -100,10 +100,10 @@
 
                     <section class="analysis-section" data-scope="all">
                         <div class="section-chrome">
-                            <h2>Career Records</h2>
-                            <p class="section-description">Regular-season win–loss totals by manager across loaded seasons</p>
+                            <h2>League Highlights</h2>
+                            <p class="section-description">All-time records, rivalries, and league lore</p>
                         </div>
-                        <div id="pulse-career-snapshot"></div>
+                        <div id="pulse-league-snapshot"></div>
                     </section>
 
                     <section class="analysis-section" data-scope="all">
@@ -118,10 +118,11 @@
                             <summary>Show table</summary>
                             <div id="playoff-table"></div>
                         </details>
+                        <div id="playoff-championships" class="playoff-championships"></div>
                     </section>
 
                     <div class="scope-empty" data-empty-for="pulse-all" hidden>
-                        <p>Playoffs and career records need every season loaded.</p>
+                        <p>Playoffs and league highlights need every season loaded.</p>
                         <button type="button" class="btn load-all-seasons-btn">Load all seasons</button>
                     </div>
                 </div>
@@ -178,9 +179,16 @@
                     <section class="analysis-section" id="section-season-comparison" data-scope="all">
                         <div class="section-chrome">
                             <h2>Regular-Season Comparison</h2>
-                            <p class="section-description">Wins by manager across seasons. Click a table row or legend to show or hide a line.</p>
+                            <p class="section-description">Points and wins by manager across seasons. Click a table row or legend to show or hide a line.</p>
+                            <div class="season-comp-controls">
+                                <div class="correlation-metric-toggle-group" role="group" aria-label="Chart metric">
+                                    <button type="button" class="correlation-toggle-btn season-comp-metric-btn" data-metric="points" aria-pressed="true">Points</button>
+                                    <button type="button" class="correlation-toggle-btn season-comp-metric-btn" data-metric="wins" aria-pressed="false">Wins</button>
+                                </div>
+                            </div>
                         </div>
                         <p class="section-unavailable-notice hidden">Need at least two seasons of data for this comparison.</p>
+                        <div id="season-comparison-leaders" class="season-comp-leaders"></div>
                         <div class="chart-container">
                             <canvas id="season-comparison-chart"></canvas>
                         </div>
@@ -364,7 +372,7 @@
 
                 <!-- LAB -->
                 <div id="hub-lab" class="hub-panel hidden" data-hub-panel="lab">
-                    <p class="hub-intro">Explore what correlates with winning — pick metrics and see Pearson correlations across manager-seasons.</p>
+                    <p class="hub-intro">Which stats track with scoring in a season — toggle metrics and explore the scatter plot.</p>
 
                     <div class="scope-empty" data-empty-for="lab" hidden>
                         <p>The Metric Correlator needs multiple seasons of data.</p>
@@ -374,16 +382,16 @@
                     <section class="analysis-section" id="section-wins-correlation" data-scope="all">
                         <div class="section-chrome">
                             <h2>Metric Correlator</h2>
-                            <p class="section-description">Correlate metrics with regular-season wins or total points scored. Each dot is one manager-season.</p>
+                            <p class="section-description">Does a metric move with regular-season points scored that same year? Each dot is one manager-season. Use +/− to toggle metrics; click a card for the scatter plot.</p>
                         </div>
                         <p class="section-unavailable-notice hidden">Need more season data for meaningful correlation.</p>
-                        <fieldset id="correlation-target-picker" class="correlation-target-picker" aria-label="Correlation outcome"></fieldset>
-                        <div id="correlation-metric-picker" class="correlation-metric-picker"></div>
-                        <div id="correlation-results-table"></div>
-                        <div class="chart-container chart-container-correlation">
-                            <label class="correlation-scatter-label" for="correlation-scatter-metric">Scatter plot metric</label>
-                            <select id="correlation-scatter-metric" class="correlation-scatter-select"></select>
-                            <canvas id="wins-correlation-scatter"></canvas>
+                        <div id="correlation-metric-toolbar" class="lab-metric-toolbar"></div>
+                        <div id="correlation-metric-cards" class="lab-metric-cards"></div>
+                        <div class="lab-scatter-stage">
+                            <div class="chart-container chart-container-correlation chart-container-lab">
+                                <canvas id="wins-correlation-scatter"></canvas>
+                            </div>
+                            <p id="correlation-scatter-empty" class="lab-scatter-empty" hidden>Select a metric card to explore the scatter plot.</p>
                         </div>
                         <p id="correlation-sample-note" class="subsection-description"></p>
                     </section>

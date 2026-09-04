@@ -218,10 +218,27 @@ function rosterMetricsFromEntries(entries, positionMap) {
     return { ...totals, ...byPosition };
 }
 
-function countTeamTrades(teamId, seasonData) {
-    return parseExecutedTrades(seasonData).filter((trade) =>
-        trade.sides.some((side) => side.teamId === teamId)
-    ).length;
+/**
+ * @param {Object} seasonData
+ * @param {number} teamId
+ * @param {Array} transactions
+ * @param {{ weekMin?: number|null, weekMax?: number|null }} [weekRange]
+ */
+function countTeamTradesInRange(teamId, seasonData, weekRange = {}) {
+    const { weekMin = null, weekMax = null } = weekRange;
+    return parseExecutedTrades(seasonData).filter((trade) => {
+        if (!trade.sides.some((side) => side.teamId === teamId)) return false;
+        if (weekMin == null && weekMax == null) return true;
+        const week = trade.week || 0;
+        if (weekMin != null && week < weekMin) return false;
+        if (weekMax != null && week > weekMax) return false;
+        return true;
+    }).length;
+}
+
+function countTeamTrades(teamId, seasonData, ctx = {}) {
+    if (ctx.partialSeason) return null;
+    return countTeamTradesInRange(teamId, seasonData, getTransactions(seasonData), ctx);
 }
 
 const METRICS = [
@@ -278,7 +295,8 @@ const METRICS = [
         label: 'Schedule difficulty',
         category: 'Schedule',
         description: 'Average opponent score vs league median that week (positive = tougher).',
-        compute(team, seasonData) {
+        compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             const relative = collectWeeklyRelativePointsAgainst(team.id, seasonData);
             if (!relative.length) return null;
             return calculateAverage(relative);
@@ -289,7 +307,8 @@ const METRICS = [
         label: 'Waiver/FA adds',
         category: 'Activity',
         description: 'Count of executed waiver and free-agent adds.',
-        compute(team, seasonData) {
+        compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             return countWireAddsAndDrops(getTransactions(seasonData), team.id).adds;
         },
     },
@@ -298,7 +317,8 @@ const METRICS = [
         label: 'Waiver/FA drops',
         category: 'Activity',
         description: 'Count of executed waiver and free-agent drops.',
-        compute(team, seasonData) {
+        compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             return countWireAddsAndDrops(getTransactions(seasonData), team.id).drops;
         },
     },
@@ -307,8 +327,9 @@ const METRICS = [
         label: 'Executed trades',
         category: 'Activity',
         description: 'Number of completed trades involving this team.',
-        compute(team, seasonData) {
-            return countTeamTrades(team.id, seasonData);
+        compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
+            return countTeamTrades(team.id, seasonData, ctx);
         },
     },
     {
@@ -339,6 +360,7 @@ const METRICS = [
         category: 'Roster',
         description: 'Sum of season fantasy points across the roster.',
         compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             return ctx.rosterMetrics.rosterTotalPoints;
         },
     },
@@ -348,6 +370,7 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest single-player season point total on roster.',
         compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             return ctx.rosterMetrics.topPlayerPoints;
         },
     },
@@ -357,6 +380,7 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest QB season points on roster.',
         compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             const value = ctx.rosterMetrics.topQBPoints;
             return value > 0 ? value : null;
         },
@@ -367,6 +391,7 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest RB season points on roster.',
         compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             const value = ctx.rosterMetrics.topRBPoints;
             return value > 0 ? value : null;
         },
@@ -377,6 +402,7 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest WR season points on roster.',
         compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             const value = ctx.rosterMetrics.topWRPoints;
             return value > 0 ? value : null;
         },
@@ -387,6 +413,7 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest TE season points on roster.',
         compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             const value = ctx.rosterMetrics.topTEPoints;
             return value > 0 ? value : null;
         },
@@ -397,6 +424,7 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest kicker season points on roster.',
         compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             const value = ctx.rosterMetrics.topKPoints;
             return value > 0 ? value : null;
         },
@@ -407,6 +435,7 @@ const METRICS = [
         category: 'Roster',
         description: 'Highest D/ST season points on roster.',
         compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
             const value = ctx.rosterMetrics.topDSTPoints;
             return value > 0 ? value : null;
         },
@@ -422,6 +451,62 @@ const DEFAULT_METRIC_IDS = [
     'projectedVsActual',
     'wireAdds',
 ];
+
+/** Hidden from Lab — tautological with points, luck-based, or not actionable */
+const LAB_EXCLUDED_METRIC_IDS = [
+    'avgPointsFor',
+    'totalPointsFor',
+    'rosterTotalPoints',
+    'topPlayerPoints',
+    'topQBPoints',
+    'topRBPoints',
+    'topWRPoints',
+    'topTEPoints',
+    'topKPoints',
+    'topDSTPoints',
+    'closeGameWinPct',
+    'avgWinMargin',
+];
+
+const LAB_DEFAULT_METRIC_IDS = [
+    'projectedVsActual',
+    'consistency',
+    'wireAdds',
+    'tradeCount',
+    'scheduleDifficulty',
+];
+
+const SIGNAL_STRONG_ABS_R = 0.35;
+const SIGNAL_WEAK_ABS_R = 0.2;
+const CORRELATION_TARGET_KEY = 'pointsFor';
+
+/** @type {Record<string, { key: string, label: string, shortLabel: string, description: string, dotLabel: string, yAxisTitle: string, directionMore: string, directionLess: string, integerYAxis: boolean, excludeMetricIds: string[] }>} */
+const CORRELATION_MODES = {
+    sameSeason: {
+        key: 'sameSeason',
+        label: 'Same season',
+        shortLabel: 'Same season',
+        description: 'When a manager ranks high on a metric in a season, do they also score more that same season?',
+        dotLabel: 'manager-season',
+        scatterXHint: 'Metric value that season',
+    },
+    yoy: {
+        key: 'yoy',
+        label: 'Year-over-year',
+        shortLabel: 'YoY carryover',
+        description: 'Does a metric in one season predict points scored the next season for the same manager?',
+        dotLabel: 'manager carryover',
+        scatterXHint: 'Metric in prior season',
+    },
+    splitHalf: {
+        key: 'splitHalf',
+        label: 'Split-half stability',
+        shortLabel: 'Split-half',
+        description: 'Is the metric stable within a season? Compare each manager\'s first half vs second half (~7 games each).',
+        dotLabel: 'manager-season half',
+        scatterXHint: 'First-half value',
+    },
+};
 
 /** @type {Record<string, { key: string, label: string, shortLabel: string, yAxisTitle: string, directionMore: string, directionLess: string, integerYAxis: boolean, excludeMetricIds: string[] }>} */
 const CORRELATION_TARGETS = {
@@ -447,6 +532,98 @@ const CORRELATION_TARGETS = {
     },
 };
 
+function getCorrelationMode(modeKey = 'sameSeason') {
+    return CORRELATION_MODES[modeKey] || CORRELATION_MODES.sameSeason;
+}
+
+function interpretCorrelationStrength(r) {
+    if (r == null || !Number.isFinite(r)) return '—';
+    const abs = Math.abs(r);
+    if (abs < 0.2) return 'Weak';
+    if (abs < 0.4) return 'Modest';
+    if (abs < 0.6) return 'Moderate';
+    if (abs < 0.8) return 'Strong';
+    return 'Very strong';
+}
+
+function formatRSquared(r) {
+    if (r == null || !Number.isFinite(r)) return '—';
+    return `${(r * r * 100).toFixed(0)}%`;
+}
+
+function filterMatchupsByWeek(matchups, weekMin, weekMax) {
+    return matchups.filter((matchup) => {
+        const week = matchup.matchupPeriodId || 0;
+        if (weekMin != null && week < weekMin) return false;
+        if (weekMax != null && week > weekMax) return false;
+        return true;
+    });
+}
+
+/**
+ * @param {string} season
+ * @param {Object} seasonData
+ * @param {Object} ownerMap
+ * @param {{ weekMin?: number|null, weekMax?: number|null }} [weekRange]
+ * @returns {Array<Object>}
+ */
+function buildRowsForSeason(season, seasonData, ownerMap, weekRange = {}) {
+    const { weekMin = null, weekMax = null } = weekRange;
+    const partialSeason = weekMin != null || weekMax != null;
+    const teams = getTeams(seasonData);
+    const allRegularMatchups = getRegularSeasonMatchups(seasonData);
+    const matchups = partialSeason
+        ? filterMatchupsByWeek(allRegularMatchups, weekMin, weekMax)
+        : allRegularMatchups;
+    const config = getPlayoffConfig(seasonData?.mSettings || {});
+    const recordByTeamId = new Map(
+        computeRegularSeasonRecords(matchups, config.regularSeasonWeeks).map((record) => [
+            record.teamId,
+            record,
+        ])
+    );
+    const positionMap = buildPlayerPositionMap(seasonData);
+    const rosterByTeam = buildSeasonRosterPointsByTeam(seasonData);
+    const rows = [];
+
+    teams.forEach((team, teamIndex) => {
+        const record = recordByTeamId.get(team.id);
+        if (!record || (record.wins === 0 && record.losses === 0 && record.ties === 0)) return;
+
+        const rosterEntries = getTeamRosterEntries(team, seasonData, teamIndex, rosterByTeam);
+        const rosterMetrics = rosterMetricsFromEntries(rosterEntries, positionMap);
+        const ctx = {
+            matchups,
+            teams,
+            record,
+            rosterMetrics,
+            partialSeason,
+        };
+
+        const ownerKey = getOwnerKey(team);
+        const row = {
+            ownerKey,
+            manager: getOwnerLabel(ownerKey, ownerMap),
+            season,
+            teamId: team.id,
+            wins: record.wins,
+            losses: record.losses,
+            ties: record.ties,
+            pointsFor: record.pointsFor,
+            metrics: {},
+        };
+
+        METRICS.forEach((metric) => {
+            const value = metric.compute(team, seasonData, ctx);
+            row.metrics[metric.id] = isValidNumber(value) ? value : null;
+        });
+
+        rows.push(row);
+    });
+
+    return rows;
+}
+
 /**
  * @param {Object} allSeasonsData
  * @returns {Array<Object>}
@@ -454,54 +631,79 @@ const CORRELATION_TARGETS = {
 function buildTeamSeasonRows(allSeasonsData) {
     const ownerMap = buildOwnerMap(allSeasonsData);
     const seasons = getActiveSeasons(allSeasonsData);
+
+    return seasons.flatMap((season) =>
+        buildRowsForSeason(season, allSeasonsData[season], ownerMap)
+    );
+}
+
+/**
+ * Prior-season metric vs next-season outcome for returning managers.
+ * @param {Object} allSeasonsData
+ * @returns {Array<Object>}
+ */
+function buildYoYRows(allSeasonsData) {
+    const sameSeasonRows = buildTeamSeasonRows(allSeasonsData);
+    const rowByOwnerSeason = new Map(
+        sameSeasonRows.map((row) => [`${row.ownerKey}|${row.season}`, row])
+    );
+
+    return sameSeasonRows.flatMap((row) => {
+        const nextSeason = String(Number(row.season) + 1);
+        const nextRow = rowByOwnerSeason.get(`${row.ownerKey}|${nextSeason}`);
+        if (!nextRow) return [];
+
+        return [{
+            ownerKey: row.ownerKey,
+            manager: row.manager,
+            season: `${row.season}→${nextSeason}`,
+            seasonFrom: row.season,
+            seasonTo: nextSeason,
+            teamId: row.teamId,
+            wins: nextRow.wins,
+            losses: nextRow.losses,
+            ties: nextRow.ties,
+            pointsFor: nextRow.pointsFor,
+            metrics: row.metrics,
+        }];
+    });
+}
+
+/**
+ * First-half vs second-half metric values within each manager-season.
+ * @param {Object} allSeasonsData
+ * @returns {Array<Object>}
+ */
+function buildSplitHalfRows(allSeasonsData) {
+    const ownerMap = buildOwnerMap(allSeasonsData);
+    const seasons = getActiveSeasons(allSeasonsData);
     const rows = [];
 
     seasons.forEach((season) => {
         const seasonData = allSeasonsData[season];
-        const teams = getTeams(seasonData);
-        const matchups = getRegularSeasonMatchups(seasonData);
-        const config = getPlayoffConfig(seasonData?.mSettings || {});
-        const recordByTeamId = new Map(
-            computeRegularSeasonRecords(getMatchups(seasonData), config.regularSeasonWeeks).map((record) => [
-                record.teamId,
-                record,
-            ])
-        );
-        const positionMap = buildPlayerPositionMap(seasonData);
-        const rosterByTeam = buildSeasonRosterPointsByTeam(seasonData);
+        const totalWeeks = getPlayoffConfig(seasonData?.mSettings || {}).regularSeasonWeeks;
+        if (totalWeeks < 2) return;
 
-        teams.forEach((team, teamIndex) => {
-            const record = recordByTeamId.get(team.id);
-            if (!record || (record.wins === 0 && record.losses === 0 && record.ties === 0)) return;
+        const mid = Math.floor(totalWeeks / 2);
+        const firstHalf = buildRowsForSeason(season, seasonData, ownerMap, { weekMin: 1, weekMax: mid });
+        const secondHalf = buildRowsForSeason(season, seasonData, ownerMap, {
+            weekMin: mid + 1,
+            weekMax: totalWeeks,
+        });
+        const secondHalfByTeam = new Map(secondHalf.map((row) => [row.teamId, row]));
 
-            const rosterEntries = getTeamRosterEntries(team, seasonData, teamIndex, rosterByTeam);
-            const rosterMetrics = rosterMetricsFromEntries(rosterEntries, positionMap);
-            const ctx = {
-                matchups,
-                teams,
-                record,
-                rosterMetrics,
-            };
+        firstHalf.forEach((firstRow) => {
+            const secondRow = secondHalfByTeam.get(firstRow.teamId);
+            if (!secondRow) return;
 
-            const ownerKey = getOwnerKey(team);
-            const row = {
-                ownerKey,
-                manager: getOwnerLabel(ownerKey, ownerMap),
+            rows.push({
+                ownerKey: firstRow.ownerKey,
+                manager: firstRow.manager,
                 season,
-                teamId: team.id,
-                wins: record.wins,
-                losses: record.losses,
-                ties: record.ties,
-                pointsFor: record.pointsFor,
-                metrics: {},
-            };
-
-            METRICS.forEach((metric) => {
-                const value = metric.compute(team, seasonData, ctx);
-                row.metrics[metric.id] = isValidNumber(value) ? value : null;
+                teamId: firstRow.teamId,
+                half1: firstRow.metrics,
+                half2: secondRow.metrics,
             });
-
-            rows.push(row);
         });
     });
 
@@ -509,10 +711,24 @@ function buildTeamSeasonRows(allSeasonsData) {
 }
 
 /**
- * @param {Array<Object>} rows
- * @param {string[]} metricIds
+ * @param {Object} allSeasonsData
+ * @param {string} modeKey
+ * @returns {Array<Object>}
+ */
+function buildCorrelationRows(allSeasonsData, modeKey = 'sameSeason') {
+    switch (modeKey) {
+        case 'yoy':
+            return buildYoYRows(allSeasonsData);
+        case 'splitHalf':
+            return buildSplitHalfRows(allSeasonsData);
+        default:
+            return buildTeamSeasonRows(allSeasonsData);
+    }
+}
+
+/**
  * @param {string} [targetKey='wins']
- * @returns {Array<{ id: string, label: string, category: string, r: number|null, n: number, direction: string, valid: boolean }>}
+ * @returns {Object}
  */
 function getCorrelationTarget(targetKey = 'wins') {
     return CORRELATION_TARGETS[targetKey] || CORRELATION_TARGETS.wins;
@@ -549,6 +765,21 @@ function sortCorrelationResults(results) {
     return [...results].sort(compareCorrelationResults);
 }
 
+function buildCorrelationResult(id, metric, { r, n, direction, excluded = false, valid = false }) {
+    return {
+        id,
+        label: metric?.label || id,
+        category: metric?.category || 'Unknown',
+        r,
+        rSquared: r != null ? r * r : null,
+        n,
+        direction,
+        strength: interpretCorrelationStrength(r),
+        valid,
+        excluded,
+    };
+}
+
 function computeCorrelations(rows, metricIds, targetKey = 'wins') {
     const target = getCorrelationTarget(targetKey);
     const targetValues = rows.map((row) => row[target.key]);
@@ -556,29 +787,20 @@ function computeCorrelations(rows, metricIds, targetKey = 'wins') {
     const results = metricIds.map((id) => {
         const metric = METRICS_BY_ID[id];
         if (!metric) {
-            return {
-                id,
-                label: id,
-                category: 'Unknown',
+            return buildCorrelationResult(id, null, {
                 r: null,
                 n: 0,
                 direction: '—',
-                valid: false,
-                excluded: false,
-            };
+            });
         }
 
         if (target.excludeMetricIds.includes(id)) {
-            return {
-                id,
-                label: metric.label,
-                category: metric.category,
+            return buildCorrelationResult(id, metric, {
                 r: null,
                 n: 0,
                 direction: 'Same as outcome',
-                valid: false,
                 excluded: true,
-            };
+            });
         }
 
         const metricValues = rows.map((row) => row.metrics[id]);
@@ -594,36 +816,200 @@ function computeCorrelations(rows, metricIds, targetKey = 'wins') {
                 : `Higher → ${target.directionLess}`;
         }
 
-        return {
-            id,
-            label: metric.label,
-            category: metric.category,
-            r,
-            n,
-            direction,
-            valid,
-            excluded: false,
-        };
+        return buildCorrelationResult(id, metric, { r, n, direction, valid });
     });
 
     return sortCorrelationResults(results);
+}
+
+/**
+ * Split-half repeatability: first-half metric vs second-half metric within each manager-season.
+ * @param {Array<Object>} rows
+ * @param {string[]} metricIds
+ * @returns {Array<Object>}
+ */
+function computeSplitHalfCorrelations(rows, metricIds) {
+    const results = metricIds.map((id) => {
+        const metric = METRICS_BY_ID[id];
+        if (!metric) {
+            return buildCorrelationResult(id, null, {
+                r: null,
+                n: 0,
+                direction: '—',
+            });
+        }
+
+        const firstHalfValues = rows.map((row) => row.half1?.[id] ?? null);
+        const secondHalfValues = rows.map((row) => row.half2?.[id] ?? null);
+        const result = pearsonCorrelation(firstHalfValues, secondHalfValues);
+        const n = result?.n ?? 0;
+        const r = result?.r ?? null;
+        const valid = n >= 5 && r != null;
+
+        let direction = '—';
+        if (valid && r !== 0) {
+            direction = r > 0 ? 'Stable across halves' : 'Regresses across halves';
+        }
+
+        return buildCorrelationResult(id, metric, { r, n, direction, valid });
+    });
+
+    return sortCorrelationResults(results);
+}
+
+/**
+ * @param {Array<Object>} rows
+ * @param {string[]} metricIds
+ * @param {string} modeKey
+ * @param {string} targetKey
+ * @returns {Array<Object>}
+ */
+function computeCorrelationsForMode(rows, metricIds, modeKey = 'sameSeason', targetKey = 'wins') {
+    if (modeKey === 'splitHalf') {
+        return computeSplitHalfCorrelations(rows, metricIds);
+    }
+    return computeCorrelations(rows, metricIds, targetKey);
 }
 
 function getMetricCategories() {
     return [...new Set(METRICS.map((metric) => metric.category))];
 }
 
+function getLabMetricIds() {
+    return METRICS
+        .map((metric) => metric.id)
+        .filter((id) => !LAB_EXCLUDED_METRIC_IDS.includes(id));
+}
+
+function getLabMetrics() {
+    return METRICS.filter((metric) => !LAB_EXCLUDED_METRIC_IDS.includes(metric.id));
+}
+
+function getLabMetricCategories() {
+    return [...new Set(getLabMetrics().map((metric) => metric.category))];
+}
+
+function classifySignalStrength(r) {
+    if (r == null || !Number.isFinite(r)) return 'none';
+    const abs = Math.abs(r);
+    if (abs < SIGNAL_WEAK_ABS_R) return 'weak';
+    if (abs < SIGNAL_STRONG_ABS_R) return 'modest';
+    return 'strong';
+}
+
+/**
+ * @param {number|null} sameSeasonR
+ * @param {number|null} splitHalfR
+ * @param {number|null} yoyR
+ * @returns {{ label: string, tone: 'positive'|'warn'|'muted'|'default' }}
+ */
+function interpretSignalVerdict(sameSeasonR, splitHalfR, yoyR) {
+    const same = classifySignalStrength(sameSeasonR);
+    const split = classifySignalStrength(splitHalfR);
+    const yoy = classifySignalStrength(yoyR);
+    const strongish = (level) => level === 'modest' || level === 'strong';
+    const weakOrNone = (level) => level === 'weak' || level === 'none';
+
+    if (!strongish(same) && !strongish(split) && !strongish(yoy)) {
+        if (same === 'none' && split === 'none' && yoy === 'none') {
+            return { label: 'Insufficient data', tone: 'muted' };
+        }
+        return { label: 'Likely noise', tone: 'muted' };
+    }
+
+    if (strongish(same) && strongish(split)) {
+        if (strongish(yoy)) return { label: 'Real & persistent', tone: 'positive' };
+        return { label: 'Real signal', tone: 'positive' };
+    }
+
+    if (strongish(same) && weakOrNone(split)) {
+        return { label: 'Streaky / noisy', tone: 'warn' };
+    }
+
+    if (strongish(same) && weakOrNone(yoy) && !strongish(split)) {
+        return { label: 'Season-specific', tone: 'warn' };
+    }
+
+    if (strongish(yoy)) {
+        return { label: 'Carries over', tone: 'positive' };
+    }
+
+    return { label: 'Mixed', tone: 'default' };
+}
+
+function compareSignalResults(a, b) {
+    const maxAbs = (row) => Math.max(
+        Math.abs(row.sameSeason?.r ?? 0),
+        Math.abs(row.splitHalf?.r ?? 0),
+        Math.abs(row.yoy?.r ?? 0)
+    );
+    const diff = maxAbs(b) - maxAbs(a);
+    if (diff !== 0) return diff;
+    return (a.label || '').localeCompare(b.label || '');
+}
+
+/**
+ * Run same-season, split-half, and YoY correlations for every Lab metric at once.
+ * @param {Object} allSeasonsData
+ * @param {string} [targetKey='pointsFor']
+ * @returns {Array<Object>}
+ */
+function computeCombinedSignalCorrelations(allSeasonsData, targetKey = CORRELATION_TARGET_KEY) {
+    const sameRows = buildTeamSeasonRows(allSeasonsData);
+    const yoyRows = buildYoYRows(allSeasonsData);
+    const splitRows = buildSplitHalfRows(allSeasonsData);
+
+    const results = getLabMetricIds().map((id) => {
+        const metric = METRICS_BY_ID[id];
+        const sameSeason = computeCorrelationsForMode(sameRows, [id], 'sameSeason', targetKey)[0];
+        const yoy = computeCorrelationsForMode(yoyRows, [id], 'yoy', targetKey)[0];
+        const splitHalf = computeSplitHalfCorrelations(splitRows, [id])[0];
+
+        return {
+            id,
+            label: metric?.label || id,
+            category: metric?.category || 'Unknown',
+            sameSeason,
+            yoy,
+            splitHalf,
+            verdict: interpretSignalVerdict(sameSeason?.r, splitHalf?.r, yoy?.r),
+        };
+    });
+
+    return results.sort(compareSignalResults);
+}
+
 export {
     METRICS,
     METRICS_BY_ID,
     DEFAULT_METRIC_IDS,
+    LAB_EXCLUDED_METRIC_IDS,
+    LAB_DEFAULT_METRIC_IDS,
+    CORRELATION_TARGET_KEY,
     CORRELATION_TARGETS,
+    CORRELATION_MODES,
     pearsonCorrelation,
     linearRegression,
     buildTeamSeasonRows,
+    buildYoYRows,
+    buildSplitHalfRows,
+    buildCorrelationRows,
     computeCorrelations,
+    computeSplitHalfCorrelations,
+    computeCorrelationsForMode,
+    computeCombinedSignalCorrelations,
     getCorrelationTarget,
+    getCorrelationMode,
     getMetricCategories,
+    getLabMetricIds,
+    getLabMetrics,
+    getLabMetricCategories,
     sortCorrelationResults,
     compareCorrelationResults,
+    compareSignalResults,
+    interpretCorrelationStrength,
+    interpretSignalVerdict,
+    classifySignalStrength,
+    formatRSquared,
+    SIGNAL_STRONG_ABS_R,
 };

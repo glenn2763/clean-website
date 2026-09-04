@@ -9,9 +9,108 @@ import {
     getActiveSeasons,
     getOwnerKey,
     getOwnerLabel,
+    getSeasonChampionshipGame,
+    getTeamNameFromObject,
     getTeams,
 } from '../utils.js';
 import { createChart } from '../charts.js';
+import { getTeamInfo, parseRosterLineup, renderTwoTeamBoxscore } from './boxscore.js';
+
+function getMatchupWinnerTeamId(matchup) {
+    if (matchup?.homeScore == null || matchup?.awayScore == null) return null;
+    if (matchup.winner === 'HOME') return matchup.homeTeamId;
+    if (matchup.winner === 'AWAY') return matchup.awayTeamId;
+    if (matchup.homeScore > matchup.awayScore) return matchup.homeTeamId;
+    if (matchup.awayScore > matchup.homeScore) return matchup.awayTeamId;
+    return null;
+}
+
+function formatTeamLabel(team, ownerMap) {
+    if (!team) return 'Unknown';
+    const owner = getOwnerLabel(getOwnerKey(team), ownerMap);
+    const teamName = getTeamNameFromObject(team);
+    return owner && owner !== teamName ? `${owner} (${teamName})` : teamName;
+}
+
+function renderChampionshipGames(allSeasonsData, ownerMap) {
+    const listEl = document.getElementById('playoff-championships');
+    if (!listEl) return;
+
+    const games = getActiveSeasons(allSeasonsData)
+        .map((season) => {
+            const seasonData = allSeasonsData[season];
+            const matchup = getSeasonChampionshipGame(seasonData);
+            if (!matchup) return null;
+
+            const teams = getTeams(seasonData);
+            const winnerId = getMatchupWinnerTeamId(matchup);
+            if (winnerId == null) return null;
+
+            const loserId = winnerId === matchup.homeTeamId ? matchup.awayTeamId : matchup.homeTeamId;
+            const winnerTeam = teams.find((team) => team.id === winnerId);
+            const loserTeam = teams.find((team) => team.id === loserId);
+            const winnerScore = winnerId === matchup.homeTeamId ? matchup.homeScore : matchup.awayScore;
+            const loserScore = winnerId === matchup.homeTeamId ? matchup.awayScore : matchup.homeScore;
+            const margin = Math.abs(winnerScore - loserScore);
+
+            const winnerSide = winnerId === matchup.homeTeamId ? 'home' : 'away';
+            const loserSide = winnerSide === 'home' ? 'away' : 'home';
+            const winnerInfo = getTeamInfo(teams, winnerId, ownerMap);
+            const loserInfo = getTeamInfo(teams, loserId, ownerMap);
+
+            return {
+                season,
+                week: matchup.matchupPeriodId || null,
+                winner: formatTeamLabel(winnerTeam, ownerMap),
+                loser: formatTeamLabel(loserTeam, ownerMap),
+                winnerScore,
+                loserScore,
+                margin,
+                boxscore: renderTwoTeamBoxscore(
+                    {
+                        manager: winnerInfo.manager,
+                        teamName: winnerInfo.teamName,
+                        score: winnerScore,
+                        lineup: parseRosterLineup(matchup[`${winnerSide}Roster`]),
+                    },
+                    {
+                        manager: loserInfo.manager,
+                        teamName: loserInfo.teamName,
+                        score: loserScore,
+                        lineup: parseRosterLineup(matchup[`${loserSide}Roster`]),
+                    }
+                ),
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => Number(b.season) - Number(a.season));
+
+    if (!games.length) {
+        listEl.innerHTML = '<p class="subsection-description">No completed championship games found.</p>';
+        return;
+    }
+
+    listEl.innerHTML = `
+        <h3 class="championship-games-heading">Championship Games</h3>
+        <div class="championship-games-list">
+            ${games.map((game) => `
+                <details class="championship-game-details">
+                    <summary class="championship-game-summary">
+                        <span class="championship-game-season">${game.season}${game.week ? ` · Week ${game.week}` : ''}</span>
+                        <span class="championship-game-result">
+                            <strong>${game.winner}</strong> def. ${game.loser}
+                            · ${game.winnerScore.toFixed(2)}–${game.loserScore.toFixed(2)}
+                            (${game.margin.toFixed(2)} pt margin)
+                        </span>
+                    </summary>
+                    <div class="championship-game-boxscore">
+                        ${game.boxscore}
+                    </div>
+                </details>
+            `).join('')}
+        </div>
+    `;
+}
 
 /**
  * Render playoff performance chart and table
@@ -131,6 +230,8 @@ function renderPlayoffPerformance(allSeasonsData) {
             </tbody>
         </table>
     `;
+
+    renderChampionshipGames(allSeasonsData, ownerMap);
 }
 
 export { renderPlayoffPerformance };

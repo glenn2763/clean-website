@@ -1,18 +1,19 @@
 /**
  * Metric Correlation Component
- * Pearson r vs regular-season wins or points scored
+ * Same-season correlations with interactive metric cards + scatter plot
  */
 
 import {
     METRICS,
-    DEFAULT_METRIC_IDS,
-    CORRELATION_TARGETS,
+    LAB_DEFAULT_METRIC_IDS,
+    CORRELATION_TARGET_KEY,
     buildTeamSeasonRows,
-    computeCorrelations,
+    computeCorrelationsForMode,
     getCorrelationTarget,
-    getMetricCategories,
+    getLabMetricIds,
+    getLabMetricCategories,
     linearRegression,
-    compareCorrelationResults,
+    formatRSquared,
     sortCorrelationResults,
 } from '../metrics.js';
 import { getActiveSeasons } from '../utils.js';
@@ -33,272 +34,165 @@ const CORRELATION_AXIS_TICK_FONT = {
     weight: '500',
 };
 
-let selectedMetricIds = [...DEFAULT_METRIC_IDS];
-let scatterMetricId = DEFAULT_METRIC_IDS[0];
-let targetKey = 'wins';
-let cachedRows = [];
+let selectedMetricIds = new Set(LAB_DEFAULT_METRIC_IDS);
+let focusMetricId = LAB_DEFAULT_METRIC_IDS[0];
 let cachedAllSeasonsData = {};
+let cachedRows = [];
+let cachedResults = [];
 
 function formatCorrelation(value) {
     if (value == null || Number.isNaN(value)) return '—';
     return value.toFixed(3);
 }
 
-function getSelectedTargetKey() {
-    const selected = document.querySelector('input[name="correlation-target"]:checked');
-    return selected?.value || targetKey;
-}
-
-function getSelectedMetricIdsFromPicker() {
-    const picker = document.getElementById('correlation-metric-picker');
-    if (!picker) return selectedMetricIds;
-
-    return [...picker.querySelectorAll('input[type="checkbox"]:checked')].map(
-        (input) => input.value
+function pickDefaultFocusMetric(results) {
+    const sorted = sortCorrelationResults(
+        results.filter((row) => selectedMetricIds.has(row.id) && row.valid)
     );
+    if (sorted.length) return sorted[0].id;
+
+    const fallback = sortCorrelationResults([...results]);
+    return fallback[0]?.id || LAB_DEFAULT_METRIC_IDS[0];
 }
 
-function getSelectableMetricIds(currentTargetKey = targetKey) {
-    const target = getCorrelationTarget(currentTargetKey);
-    return METRICS
-        .filter((metric) => !target.excludeMetricIds.includes(metric.id))
-        .map((metric) => metric.id);
+function rStrengthClass(result) {
+    if (!result?.valid || result.r == null) return 'lab-r-none';
+    const abs = Math.abs(result.r);
+    if (abs >= 0.35) return 'lab-r-strong';
+    if (abs >= 0.2) return 'lab-r-modest';
+    return 'lab-r-weak';
 }
 
-function getSelectableMetricIdsForCategory(category, currentTargetKey = targetKey) {
-    const target = getCorrelationTarget(currentTargetKey);
-    return METRICS
-        .filter((metric) => metric.category === category && !target.excludeMetricIds.includes(metric.id))
-        .map((metric) => metric.id);
-}
+function renderMetricToolbar() {
+    const toolbar = document.getElementById('correlation-metric-toolbar');
+    if (!toolbar) return;
 
-function setAllMetricsSelected(on) {
-    selectedMetricIds = on ? getSelectableMetricIds() : [];
-    refreshCorrelationWidget(cachedRows);
-}
+    const activeCount = selectedMetricIds.size;
+    const totalCount = getLabMetricIds().length;
 
-function setCategoryMetricsSelected(category, on) {
-    const categoryIds = getSelectableMetricIdsForCategory(category);
-    const categorySet = new Set(categoryIds);
+    toolbar.innerHTML = `
+        <div class="lab-toolbar-copy">
+            <span class="lab-toolbar-title">Metrics</span>
+            <span class="lab-toolbar-count">${activeCount} of ${totalCount} active</span>
+        </div>
+        <div class="correlation-metric-toggle-group" role="group" aria-label="Toggle metrics">
+            <button type="button" class="correlation-toggle-btn" data-action="all-on">All on</button>
+            <button type="button" class="correlation-toggle-btn" data-action="all-off">All off</button>
+        </div>
+    `;
 
-    if (on) {
-        selectedMetricIds = [...new Set([...selectedMetricIds, ...categoryIds])];
-    } else {
-        selectedMetricIds = selectedMetricIds.filter((id) => !categorySet.has(id));
-    }
-    refreshCorrelationWidget(cachedRows);
-}
+    toolbar.querySelector('[data-action="all-on"]')?.addEventListener('click', () => {
+        selectedMetricIds = new Set(getLabMetricIds());
+        if (!selectedMetricIds.has(focusMetricId)) {
+            focusMetricId = pickDefaultFocusMetric(cachedResults);
+        }
+        refreshCorrelationWidget();
+    });
 
-function isMetricExcludedForTarget(metricId, currentTargetKey) {
-    const target = getCorrelationTarget(currentTargetKey);
-    return target.excludeMetricIds.includes(metricId);
-}
-
-function renderTargetPicker() {
-    const container = document.getElementById('correlation-target-picker');
-    if (!container) return;
-
-    container.innerHTML = Object.entries(CORRELATION_TARGETS)
-        .map(
-            ([key, target]) => `
-            <label class="correlation-target-option">
-                <input
-                    type="radio"
-                    name="correlation-target"
-                    value="${key}"
-                    ${key === targetKey ? 'checked' : ''}
-                />
-                <span>${target.label}</span>
-            </label>
-        `
-        )
-        .join('');
-
-    container.querySelectorAll('input[name="correlation-target"]').forEach((input) => {
-        input.addEventListener('change', () => {
-            targetKey = getSelectedTargetKey();
-            refreshCorrelationWidget(cachedRows);
-        });
+    toolbar.querySelector('[data-action="all-off"]')?.addEventListener('click', () => {
+        selectedMetricIds = new Set();
+        refreshCorrelationWidget();
     });
 }
 
-function renderMetricPicker(correlationById = {}) {
-    const picker = document.getElementById('correlation-metric-picker');
-    if (!picker) return;
+function renderMetricCards(results) {
+    const container = document.getElementById('correlation-metric-cards');
+    if (!container) return;
 
-    const target = getCorrelationTarget(targetKey);
-    const categories = getMetricCategories();
-    picker.innerHTML = `
-        <div class="correlation-metric-toolbar">
-            <span class="correlation-metric-toolbar-label">Metrics</span>
-            <div class="correlation-metric-toggle-group" role="group" aria-label="Toggle all metrics">
-                <button type="button" class="correlation-toggle-btn" data-action="all-on">All on</button>
-                <button type="button" class="correlation-toggle-btn" data-action="all-off">All off</button>
-            </div>
-        </div>
-        <div class="correlation-metric-groups">
-            ${categories
-        .map((category) => {
-            const metrics = METRICS
-                .filter((metric) => metric.category === category)
-                .sort((a, b) => compareCorrelationResults(
-                    correlationById[a.id] || {
-                        label: a.label,
-                        r: null,
-                        valid: false,
-                        excluded: target.excludeMetricIds.includes(a.id),
-                    },
-                    correlationById[b.id] || {
-                        label: b.label,
-                        r: null,
-                        valid: false,
-                        excluded: target.excludeMetricIds.includes(b.id),
-                    }
-                ));
-            return `
-                <div class="correlation-metric-group">
-                    <div class="correlation-metric-group-header">
-                        <h4>${category}</h4>
-                        <div class="correlation-metric-toggle-group" role="group" aria-label="Toggle ${category} metrics">
-                            <button type="button" class="correlation-toggle-btn" data-action="category-on" data-category="${category}">All on</button>
-                            <button type="button" class="correlation-toggle-btn" data-action="category-off" data-category="${category}">All off</button>
+    if (!results.length) {
+        container.innerHTML = '<p class="correlation-empty-hint">No metrics available for correlation analysis.</p>';
+        return;
+    }
+
+    const categories = getLabMetricCategories();
+    const byCategory = Object.fromEntries(categories.map((cat) => [cat, []]));
+    results.forEach((row) => {
+        if (byCategory[row.category]) byCategory[row.category].push(row);
+    });
+
+    container.innerHTML = `<div class="lab-metric-flow">${categories.map((category) => {
+        const cards = byCategory[category];
+        if (!cards?.length) return '';
+
+        return `
+            <span class="lab-category-label">${category}</span>
+            ${cards.map((row) => {
+                const metric = METRICS.find((entry) => entry.id === row.id);
+                const isSelected = selectedMetricIds.has(row.id);
+                const isFocused = focusMetricId === row.id;
+                const strengthClass = rStrengthClass(row);
+                const tooltip = [metric?.description, row.direction].filter(Boolean).join(' · ');
+                return `
+                    <article
+                        class="lab-metric-card ${strengthClass}${isSelected ? ' lab-metric-card-active' : ' lab-metric-card-inactive'}${isFocused ? ' lab-metric-card-focused' : ''}"
+                        data-metric-id="${row.id}"
+                    >
+                        <div class="lab-metric-card-inner">
+                            <button
+                                type="button"
+                                class="lab-metric-toggle"
+                                aria-pressed="${isSelected ? 'true' : 'false'}"
+                                aria-label="${isSelected ? 'Remove' : 'Add'} ${row.label}"
+                                title="${isSelected ? 'Remove from analysis' : 'Add to analysis'}"
+                            >
+                                <span class="lab-metric-toggle-icon" aria-hidden="true">${isSelected ? '−' : '+'}</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="lab-metric-card-body"
+                                aria-pressed="${isFocused ? 'true' : 'false'}"
+                                title="${tooltip}"
+                            >
+                                <span class="lab-metric-name">${row.label}</span>
+                                <span class="lab-metric-card-stats">
+                                    <span class="lab-stat-inline"><span class="lab-stat-label">r</span> ${formatCorrelation(row.r)}</span>
+                                    <span class="lab-stat-sep" aria-hidden="true">·</span>
+                                    <span class="lab-stat-inline"><span class="lab-stat-label">R²</span> ${formatRSquared(row.r)}</span>
+                                    <span class="lab-stat-sep" aria-hidden="true">·</span>
+                                    <span class="lab-stat-inline"><span class="lab-stat-label">n</span> ${row.n || '—'}</span>
+                                </span>
+                                ${row.valid ? `<span class="lab-strength-badge">${row.strength}</span>` : ''}
+                            </button>
                         </div>
-                    </div>
-                    <div class="correlation-metric-options">
-                        ${metrics
-                            .map((metric) => {
-                                const excluded = target.excludeMetricIds.includes(metric.id);
-                                return `
-                            <label class="correlation-metric-option${excluded ? ' correlation-metric-excluded' : ''}">
-                                <input
-                                    type="checkbox"
-                                    value="${metric.id}"
-                                    ${selectedMetricIds.includes(metric.id) && !excluded ? 'checked' : ''}
-                                    ${excluded ? 'disabled' : ''}
-                                />
-                                <span>${metric.label}${excluded ? ' (outcome)' : ''}</span>
-                            </label>
-                        `;
-                            })
-                            .join('')}
-                    </div>
-                </div>
-            `;
-        })
-        .join('')}
-        </div>
-    `;
+                    </article>
+                `;
+            }).join('')}
+        `;
+    }).join('')}</div>`;
 
-    picker.querySelector('[data-action="all-on"]')?.addEventListener('click', () => setAllMetricsSelected(true));
-    picker.querySelector('[data-action="all-off"]')?.addEventListener('click', () => setAllMetricsSelected(false));
+    container.querySelectorAll('.lab-metric-card').forEach((cardEl) => {
+        const metricId = cardEl.dataset.metricId;
 
-    picker.querySelectorAll('[data-action="category-on"]').forEach((button) => {
-        button.addEventListener('click', () => setCategoryMetricsSelected(button.dataset.category, true));
-    });
-    picker.querySelectorAll('[data-action="category-off"]').forEach((button) => {
-        button.addEventListener('click', () => setCategoryMetricsSelected(button.dataset.category, false));
-    });
+        cardEl.querySelector('.lab-metric-toggle')?.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (selectedMetricIds.has(metricId)) {
+                selectedMetricIds.delete(metricId);
+            } else {
+                selectedMetricIds.add(metricId);
+            }
+            if (!selectedMetricIds.has(focusMetricId)) {
+                focusMetricId = selectedMetricIds.size
+                    ? pickDefaultFocusMetric(cachedResults.filter((row) => selectedMetricIds.has(row.id)))
+                    : null;
+            }
+            refreshCorrelationWidget();
+        });
 
-    picker.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach((input) => {
-        input.addEventListener('change', () => {
-            selectedMetricIds = getSelectedMetricIdsFromPicker();
-            refreshCorrelationWidget(cachedRows);
+        cardEl.querySelector('.lab-metric-card-body')?.addEventListener('click', () => {
+            if (!selectedMetricIds.has(metricId)) {
+                selectedMetricIds.add(metricId);
+            }
+            focusMetricId = metricId;
+            refreshCorrelationWidget();
         });
     });
 }
 
-function renderScatterMetricSelect(metricIds, correlationResults) {
-    const select = document.getElementById('correlation-scatter-metric');
-    if (!select) return;
-
-    if (!metricIds.length) {
-        select.innerHTML = '<option value="">Select a metric</option>';
-        select.disabled = true;
-        return;
-    }
-
-    select.disabled = false;
-    const resultById = Object.fromEntries(correlationResults.map((result) => [result.id, result]));
-    const options = (metricIds.length > 0 ? metricIds : DEFAULT_METRIC_IDS)
-        .filter((id) => !isMetricExcludedForTarget(id, targetKey))
-        .sort((a, b) => compareCorrelationResults(
-            resultById[a] || { label: a, r: null, valid: false, excluded: false },
-            resultById[b] || { label: b, r: null, valid: false, excluded: false }
-        ));
-
-    select.innerHTML = options
-        .map((id) => {
-            const metric = METRICS.find((entry) => entry.id === id);
-            const r = resultById[id]?.r;
-            const rLabel = r != null ? ` (r=${formatCorrelation(r)})` : '';
-            return `<option value="${id}">${metric?.label || id}${rLabel}</option>`;
-        })
-        .join('');
-
-    if (!options.includes(scatterMetricId)) {
-        scatterMetricId = options[0] || DEFAULT_METRIC_IDS[0];
-    }
-    select.value = scatterMetricId;
-
-    select.onchange = () => {
-        scatterMetricId = select.value;
-        renderScatterChart(cachedRows, scatterMetricId, targetKey);
-    };
-}
-
-function renderResultsTable(correlationResults, currentTargetKey) {
-    const container = document.getElementById('correlation-results-table');
-    if (!container) return;
-
-    if (!correlationResults.length) {
-        container.innerHTML = '<p class="correlation-empty-hint">Select at least one metric to compare.</p>';
-        return;
-    }
-
-    const target = getCorrelationTarget(currentTargetKey);
-    const results = sortCorrelationResults(correlationResults);
-
-    container.innerHTML = `
-        <table class="correlation-table">
-            <thead>
-                <tr>
-                    <th>Metric</th>
-                    <th>r vs ${target.shortLabel.toLowerCase()}</th>
-                    <th>n</th>
-                    <th>Direction</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${results
-                    .map(
-                        (result) => `
-                    <tr class="${result.valid ? '' : 'correlation-row-muted'}">
-                        <td>${result.label}</td>
-                        <td>${formatCorrelation(result.r)}</td>
-                        <td>${result.n}</td>
-                        <td>${result.direction}</td>
-                    </tr>
-                `
-                    )
-                    .join('')}
-            </tbody>
-        </table>
-    `;
-}
-
-function formatTargetValue(value, currentTargetKey) {
-    const target = getCorrelationTarget(currentTargetKey);
-    if (target.integerYAxis) return String(value);
+function formatTargetValue(value) {
     return Number(value).toFixed(1);
 }
 
-/**
- * Tight axis bounds with padding so scatter data fills the plot area.
- * @param {number[]} values
- * @param {{ pad?: number, integer?: boolean, minFloor?: number|null }} [opts]
- * @returns {{ min: number, max: number }|undefined}
- */
-function paddedAxisRange(values, { pad = 0.1, integer = false, minFloor = null } = {}) {
+function paddedAxisRange(values, { pad = 0.1 } = {}) {
     const finite = values.filter((v) => Number.isFinite(v));
     if (!finite.length) return undefined;
 
@@ -307,29 +201,34 @@ function paddedAxisRange(values, { pad = 0.1, integer = false, minFloor = null }
     const span = max - min || Math.max(Math.abs(max), 1) * 0.1;
     const margin = span * pad;
 
-    min -= margin;
-    max += margin;
-
-    if (minFloor != null) min = Math.max(minFloor, min);
-
-    if (integer) {
-        min = Math.floor(min);
-        max = Math.ceil(max);
-        if (max <= min) max = min + 1;
-    }
-
-    return { min, max };
+    return { min: min - margin, max: max + margin };
 }
 
-function renderScatterChart(rows, metricId, currentTargetKey) {
+function renderScatterChart() {
     const canvas = document.getElementById('wins-correlation-scatter');
+    const emptyEl = document.getElementById('correlation-scatter-empty');
     if (!canvas) return;
 
-    const metric = METRICS.find((entry) => entry.id === metricId);
-    const target = getCorrelationTarget(currentTargetKey);
-    const points = rows
+    if (!focusMetricId || !selectedMetricIds.has(focusMetricId)) {
+        canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+        if (emptyEl) {
+            emptyEl.hidden = false;
+            emptyEl.textContent = selectedMetricIds.size
+                ? 'Click a metric card to see its scatter plot.'
+                : 'Turn on at least one metric card to begin.';
+        }
+        return;
+    }
+
+    if (emptyEl) emptyEl.hidden = true;
+
+    const metric = METRICS.find((entry) => entry.id === focusMetricId);
+    const target = getCorrelationTarget(CORRELATION_TARGET_KEY);
+    const activeResult = cachedResults.find((row) => row.id === focusMetricId);
+
+    const points = cachedRows
         .map((row) => ({
-            x: row.metrics[metricId],
+            x: row.metrics[focusMetricId],
             y: row[target.key],
             manager: row.manager,
             season: row.season,
@@ -346,8 +245,8 @@ function renderScatterChart(rows, metricId, currentTargetKey) {
             data: points,
             backgroundColor: 'rgba(10, 122, 106, 0.65)',
             borderColor: 'rgba(10, 122, 106, 1)',
-            pointRadius: 5,
-            pointHoverRadius: 7,
+            pointRadius: 6,
+            pointHoverRadius: 8,
         },
     ];
 
@@ -355,31 +254,24 @@ function renderScatterChart(rows, metricId, currentTargetKey) {
         const xs = [...xValues].sort((a, b) => a - b);
         const xMin = xs[0];
         const xMax = xs[xs.length - 1];
-        const yAtMin = regression.slope * xMin + regression.intercept;
-        const yAtMax = regression.slope * xMax + regression.intercept;
         datasets.push({
             label: 'Trend line',
             data: [
-                { x: xMin, y: yAtMin },
-                { x: xMax, y: yAtMax },
+                { x: xMin, y: regression.slope * xMin + regression.intercept },
+                { x: xMax, y: regression.slope * xMax + regression.intercept },
             ],
             type: 'line',
             borderColor: 'rgba(255, 193, 7, 0.9)',
             backgroundColor: 'rgba(255, 193, 7, 0.9)',
-            borderWidth: 2,
+            borderWidth: 2.5,
             pointRadius: 0,
             fill: false,
         });
     }
 
-    const trendYs = datasets.length > 1
-        ? datasets[1].data.map((point) => point.y)
-        : [];
+    const trendYs = datasets.length > 1 ? datasets[1].data.map((point) => point.y) : [];
     const xRange = paddedAxisRange(xValues);
-    const yRange = paddedAxisRange([...yValues, ...trendYs], {
-        integer: target.integerYAxis,
-        minFloor: target.integerYAxis ? 0 : null,
-    });
+    const yRange = paddedAxisRange([...yValues, ...trendYs]);
 
     createChart('winsCorrelationScatter', canvas, {
         type: 'scatter',
@@ -388,31 +280,29 @@ function renderScatterChart(rows, metricId, currentTargetKey) {
             responsive: true,
             maintainAspectRatio: false,
             layout: {
-                padding: {
-                    bottom: 20,
-                    top: 4,
-                    left: 4,
-                    right: 8,
-                },
+                padding: { bottom: 20, top: 8, left: 4, right: 8 },
             },
             plugins: {
                 title: {
                     display: true,
-                    text: metric
-                        ? `${metric.label} vs ${target.yAxisTitle}`
-                        : `Metric vs ${target.shortLabel}`,
+                    text: `${metric?.label || 'Metric'} vs ${target.yAxisTitle}`,
+                    font: { family: '"Barlow Condensed", sans-serif', size: 16, weight: '700' },
+                },
+                subtitle: {
+                    display: Boolean(activeResult?.r != null),
+                    text: activeResult?.r != null
+                        ? `Same-season r = ${formatCorrelation(activeResult.r)} · R² = ${formatRSquared(activeResult.r)} · n = ${activeResult.n}`
+                        : '',
                 },
                 legend: { display: true },
                 tooltip: {
                     callbacks: {
                         label(context) {
                             const raw = context.raw;
-                            if (raw.manager) {
-                                const outcome = formatTargetValue(raw.y, currentTargetKey);
-                                const outcomeLabel = target.integerYAxis ? `${outcome} wins` : `${outcome} pts`;
-                                return `${raw.manager} (${raw.season}): ${raw.x?.toFixed(2)} → ${outcomeLabel}`;
+                            if (!raw.manager) {
+                                return `${context.dataset.label}: (${raw.x?.toFixed(2)}, ${raw.y})`;
                             }
-                            return `${context.dataset.label}: (${raw.x?.toFixed(2)}, ${raw.y})`;
+                            return `${raw.manager} (${raw.season}): ${raw.x?.toFixed(2)} → ${formatTargetValue(raw.y)} pts`;
                         },
                     },
                 },
@@ -426,10 +316,7 @@ function renderScatterChart(rows, metricId, currentTargetKey) {
                         font: CORRELATION_AXIS_TITLE_FONT,
                         padding: { top: 12, bottom: 4 },
                     },
-                    ticks: {
-                        padding: 8,
-                        font: CORRELATION_AXIS_TICK_FONT,
-                    },
+                    ticks: { padding: 8, font: CORRELATION_AXIS_TICK_FONT },
                 },
                 y: {
                     beginAtZero: false,
@@ -440,54 +327,45 @@ function renderScatterChart(rows, metricId, currentTargetKey) {
                         font: CORRELATION_AXIS_TITLE_FONT,
                         padding: { bottom: 8 },
                     },
-                    ticks: {
-                        ...(target.integerYAxis ? { stepSize: 1 } : {}),
-                        font: CORRELATION_AXIS_TICK_FONT,
-                        padding: 6,
-                    },
+                    ticks: { font: CORRELATION_AXIS_TICK_FONT, padding: 6 },
                 },
             },
         },
     });
 }
 
-function renderSampleNote(rows, allSeasonsData, currentTargetKey) {
+function renderSampleNote(allSeasonsData) {
     const note = document.getElementById('correlation-sample-note');
     if (!note) return;
 
     const seasons = getActiveSeasons(allSeasonsData);
-    const target = getCorrelationTarget(currentTargetKey);
-    note.textContent = `${rows.length} manager-season${rows.length === 1 ? '' : 's'} across ${seasons.length} season${seasons.length === 1 ? '' : 's'}. Pearson r compares each metric to ${target.label.toLowerCase()}; n is the number of paired observations with valid values. Points scored ignores opponent strength and schedule luck.`;
+    note.textContent = [
+        `${cachedRows.length} manager-season${cachedRows.length === 1 ? '' : 's'} across ${seasons.length} season${seasons.length === 1 ? '' : 's'}.`,
+        'Each dot is one manager in one season. Pearson r measures how closely the metric tracks with regular-season points scored that same year.',
+        'Use +/− to toggle metrics; click a card to update the scatter plot.',
+        'Correlation shows co-movement, not causation.',
+    ].join(' ');
 }
 
-function refreshCorrelationWidget(rows) {
-    targetKey = getSelectedTargetKey();
-    const metricIds = selectedMetricIds.filter(
-        (id) => !isMetricExcludedForTarget(id, targetKey)
+function refreshCorrelationWidget() {
+    cachedResults = computeCorrelationsForMode(
+        cachedRows,
+        getLabMetricIds(),
+        'sameSeason',
+        CORRELATION_TARGET_KEY
     );
-    selectedMetricIds = metricIds;
 
-    const allCorrelations = computeCorrelations(rows, METRICS.map((metric) => metric.id), targetKey);
-    const correlationById = Object.fromEntries(allCorrelations.map((result) => [result.id, result]));
-    const selectedCorrelations = metricIds.length
-        ? computeCorrelations(rows, metricIds, targetKey)
-        : [];
-
-    renderMetricPicker(correlationById);
-    renderScatterMetricSelect(metricIds, selectedCorrelations);
-    renderResultsTable(selectedCorrelations, targetKey);
-
-    if (metricIds.length) {
-        if (!metricIds.includes(scatterMetricId)) {
-            scatterMetricId = metricIds[0];
-        }
-        renderScatterChart(rows, scatterMetricId, targetKey);
-    } else {
-        const canvas = document.getElementById('wins-correlation-scatter');
-        canvas?.getContext('2d')?.clearRect(0, 0, canvas?.width || 0, canvas?.height || 0);
+    if (!focusMetricId || !getLabMetricIds().includes(focusMetricId)) {
+        focusMetricId = pickDefaultFocusMetric(cachedResults);
+    }
+    if (focusMetricId && !selectedMetricIds.has(focusMetricId)) {
+        selectedMetricIds.add(focusMetricId);
     }
 
-    renderSampleNote(rows, cachedAllSeasonsData, targetKey);
+    renderMetricToolbar();
+    renderMetricCards(cachedResults);
+    renderScatterChart();
+    renderSampleNote(cachedAllSeasonsData);
 }
 
 function renderWinsCorrelation(allSeasonsData) {
@@ -497,6 +375,7 @@ function renderWinsCorrelation(allSeasonsData) {
     const seasons = getActiveSeasons(allSeasonsData);
     cachedAllSeasonsData = allSeasonsData;
     cachedRows = buildTeamSeasonRows(allSeasonsData);
+
     const unavailable = seasons.length < MIN_SEASONS || cachedRows.length < MIN_ROWS;
 
     section.classList.toggle('section-unavailable', unavailable);
@@ -504,28 +383,22 @@ function renderWinsCorrelation(allSeasonsData) {
     if (notice) {
         notice.classList.toggle('hidden', !unavailable);
         if (unavailable) {
-            notice.textContent =
-                seasons.length < MIN_SEASONS
-                    ? 'Need at least two seasons of data for meaningful correlation.'
-                    : `Need at least ${MIN_ROWS} manager-season rows (currently ${cachedRows.length}).`;
+            notice.textContent = seasons.length < MIN_SEASONS
+                ? 'Need at least two seasons of data for meaningful correlation.'
+                : `Need at least ${MIN_ROWS} manager-season rows (currently ${cachedRows.length}).`;
         }
     }
 
-    renderTargetPicker();
-    renderSampleNote(cachedRows, allSeasonsData, targetKey);
-
     if (unavailable) {
-        const picker = document.getElementById('correlation-metric-picker');
-        const table = document.getElementById('correlation-results-table');
+        const cards = document.getElementById('correlation-metric-cards');
         const canvas = document.getElementById('wins-correlation-scatter');
-        if (picker) picker.innerHTML = '';
-        if (table) table.innerHTML = '';
+        if (cards) cards.innerHTML = '';
         if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+        renderSampleNote(allSeasonsData);
         return;
     }
 
-    refreshCorrelationWidget(cachedRows);
-    renderSampleNote(cachedRows, allSeasonsData, targetKey);
+    refreshCorrelationWidget();
 }
 
 export { renderWinsCorrelation };
