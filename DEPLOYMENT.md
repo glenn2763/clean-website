@@ -48,18 +48,17 @@ Your code is already set up! The server will use environment variables for ESPN 
    - Once deployed, you'll see a URL like: `https://fantasy-football-backend-xxxx.onrender.com`
    - Copy this URL - you'll need it for the frontend!
 
-## Step 4: Update Frontend to Use Backend
+## Step 4: Frontend backend URL
 
-1. Open `fantasy-football-stats.html`
-2. Find this line (around line 180):
-   ```javascript
-   window.BACKEND_URL = null;
-   ```
-3. Replace `null` with your Render backend URL + `/api/espn`:
-   ```javascript
-   window.BACKEND_URL = 'https://fantasy-football-backend-xxxx.onrender.com/api/espn';
-   ```
-4. Commit and push to GitHub
+`fantasy-football-stats.html` picks the API URL automatically:
+
+```javascript
+window.BACKEND_URL = isLocal
+    ? 'http://localhost:3000/api/espn'
+    : 'https://clean-website.onrender.com/api/espn';
+```
+
+Update the production URL only if your Render service hostname is different. Push to GitHub to deploy via `render.yaml`.
 
 ## Step 5: Deploy Frontend to GitHub Pages
 

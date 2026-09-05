@@ -111,7 +111,7 @@ function toggleDatasetLine(chart, datasetIndex) {
     (chart.$linkedCharts || [chart]).forEach((linkedChart) => {
         linkedChart.setDatasetVisibility(datasetIndex, nextVisible);
         linkedChart.update();
-        syncTableLineVisibility(linkedChart, linkedChart.$wireTable);
+        syncTableLineVisibility(linkedChart, linkedChart.$waiverTable);
     });
 }
 
@@ -235,7 +235,7 @@ function buildWireChart({
 
     highlightHandlers.attachLeaveReset(chart);
     chart.$lineHighlightHandlers = highlightHandlers;
-    chart.$wireTable = tableEl;
+    chart.$waiverTable = tableEl;
     return chart;
 }
 

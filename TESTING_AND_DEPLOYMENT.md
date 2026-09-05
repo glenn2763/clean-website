@@ -27,40 +27,29 @@ npm install
 }
 ```
 
-### Step 3: Configure Frontend for Local Testing
-Open `fantasy-football-stats.html` and set the backend URL to `null`:
-
-```javascript
-// Line ~181 - For local testing
-window.BACKEND_URL = null; // Uses relative path /api/espn
-```
-
-### Step 4: Start the Backend Server
+### Step 3: Start the Backend Server
 ```bash
 npm start
 ```
 
-The server will start on `http://localhost:3000`
+The server starts on `http://localhost:3000` and serves both the API and static files (including `fantasy-football-stats.html`).
 
-### Step 5: Open the Frontend
-Open `fantasy-football-stats.html` in your browser:
-- **Option A**: Double-click the file (works but may have CORS issues)
-- **Option B**: Use a local server:
-  ```bash
-  # Using Python 3
-  python3 -m http.server 8000
-  
-  # Or using Node.js http-server (install: npm install -g http-server)
-  http-server -p 8000
-  ```
-  Then visit: `http://localhost:8000/fantasy-football-stats.html`
+`fantasy-football-stats.html` auto-selects the backend URL:
+- **localhost** → `http://localhost:3000/api/espn`
+- **production** → `https://clean-website.onrender.com/api/espn`
 
-### Step 6: Test the Application
-1. Enter a league ID (e.g., `37892`)
-2. Select a season
-3. Click "Fetch League Data"
-4. Verify all visualizations load correctly
-5. Check browser console for any errors
+No manual `BACKEND_URL` edit is needed for normal local or Render deployment.
+
+### Step 4: Open the Frontend
+Visit `http://localhost:3000/fantasy-football-stats.html` (recommended — same origin as the API).
+
+Alternatively, use a separate static server on another port; the HTML will still point at `localhost:3000` for the API when hostname is localhost.
+
+### Step 5: Test the Application
+1. Select a league (or enter a custom league ID)
+2. Choose **Single season** or **All seasons**
+3. Click **Analyze Season** or **Analyze All Seasons**
+4. Walk through each hub and check the browser console for errors
 
 ### Troubleshooting Local Testing
 - **CORS errors**: Make sure you're using a local server (not file://)
@@ -105,21 +94,19 @@ Open `fantasy-football-stats.html` in your browser:
    - Wait 2-3 minutes for deployment
    - Copy your backend URL (e.g., `https://clean-website.onrender.com`)
 
-#### Step 2: Update Frontend to Use Production Backend
+#### Step 2: Verify Frontend Backend URL
 
-1. **Update Backend URL**
-   Open `fantasy-football-stats.html` and update line ~181:
-   ```javascript
-   // For production
-   window.BACKEND_URL = 'https://your-backend-name.onrender.com/api/espn';
-   ```
+`fantasy-football-stats.html` already points production hostnames at Render:
 
-2. **Commit and Push**
-   ```bash
-   git add fantasy-football-stats.html
-   git commit -m "Update backend URL for production"
-   git push
-   ```
+```javascript
+window.BACKEND_URL = isLocal
+    ? 'http://localhost:3000/api/espn'
+    : 'https://clean-website.onrender.com/api/espn';
+```
+
+Change the production URL only if your Render service name differs.
+
+2. **Commit and push** — Render deploys from `render.yaml` on push to `master`.
 
 ### Frontend Deployment (GitHub Pages)
 
@@ -225,9 +212,9 @@ https://glennwysen.com/fantasy-football-stats.html
 
 ## 💡 Tips
 
-1. **Keep local and production configs separate**
-   - Local: `window.BACKEND_URL = null`
-   - Production: `window.BACKEND_URL = 'https://...'`
+1. **Keep backend URL automatic**
+   - Localhost uses `http://localhost:3000/api/espn`
+   - Production uses the Render URL baked into `fantasy-football-stats.html`
 
 2. **Test locally before deploying**
    - Always test changes locally first

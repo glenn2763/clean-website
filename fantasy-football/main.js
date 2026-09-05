@@ -279,7 +279,7 @@ function init() {
 
     function hubFromHash() {
         const hash = window.location.hash.replace(/^#/, '');
-        const hubId = hash === 'wire' ? 'waivers' : hash;
+        const hubId = hash;
         const scopeType = currentScopeType || getScopeType();
         return resolveHub(HUBS.includes(hubId) ? hubId : DEFAULT_HUB, scopeType);
     }
