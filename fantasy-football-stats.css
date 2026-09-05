@@ -920,6 +920,10 @@ td.mono {
     gap: 1rem;
 }
 
+.trade-list .trade-card {
+    flex-shrink: 0;
+}
+
 .trade-card {
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -1300,6 +1304,9 @@ td.mono {
     border: 1px solid var(--border-color);
     border-radius: 6px;
     background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    max-height: min(75vh, 820px);
     overflow: hidden;
 }
 
@@ -1314,6 +1321,7 @@ td.mono {
     padding: 0.75rem 1rem;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .trade-sociogram-detail-title {
@@ -1342,9 +1350,19 @@ td.mono {
 }
 
 .trade-sociogram-detail-list {
+    flex: 1;
+    min-height: 0;
     padding: 1rem;
-    max-height: 420px;
     overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.trade-network-all-trades .trade-list {
+    margin-top: 0.75rem;
+    max-height: min(75vh, 820px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.25rem;
 }
 
 .trade-list-heading {
