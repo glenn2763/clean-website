@@ -223,6 +223,12 @@ async function renderBirthplaceMap(allSeasonsData) {
                     [...seasons].sort(),
                 ])
             ),
+            ownerSeasonCounts: Object.fromEntries(
+                [...meta.ownerSeasons.entries()].map(([ownerKey, seasons]) => [
+                    ownerKey,
+                    seasons.size,
+                ])
+            ),
             birthplace: birthOk
                 ? {
                       lat: record.lat,
@@ -353,6 +359,10 @@ async function renderBirthplaceMap(allSeasonsData) {
         }
     }
 
+    function rosterSeasonCount(player, ownerKey) {
+        return player.ownerSeasonCounts?.[ownerKey] ?? (player.ownerSeasons[ownerKey] || []).length;
+    }
+
     function renderPlayerList(ownerKey) {
         if (!listEl) return;
         if (!ownerKey) {
@@ -362,19 +372,26 @@ async function renderBirthplaceMap(allSeasonsData) {
 
         const owned = players
             .filter((p) => p.owners.includes(ownerKey))
-            .sort((a, b) => a.fullName.localeCompare(b.fullName));
+            .slice()
+            .sort((a, b) => {
+                const countDiff = rosterSeasonCount(b, ownerKey) - rosterSeasonCount(a, ownerKey);
+                if (countDiff !== 0) return countDiff;
+                return a.fullName.localeCompare(b.fullName, undefined, { sensitivity: 'base' });
+            });
 
         const label = getOwnerLabel(ownerKey, ownerMap);
         const rows = owned
             .map((p) => {
+                const seasonCount = rosterSeasonCount(p, ownerKey);
                 const years = formatSeasonYears(p.ownerSeasons[ownerKey] || []);
                 const loc = activeLocation(p);
                 const place = loc?.label || (locationMode === 'college' ? 'No college mapped' : 'Unknown');
+                const seasonLabel = seasonCount === 1 ? '1 season' : `${seasonCount} seasons`;
                 return (
                     `<li>` +
                     `<div class="birthplace-list-main">` +
                     `<span class="birthplace-list-name">${escapeHtml(p.fullName)}</span>` +
-                    `<span class="birthplace-list-years">${escapeHtml(years)}</span>` +
+                    `<span class="birthplace-list-years">${escapeHtml(seasonLabel)} · ${escapeHtml(years)}</span>` +
                     `</div>` +
                     `<span class="birthplace-list-place">${escapeHtml(place)}</span>` +
                     `</li>`
