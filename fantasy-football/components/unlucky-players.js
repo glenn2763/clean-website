@@ -15,6 +15,7 @@ import {
 } from '../utils.js';
 import { createChart, seriesColor, seriesFill } from '../charts.js';
 import { createViolinChart, syncViolinFromLineChart } from '../violin-chart.js';
+import { collectTableExtremes, renderExtremeTd } from './table-extremes.js';
 
 function fadeHslColor(hslColor, alpha) {
     if (hslColor.startsWith('hsla(')) {
@@ -282,6 +283,18 @@ function renderUnluckyPlayersChart(allSeasonsData) {
         syncViolinFromLineChart('pointsAgainstViolin', chart);
     }
 
+    const numericValues = [];
+    const tableRows = owners.map((owner, datasetIndex) => {
+        const seasonCells = seasons.map((season) => {
+            const value = owner.data[season] || 0;
+            const index = numericValues.length;
+            numericValues.push(value);
+            return { index, html: value.toFixed(2) };
+        });
+        return { owner, datasetIndex, seasonCells };
+    });
+    const extremes = collectTableExtremes(numericValues);
+
     tableContainer.innerHTML = `
         <table class="season-comp-table">
             <thead>
@@ -292,11 +305,13 @@ function renderUnluckyPlayersChart(allSeasonsData) {
                 </tr>
             </thead>
             <tbody>
-                ${owners.map((owner, datasetIndex) => `
-                    <tr data-dataset-index="${datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this line">
-                        <td>${owner.name}</td>
-                        ${seasons.map((season) => `<td>${(owner.data[season] || 0).toFixed(2)}</td>`).join('')}
-                        <td><strong>${owner.avg.toFixed(2)}</strong></td>
+                ${tableRows.map((row) => `
+                    <tr data-dataset-index="${row.datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this line">
+                        <td>${row.owner.name}</td>
+                        ${row.seasonCells.map((cell) =>
+                            renderExtremeTd(cell.html, extremes, cell.index)
+                        ).join('')}
+                        <td><strong>${row.owner.avg.toFixed(2)}</strong></td>
                     </tr>
                 `).join('')}
             </tbody>

@@ -496,18 +496,209 @@ runner.test('parseExecutedTrades groups ESPN trade copies by relatedTransactionI
     };
 
     const trades = parseExecutedTrades(seasonData);
-    if (trades.length !== 2) {
-        throw new Error(`Expected 2 executed trades, got ${trades.length}`);
+    if (trades.length !== 1) {
+        throw new Error(`Expected 1 executed trade, got ${trades.length}`);
     }
 
     const detailedTrade = trades.find((trade) => trade.id === 'trade-group-3');
     if (!detailedTrade || detailedTrade.partial || detailedTrade.sides.length !== 2) {
         throw new Error('Expected one detailed trade with two sides');
     }
+});
 
-    const pairedTrade = trades.find((trade) => trade.partial && trade.sides.length === 2);
-    if (!pairedTrade) {
-        throw new Error('Expected one paired partial trade between two managers');
+runner.test('parseExecutedTrades infers players from roster diffs when TRADE_ACCEPT has no items', () => {
+    const roster = (playerIds) => playerIds.map((id) => ({ id, totalPoints: 10 }));
+
+    const seasonData = {
+        mSettings: { scheduleSettings: { numberOfRegularSeasonMatchups: 14 } },
+        mTransactions: {
+            transactions: [
+                {
+                    id: 'nick-accept',
+                    relatedTransactionId: 'stub-trade-9',
+                    type: 'TRADE_ACCEPT',
+                    status: 'EXECUTED',
+                    scoringPeriodId: 9,
+                    teamId: 1,
+                    proposedDate: 2000,
+                    items: [],
+                },
+                {
+                    id: 'nick-waiver',
+                    type: 'WAIVER',
+                    status: 'EXECUTED',
+                    scoringPeriodId: 9,
+                    items: [{ type: 'ADD', toTeamId: 1, playerId: 900 }],
+                },
+            ],
+        },
+        mTeam: [
+            { id: 1, ownerName: 'Nick Manager' },
+            { id: 3, ownerName: 'Alex Manager' },
+        ],
+        mMatchup: {
+            schedule: [
+                {
+                    matchupPeriodId: 8,
+                    homeTeamId: 1,
+                    awayTeamId: 3,
+                    homeScore: 100,
+                    awayScore: 90,
+                    homeRoster: roster([100, 200]),
+                    awayRoster: roster([3929630, 300]),
+                },
+                {
+                    matchupPeriodId: 9,
+                    homeTeamId: 1,
+                    awayTeamId: 3,
+                    homeScore: 110,
+                    awayScore: 95,
+                    homeRoster: roster([3929630, 200, 900]),
+                    awayRoster: roster([100, 300]),
+                },
+            ],
+        },
+        kona_player_info: {
+            players: [
+                { id: 3929630, fullName: 'Saquon Barkley' },
+                { id: 100, fullName: 'Player A' },
+                { id: 200, fullName: 'Player B' },
+                { id: 300, fullName: 'Player C' },
+                { id: 900, fullName: 'Waiver Pickup' },
+            ],
+        },
+    };
+
+    const trades = parseExecutedTrades(seasonData);
+    if (trades.length !== 1) {
+        throw new Error(`Expected 1 inferred trade, got ${trades.length}`);
+    }
+
+    const trade = trades[0];
+    if (!trade.inferred || trade.partial) {
+        throw new Error('Expected a completed inferred trade');
+    }
+
+    const nick = trade.sides.find((side) => side.teamId === 1);
+    const alex = trade.sides.find((side) => side.teamId === 3);
+    if (!nick || !alex) {
+        throw new Error('Expected Nick and Alex trade sides');
+    }
+    if (!nick.received.includes('Saquon Barkley') || !alex.sent.includes('Saquon Barkley')) {
+        throw new Error(`Expected Saquon traded from Alex to Nick, got ${JSON.stringify(trade.sides)}`);
+    }
+    if (nick.received.includes('Waiver Pickup')) {
+        throw new Error('Waiver pickup should not appear in inferred trade');
+    }
+});
+
+runner.test('parseExecutedTrades discovers roster-only trades missing from ESPN transactions', () => {
+    const roster = (playerIds) => playerIds.map((id) => ({ id, totalPoints: 10 }));
+
+    const seasonData = {
+        mSettings: { scheduleSettings: { numberOfRegularSeasonMatchups: 14 } },
+        mTransactions: { transactions: [] },
+        mTeam: [
+            { id: 1, ownerName: 'Nick Manager' },
+            { id: 5, ownerName: 'Isaac Manager' },
+        ],
+        mMatchup: {
+            schedule: [
+                {
+                    matchupPeriodId: 1,
+                    homeTeamId: 1,
+                    awayTeamId: 5,
+                    homeScore: 100,
+                    awayScore: 90,
+                    homeRoster: roster([100, 200]),
+                    awayRoster: roster([300, 400]),
+                },
+                {
+                    matchupPeriodId: 2,
+                    homeTeamId: 1,
+                    awayTeamId: 5,
+                    homeScore: 110,
+                    awayScore: 95,
+                    homeRoster: roster([100, 400]),
+                    awayRoster: roster([300, 200]),
+                },
+            ],
+        },
+        kona_player_info: {
+            players: [
+                { id: 200, fullName: 'Jarvis Landry' },
+                { id: 400, fullName: 'Christian Kirk' },
+                { id: 100, fullName: 'Player A' },
+                { id: 300, fullName: 'Player B' },
+            ],
+        },
+    };
+
+    const trades = parseExecutedTrades(seasonData);
+    if (trades.length !== 1) {
+        throw new Error(`Expected 1 discovered trade, got ${trades.length}`);
+    }
+
+    const trade = trades[0];
+    if (!trade.inferred || !trade.discoveredFromRosters) {
+        throw new Error('Expected a roster-discovered trade');
+    }
+
+    const nick = trade.sides.find((side) => side.teamId === 1);
+    const isaac = trade.sides.find((side) => side.teamId === 5);
+    if (
+        !nick.received.includes('Christian Kirk') ||
+        !nick.sent.includes('Jarvis Landry') ||
+        !isaac.received.includes('Jarvis Landry') ||
+        !isaac.sent.includes('Christian Kirk')
+    ) {
+        throw new Error(`Expected Kirk/Landry swap, got ${JSON.stringify(trade.sides)}`);
+    }
+});
+
+runner.test('parseExecutedTrades drops phantom partial stubs with no roster movement', () => {
+    const seasonData = {
+        mTransactions: {
+            transactions: [
+                {
+                    id: 'phantom-accept',
+                    type: 'TRADE_ACCEPT',
+                    status: 'EXECUTED',
+                    scoringPeriodId: 10,
+                    teamId: 4,
+                    proposedDate: 1000,
+                    items: [],
+                },
+            ],
+        },
+        mTeam: [{ id: 4, ownerName: 'Kenyon Manager' }],
+        mMatchup: {
+            schedule: [
+                {
+                    matchupPeriodId: 9,
+                    homeTeamId: 4,
+                    awayTeamId: 5,
+                    homeScore: 100,
+                    awayScore: 90,
+                    homeRoster: [{ id: 100, totalPoints: 10 }],
+                    awayRoster: [{ id: 200, totalPoints: 10 }],
+                },
+                {
+                    matchupPeriodId: 10,
+                    homeTeamId: 4,
+                    awayTeamId: 5,
+                    homeScore: 110,
+                    awayScore: 95,
+                    homeRoster: [{ id: 100, totalPoints: 10 }],
+                    awayRoster: [{ id: 200, totalPoints: 10 }],
+                },
+            ],
+        },
+    };
+
+    const trades = parseExecutedTrades(seasonData);
+    if (trades.length !== 0) {
+        throw new Error(`Expected phantom partial to be dropped, got ${trades.length}`);
     }
 });
 
@@ -635,40 +826,40 @@ runner.test('buildTeamSeasonRows computes regular-season wins per manager-season
 
 runner.test('computeCorrelations excludes tautological metrics for points target', () => {
     const rows = [
-        { wins: 10, pointsFor: 1500, metrics: { avgPointsFor: 107.1, totalPointsFor: 1500, wireAdds: 2 } },
-        { wins: 8, pointsFor: 1400, metrics: { avgPointsFor: 100, totalPointsFor: 1400, wireAdds: 5 } },
-        { wins: 6, pointsFor: 1300, metrics: { avgPointsFor: 92.9, totalPointsFor: 1300, wireAdds: 8 } },
-        { wins: 4, pointsFor: 1200, metrics: { avgPointsFor: 85.7, totalPointsFor: 1200, wireAdds: 10 } },
-        { wins: 2, pointsFor: 1100, metrics: { avgPointsFor: 78.6, totalPointsFor: 1100, wireAdds: 12 } },
+        { wins: 10, pointsFor: 1500, metrics: { avgPointsFor: 107.1, totalPointsFor: 1500, wireMoves: 2 } },
+        { wins: 8, pointsFor: 1400, metrics: { avgPointsFor: 100, totalPointsFor: 1400, wireMoves: 5 } },
+        { wins: 6, pointsFor: 1300, metrics: { avgPointsFor: 92.9, totalPointsFor: 1300, wireMoves: 8 } },
+        { wins: 4, pointsFor: 1200, metrics: { avgPointsFor: 85.7, totalPointsFor: 1200, wireMoves: 10 } },
+        { wins: 2, pointsFor: 1100, metrics: { avgPointsFor: 78.6, totalPointsFor: 1100, wireMoves: 12 } },
     ];
-    const results = computeCorrelations(rows, ['avgPointsFor', 'totalPointsFor', 'wireAdds'], 'pointsFor');
+    const results = computeCorrelations(rows, ['avgPointsFor', 'totalPointsFor', 'wireMoves'], 'pointsFor');
     const avgPf = results.find((entry) => entry.id === 'avgPointsFor');
     const totalPf = results.find((entry) => entry.id === 'totalPointsFor');
-    const wire = results.find((entry) => entry.id === 'wireAdds');
+    const wire = results.find((entry) => entry.id === 'wireMoves');
     if (!avgPf?.excluded || !totalPf?.excluded) {
         throw new Error('Expected scoring outcome metrics to be excluded for points target');
     }
     if (!wire?.valid || wire.r >= 0) {
-        throw new Error(`Expected negative correlation for wireAdds vs points, got ${JSON.stringify(wire)}`);
+        throw new Error(`Expected negative correlation for wireMoves vs points, got ${JSON.stringify(wire)}`);
     }
 });
 
 runner.test('computeCorrelations ranks scoring metrics against wins', () => {
     const rows = [
-        { wins: 10, metrics: { avgPointsFor: 120, wireAdds: 2 } },
-        { wins: 8, metrics: { avgPointsFor: 110, wireAdds: 5 } },
-        { wins: 6, metrics: { avgPointsFor: 100, wireAdds: 8 } },
-        { wins: 4, metrics: { avgPointsFor: 90, wireAdds: 10 } },
-        { wins: 2, metrics: { avgPointsFor: 80, wireAdds: 12 } },
+        { wins: 10, metrics: { avgPointsFor: 120, wireMoves: 2 } },
+        { wins: 8, metrics: { avgPointsFor: 110, wireMoves: 5 } },
+        { wins: 6, metrics: { avgPointsFor: 100, wireMoves: 8 } },
+        { wins: 4, metrics: { avgPointsFor: 90, wireMoves: 10 } },
+        { wins: 2, metrics: { avgPointsFor: 80, wireMoves: 12 } },
     ];
-    const results = computeCorrelations(rows, ['avgPointsFor', 'wireAdds'], 'wins');
+    const results = computeCorrelations(rows, ['avgPointsFor', 'wireMoves'], 'wins');
     const pf = results.find((entry) => entry.id === 'avgPointsFor');
-    const wire = results.find((entry) => entry.id === 'wireAdds');
+    const wire = results.find((entry) => entry.id === 'wireMoves');
     if (!pf?.valid || pf.r <= 0) {
         throw new Error(`Expected positive correlation for avgPointsFor, got ${JSON.stringify(pf)}`);
     }
     if (!wire?.valid || wire.r >= 0) {
-        throw new Error(`Expected negative correlation for wireAdds, got ${JSON.stringify(wire)}`);
+        throw new Error(`Expected negative correlation for wireMoves, got ${JSON.stringify(wire)}`);
     }
 });
 
@@ -771,17 +962,20 @@ runner.test('getLabMetricIds excludes tautological roster and luck metrics', () 
     const labIds = getLabMetricIds();
     const excluded = [
         'rosterTotalPoints',
-        'topPlayerPoints',
-        'closeGameWinPct',
         'avgPointsFor',
+        'totalPointsFor',
+        'topKPoints',
     ];
     excluded.forEach((id) => {
         if (labIds.includes(id)) {
             throw new Error(`Expected ${id} to be excluded from Lab metrics`);
         }
     });
-    if (!labIds.includes('projectedVsActual') || !labIds.includes('wireAdds')) {
+    if (!labIds.includes('projectedVsActual') || !labIds.includes('wireMoves')) {
         throw new Error('Expected actionable metrics to remain in Lab set');
+    }
+    if (!labIds.includes('weeklyCeiling') || !labIds.includes('topRBPoints') || !labIds.includes('blowoutWinPct')) {
+        throw new Error('Expected expanded Lab metrics to be available');
     }
 });
 

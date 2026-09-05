@@ -5,6 +5,7 @@
 
 import { buildOwnerMap, getActiveSeasons, getOwnerKey, getOwnerLabel, getTeams } from '../utils.js';
 import { createChart, getChart, seriesColor, seriesFill } from '../charts.js';
+import { collectTableExtremes, renderExtremeTd } from './table-extremes.js';
 
 const METRICS = {
     points: {
@@ -107,6 +108,7 @@ function buildPointLeaderStats(model) {
         .sort((a, b) => b.total - a.total);
 
     let bestSeason = null;
+    let worstSeason = null;
     seasons.forEach((season) => {
         ownerList.forEach((ownerKey) => {
             const record = ownerSeasons[ownerKey][season];
@@ -118,12 +120,20 @@ function buildPointLeaderStats(model) {
                     season,
                 };
             }
+            if (!worstSeason || record.pointsFor < worstSeason.pointsFor) {
+                worstSeason = {
+                    name: getOwnerLabel(ownerKey, ownerMap),
+                    pointsFor: record.pointsFor,
+                    season,
+                };
+            }
         });
     });
 
     return {
         careerTop: careerTotals.slice(0, 3),
         bestSeason,
+        worstSeason,
     };
 }
 
@@ -131,8 +141,8 @@ function renderPointLeaderStrip(model) {
     const container = document.getElementById('season-comparison-leaders');
     if (!container) return;
 
-    const { careerTop, bestSeason } = buildPointLeaderStats(model);
-    if (!careerTop.length && !bestSeason) {
+    const { careerTop, bestSeason, worstSeason } = buildPointLeaderStats(model);
+    if (!careerTop.length && !bestSeason && !worstSeason) {
         container.innerHTML = '';
         return;
     }
@@ -141,11 +151,17 @@ function renderPointLeaderStrip(model) {
         ? `<span><strong>Career PF</strong> ${careerTop.map((entry) => `${entry.name} ${formatPoints(entry.total)}`).join(' · ')}</span>`
         : '';
 
-    const seasonLine = bestSeason
+    const bestSeasonLine = bestSeason
         ? `<span><strong>Best season</strong> ${bestSeason.name} ${formatPoints(bestSeason.pointsFor)} (${bestSeason.season})</span>`
         : '';
 
-    container.innerHTML = [careerLine, seasonLine].filter(Boolean).join('<span class="season-comp-leaders-divider">|</span>');
+    const worstSeasonLine = worstSeason
+        ? `<span><strong>Worst season</strong> ${worstSeason.name} ${formatPoints(worstSeason.pointsFor)} (${worstSeason.season})</span>`
+        : '';
+
+    container.innerHTML = [careerLine, bestSeasonLine, worstSeasonLine]
+        .filter(Boolean)
+        .join('<span class="season-comp-leaders-divider">|</span>');
 }
 
 function fadeHslColor(hslColor, alpha) {
@@ -280,6 +296,30 @@ function buildComparisonTable(model, metricKey) {
     const metric = METRICS[metricKey];
     const { seasons, ownerMap, ownerSeasons, ownerList } = model;
 
+    const numericValues = [];
+    const rowData = ownerList.map((ownerKey, datasetIndex) => {
+        const name = getOwnerLabel(ownerKey, ownerMap);
+        const total = seasons.reduce(
+            (totals, season) => metric.accumulateTotal(totals, ownerSeasons[ownerKey][season]),
+            metric.emptyTotal()
+        );
+
+        const seasonCells = seasons.map((season) => {
+            const record = ownerSeasons[ownerKey][season];
+            const value = metric.getValue(record);
+            const index = numericValues.length;
+            numericValues.push(value);
+            return {
+                index,
+                html: metric.formatSeasonCell(record),
+            };
+        });
+
+        return { name, datasetIndex, seasonCells, totalHtml: metric.formatTotal(total) };
+    });
+
+    const extremes = collectTableExtremes(numericValues);
+
     return `
         <table class="season-comp-table">
             <thead>
@@ -290,23 +330,15 @@ function buildComparisonTable(model, metricKey) {
                 </tr>
             </thead>
             <tbody>
-                ${ownerList.map((ownerKey, datasetIndex) => {
-                    const name = getOwnerLabel(ownerKey, ownerMap);
-                    const total = seasons.reduce(
-                        (totals, season) => metric.accumulateTotal(totals, ownerSeasons[ownerKey][season]),
-                        metric.emptyTotal()
-                    );
-                    return `
-                        <tr data-dataset-index="${datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this line">
-                            <td>${name}</td>
-                            ${seasons.map((season) => {
-                                const record = ownerSeasons[ownerKey][season];
-                                return `<td>${metric.formatSeasonCell(record)}</td>`;
-                            }).join('')}
-                            <td><strong>${metric.formatTotal(total)}</strong></td>
-                        </tr>
-                    `;
-                }).join('')}
+                ${rowData.map((row) => `
+                    <tr data-dataset-index="${row.datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this line">
+                        <td>${row.name}</td>
+                        ${row.seasonCells.map((cell) =>
+                            renderExtremeTd(cell.html, extremes, cell.index)
+                        ).join('')}
+                        <td><strong>${row.totalHtml}</strong></td>
+                    </tr>
+                `).join('')}
             </tbody>
         </table>
     `;

@@ -1,5 +1,5 @@
 /**
- * League History — birthplace / college map with manager LED selection.
+ * League History — birthplace / college heat map with manager filter.
  */
 
 import {
@@ -16,29 +16,26 @@ const US_BOUNDS = [
     [49.5, -66.5],
 ];
 
+const HEAT_GRADIENT = {
+    0.2: '#2b83ba',
+    0.45: '#abdda4',
+    0.65: '#ffffbf',
+    0.85: '#fdae61',
+    1.0: '#d7191c',
+};
+
 const LOCATION_MODES = {
     birthplace: {
         key: 'birthplace',
         label: 'Birthplace',
-        emptyList: 'Select a manager to light up their roster birthplaces and see the full list.',
+        emptyList: 'Select a manager to see their roster birthplaces in the list.',
     },
     college: {
         key: 'college',
         label: 'College',
-        emptyList: 'Select a manager to light up their roster colleges and see the full list.',
+        emptyList: 'Select a manager to see their roster colleges in the list.',
     },
 };
-
-/** Deterministic sub-pixel jitter so stacked city dots fan out slightly. */
-function jitterForId(playerId) {
-    const n = Math.abs(Number(playerId)) || 0;
-    const angle = ((n * 47) % 360) * (Math.PI / 180);
-    const radius = 0.04 + ((n * 13) % 17) * 0.005;
-    return {
-        dLat: Math.sin(angle) * radius,
-        dLng: Math.cos(angle) * radius,
-    };
-}
 
 function managerColor(index) {
     const hue = (index * 33) % 360;
@@ -127,7 +124,7 @@ function formatCollegePlace(record) {
 }
 
 let mapInstance = null;
-let markerLayer = null;
+let heatLayer = null;
 let resizeObserver = null;
 
 function destroyMap() {
@@ -139,14 +136,21 @@ function destroyMap() {
         mapInstance.remove();
         mapInstance = null;
     }
-    markerLayer = null;
+    heatLayer = null;
 }
 
 function ensureLeaflet() {
     if (typeof window === 'undefined' || !window.L) {
         throw new Error('Leaflet is not loaded');
     }
+    if (typeof window.L.heatLayer !== 'function') {
+        throw new Error('Leaflet.heat is not loaded');
+    }
     return window.L;
+}
+
+function locationBucketKey(lat, lng) {
+    return `${lat.toFixed(2)}|${lng.toFixed(2)}`;
 }
 
 /**
@@ -206,7 +210,6 @@ async function renderBirthplaceMap(allSeasonsData) {
         const record = birthMap[String(playerId)];
         if (!record) return;
 
-        const jitter = jitterForId(playerId);
         const birthOk = record.lat != null && record.lng != null;
         const collegeOk = record.collegeLat != null && record.collegeLng != null;
 
@@ -222,16 +225,16 @@ async function renderBirthplaceMap(allSeasonsData) {
             ),
             birthplace: birthOk
                 ? {
-                      lat: record.lat + jitter.dLat,
-                      lng: record.lng + jitter.dLng,
+                      lat: record.lat,
+                      lng: record.lng,
                       label: formatBirthPlace(record),
                       country: record.country,
                   }
                 : null,
             college: collegeOk
                 ? {
-                      lat: record.collegeLat + jitter.dLat,
-                      lng: record.collegeLng + jitter.dLng,
+                      lat: record.collegeLat,
+                      lng: record.collegeLng,
                       label: formatCollegePlace(record),
                       name: record.collegeName,
                   }
@@ -241,7 +244,6 @@ async function renderBirthplaceMap(allSeasonsData) {
 
     let locationMode = 'birthplace';
     let selectedOwnerKey = null;
-    const markersByPlayer = new Map();
 
     if (modePicker) {
         modePicker.innerHTML = '';
@@ -287,8 +289,6 @@ async function renderBirthplaceMap(allSeasonsData) {
         minZoom: 2,
     }).addTo(mapInstance);
 
-    markerLayer = L.layerGroup().addTo(mapInstance);
-
     function activeLocation(player) {
         return player[locationMode] || null;
     }
@@ -297,85 +297,60 @@ async function renderBirthplaceMap(allSeasonsData) {
         return players.filter((p) => activeLocation(p));
     }
 
+    function buildHeatPoints(ownerKey) {
+        const buckets = new Map();
+
+        visiblePlayers().forEach((player) => {
+            if (ownerKey && !player.owners.includes(ownerKey)) return;
+
+            const loc = activeLocation(player);
+            if (!loc) return;
+
+            const key = locationBucketKey(loc.lat, loc.lng);
+            if (!buckets.has(key)) {
+                buckets.set(key, { lat: loc.lat, lng: loc.lng, weight: 0 });
+            }
+            buckets.get(key).weight += 1;
+        });
+
+        return [...buckets.values()].map((bucket) => [bucket.lat, bucket.lng, bucket.weight]);
+    }
+
+    function heatOptions(ownerKey) {
+        const pointCount = buildHeatPoints(ownerKey).length;
+        const radius = ownerKey ? 22 : 28;
+        const blur = ownerKey ? 16 : 20;
+
+        return {
+            radius,
+            blur,
+            maxZoom: 10,
+            minOpacity: pointCount <= 3 ? 0.45 : 0.35,
+            max: ownerKey ? 1.2 : 1.8,
+            gradient: HEAT_GRADIENT,
+        };
+    }
+
     function updateSummary() {
         if (!summary) return;
         const visible = visiblePlayers();
+        const filterNote = selectedOwnerKey
+            ? ` · showing ${getOwnerLabel(selectedOwnerKey, ownerMap)}`
+            : '';
         if (locationMode === 'birthplace') {
             const international = visible.filter(
                 (p) => p.birthplace?.country && p.birthplace.country !== 'USA'
             ).length;
             const intlNote =
                 international > 0
-                    ? ` · ${international} born outside the U.S. (plotted — zoom out or pan to find them)`
+                    ? ` · ${international} born outside the U.S. (zoom out or pan to find them)`
                     : '';
-            summary.textContent = `${visible.length} players with mapped birthplaces across ${ownerKeys.length} managers${intlNote}`;
+            summary.textContent = `${visible.length} players with mapped birthplaces across ${ownerKeys.length} managers${filterNote}${intlNote}`;
         } else {
             const missing = players.length - visible.length;
             const missingNote = missing > 0 ? ` · ${missing} without a mapped college` : '';
-            summary.textContent = `${visible.length} players with mapped colleges across ${ownerKeys.length} managers${missingNote}`;
+            summary.textContent = `${visible.length} players with mapped colleges across ${ownerKeys.length} managers${filterNote}${missingNote}`;
         }
-    }
-
-    function circleStyle(player, ownerKey) {
-        const isSelected = ownerKey && player.owners.includes(ownerKey);
-        const isAll = !ownerKey;
-        const ownerColor = ownerKey ? colorByOwner.get(ownerKey) : '#5b7c99';
-        const base = { radius: 3, weight: 0.75 };
-
-        if (isAll) {
-            return {
-                ...base,
-                color: '#1c2a3a',
-                fillColor: '#5b7c99',
-                fillOpacity: 0.5,
-                opacity: 0.65,
-                className: 'birthplace-dot birthplace-dot-all',
-            };
-        }
-        if (isSelected) {
-            return {
-                ...base,
-                color: ownerColor,
-                fillColor: ownerColor,
-                fillOpacity: 0.92,
-                opacity: 1,
-                className: 'birthplace-dot birthplace-dot-lit',
-            };
-        }
-        return {
-            ...base,
-            color: '#8a93a0',
-            fillColor: '#b0b7c0',
-            fillOpacity: 0.18,
-            opacity: 0.3,
-            className: 'birthplace-dot birthplace-dot-dim',
-        };
-    }
-
-    function tooltipHtml(player, ownerKey) {
-        const loc = activeLocation(player);
-        const years = ownerKey ? formatSeasonYears(player.ownerSeasons[ownerKey] || []) : '';
-        const yearsLine = years ? `<br>${escapeHtml(years)}` : '';
-        return (
-            `<strong>${escapeHtml(player.fullName)}</strong><br>` +
-            `${escapeHtml(loc?.label || 'Unknown')}${yearsLine}`
-        );
-    }
-
-    function syncMarkerTooltip(marker, player, ownerKey) {
-        const loc = activeLocation(player);
-        const showTooltip = Boolean(loc) && (!ownerKey || player.owners.includes(ownerKey));
-
-        marker.unbindTooltip();
-        if (marker._path) {
-            marker._path.style.pointerEvents = showTooltip ? 'auto' : 'none';
-        }
-        if (!showTooltip) return;
-
-        marker.bindTooltip(tooltipHtml(player, ownerKey || null), {
-            sticky: true,
-            className: 'birthplace-tooltip',
-        });
     }
 
     function renderPlayerList(ownerKey) {
@@ -414,33 +389,17 @@ async function renderBirthplaceMap(allSeasonsData) {
             `</div><ul class="birthplace-list">${rows}</ul>`;
     }
 
-    function syncMarkers() {
-        players.forEach((player) => {
-            const loc = activeLocation(player);
-            let marker = markersByPlayer.get(player.playerId);
+    function syncHeatLayer() {
+        const points = buildHeatPoints(selectedOwnerKey);
 
-            if (!loc) {
-                if (marker) {
-                    markerLayer.removeLayer(marker);
-                    markersByPlayer.delete(player.playerId);
-                }
-                return;
-            }
+        if (heatLayer) {
+            mapInstance.removeLayer(heatLayer);
+            heatLayer = null;
+        }
 
-            if (!marker) {
-                marker = L.circleMarker([loc.lat, loc.lng], circleStyle(player, selectedOwnerKey));
-                marker.addTo(markerLayer);
-                markersByPlayer.set(player.playerId, marker);
-            } else {
-                marker.setLatLng([loc.lat, loc.lng]);
-                marker.setStyle(circleStyle(player, selectedOwnerKey));
-            }
+        if (!points.length) return;
 
-            syncMarkerTooltip(marker, player, selectedOwnerKey);
-            if (selectedOwnerKey && player.owners.includes(selectedOwnerKey)) {
-                marker.bringToFront();
-            }
-        });
+        heatLayer = L.heatLayer(points, heatOptions(selectedOwnerKey)).addTo(mapInstance);
     }
 
     function applySelection(ownerKey) {
@@ -449,7 +408,8 @@ async function renderBirthplaceMap(allSeasonsData) {
             const key = btn.dataset.ownerKey || '';
             btn.classList.toggle('is-selected', key === (selectedOwnerKey || ''));
         });
-        syncMarkers();
+        updateSummary();
+        syncHeatLayer();
         renderPlayerList(selectedOwnerKey);
     }
 
@@ -462,13 +422,13 @@ async function renderBirthplaceMap(allSeasonsData) {
             });
         }
         updateSummary();
-        syncMarkers();
+        syncHeatLayer();
         renderPlayerList(selectedOwnerKey);
         mapInstance.fitBounds(US_BOUNDS);
     }
 
     updateSummary();
-    syncMarkers();
+    syncHeatLayer();
     mapInstance.fitBounds(US_BOUNDS);
 
     picker.onclick = (event) => {

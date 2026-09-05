@@ -7,7 +7,6 @@ import { renderLeagueOverview } from './league-overview.js';
 import { renderUnluckyPlayersChart } from './unlucky-players.js';
 import { renderLuckQuadrantChart } from './luck-quadrant.js';
 import { renderConsistencyChart } from './consistency.js';
-import { renderProjectedVsActualChart } from './projected-vs-actual.js';
 import { renderScoreExtremesChart } from './score-extremes.js';
 import { renderH2HMatrix } from './h2h-matrix.js';
 import { renderPlayoffPerformance } from './playoff-performance.js';
@@ -46,7 +45,6 @@ function renderPulseHub(scopeType, allSeasonsData) {
 function renderScoringHub(scopeType, allSeasonsData) {
     if (scopeType === 'season') {
         renderWeeklyTrends(allSeasonsData);
-        renderProjectedVsActualChart(allSeasonsData);
         renderConsistencyChart(allSeasonsData);
         return;
     }
@@ -102,13 +100,21 @@ function renderMatchupsHub(scopeType, allSeasonsData) {
  * @param {'season'|'all'} scopeType
  * @param {Object} allSeasonsData
  */
-function renderWireHub(scopeType, allSeasonsData) {
+function renderWaiversHub(scopeType, allSeasonsData) {
+    if (scopeType !== 'all' || getActiveSeasons(allSeasonsData).length < 2) return;
+    renderWaiverWireSpecialist(allSeasonsData);
+}
+
+/**
+ * @param {'season'|'all'} scopeType
+ * @param {Object} allSeasonsData
+ */
+function renderTradesHub(scopeType, allSeasonsData) {
     if (scopeType === 'season') {
         renderTradeAnalyzer(allSeasonsData);
         return;
     }
     if (getActiveSeasons(allSeasonsData).length >= 2) {
-        renderWaiverWireSpecialist(allSeasonsData);
         renderLeagueTradeNetwork(allSeasonsData);
     }
 }
@@ -163,8 +169,11 @@ function renderHub(hubId, scopeType, allSeasonsData) {
         case 'matchups':
             renderMatchupsHub(scopeType, allSeasonsData);
             break;
-        case 'wire':
-            renderWireHub(scopeType, allSeasonsData);
+        case 'waivers':
+            renderWaiversHub(scopeType, allSeasonsData);
+            break;
+        case 'trades':
+            renderTradesHub(scopeType, allSeasonsData);
             break;
         case 'roster':
             renderRosterHub(scopeType, allSeasonsData);
@@ -185,7 +194,7 @@ function renderHub(hubId, scopeType, allSeasonsData) {
 function renderVisualizations(mode, allSeasonsData) {
     destroyAllCharts();
     const scopeType = mode === 'multi' || mode === 'all' ? 'all' : 'season';
-    const hubs = ['pulse', 'scoring', 'luck', 'matchups', 'wire', 'roster', 'lab'];
+    const hubs = ['pulse', 'scoring', 'luck', 'matchups', 'waivers', 'trades', 'roster', 'lab'];
     hubs.forEach((hubId) => renderHub(hubId, scopeType, allSeasonsData));
 }
 
@@ -193,7 +202,6 @@ export {
     renderLeagueOverview,
     renderUnluckyPlayersChart,
     renderConsistencyChart,
-    renderProjectedVsActualChart,
     renderScoreExtremesChart,
     renderH2HMatrix,
     renderPlayoffPerformance,

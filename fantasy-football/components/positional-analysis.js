@@ -11,6 +11,8 @@ import { buildSeasonRosterPointsByTeam } from '../utils.js';
  */
 function renderPositionalAnalysis(allSeasonsData) {
     const container = document.getElementById('positional-tables');
+    if (!container) return;
+
     const positionalStats = {
         QB: [],
         RB: [],
@@ -55,32 +57,38 @@ function renderPositionalAnalysis(allSeasonsData) {
         });
     });
 
-    container.innerHTML = Object.entries(positionalStats).map(([pos, players]) => {
-        const sorted = players.sort((a, b) => b.points - a.points).slice(0, 5);
-        if (sorted.length === 0) return '';
+    const groups = Object.entries(positionalStats)
+        .map(([pos, players]) => {
+            const sorted = players.sort((a, b) => b.points - a.points).slice(0, 5);
+            if (sorted.length === 0) return '';
 
-        return `
+            return `
             <div class="position-group">
                 <h4>Top ${pos}s</h4>
-                <table>
+                <table class="positional-leaders-table">
                     <thead>
                         <tr>
                             <th>Player</th>
-                            <th>Total Points</th>
+                            <th>Pts</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${sorted.map(player => `
+                        ${sorted.map((player) => `
                             <tr>
                                 <td>${player.name}</td>
-                                <td>${player.points.toFixed(2)}</td>
+                                <td>${player.points.toFixed(1)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             </div>
         `;
-    }).join('');
+        })
+        .filter(Boolean);
+
+    container.innerHTML = groups.length
+        ? `<div class="positional-leaders-grid">${groups.join('')}</div>`
+        : '<p class="game-log-empty">No positional data available.</p>';
 }
 
 export { renderPositionalAnalysis };

@@ -861,6 +861,457 @@ function resolvePlayerName(playerId, playerNameMap) {
     return `Player ${playerId}`;
 }
 
+function rosterEntryPlayerId(entry) {
+    return entry?.id ?? entry?.playerId ?? entry?.player?.id ?? null;
+}
+
+/**
+ * teamId -> week -> Set(playerId) from weekly boxscore rosters.
+ * @param {Object} seasonData
+ * @returns {Map<number, Map<number, Set<number>>>}
+ */
+function extractWeeklyRosterByTeam(seasonData) {
+    const byTeam = new Map();
+
+    getMatchups(seasonData).forEach((matchup) => {
+        const week = matchup.matchupPeriodId;
+        if (!week) return;
+
+        [
+            { teamId: matchup.homeTeamId, roster: matchup.homeRoster },
+            { teamId: matchup.awayTeamId, roster: matchup.awayRoster },
+        ].forEach(({ teamId, roster }) => {
+            if (teamId == null || !Array.isArray(roster)) return;
+
+            if (!byTeam.has(teamId)) byTeam.set(teamId, new Map());
+            const weekMap = byTeam.get(teamId);
+            if (!weekMap.has(week)) weekMap.set(week, new Set());
+
+            roster.forEach((entry) => {
+                const playerId = rosterEntryPlayerId(entry);
+                if (playerId != null) weekMap.get(week).add(playerId);
+            });
+        });
+    });
+
+    return byTeam;
+}
+
+/**
+ * teamId -> week -> { adds: Set<number>, drops: Set<number> } for executed wire moves.
+ * @param {Object} seasonData
+ * @returns {Map<number, Map<number, { adds: Set<number>, drops: Set<number> }>>}
+ */
+function getWirePlayerMovesByTeamWeek(seasonData) {
+    const byTeam = new Map();
+
+    (getTransactions(seasonData) || []).forEach((transaction) => {
+        if (!isWireTransaction(transaction) || !isExecutedTransaction(transaction)) return;
+
+        const week = transaction.scoringPeriodId;
+        if (!week) return;
+
+        (transaction.items || []).forEach((item) => {
+            if (item.type === 'ADD' && item.toTeamId != null) {
+                const teamId = Number(item.toTeamId);
+                if (!byTeam.has(teamId)) byTeam.set(teamId, new Map());
+                if (!byTeam.get(teamId).has(week)) {
+                    byTeam.get(teamId).set(week, { adds: new Set(), drops: new Set() });
+                }
+                if (item.playerId != null) byTeam.get(teamId).get(week).adds.add(item.playerId);
+            } else if (item.type === 'DROP' && item.fromTeamId != null) {
+                const teamId = Number(item.fromTeamId);
+                if (!byTeam.has(teamId)) byTeam.set(teamId, new Map());
+                if (!byTeam.get(teamId).has(week)) {
+                    byTeam.get(teamId).set(week, { adds: new Set(), drops: new Set() });
+                }
+                if (item.playerId != null) byTeam.get(teamId).get(week).drops.add(item.playerId);
+            }
+        });
+    });
+
+    return byTeam;
+}
+
+/**
+ * Net roster change between consecutive weeks, excluding same-week wire adds/drops.
+ * @returns {{ acquired: number[], lost: number[] }|null}
+ */
+function computeNetRosterChange(teamId, week, rosterByTeam, wireMoves) {
+    const weekMap = rosterByTeam.get(teamId);
+    if (!weekMap) return null;
+
+    const previous = weekMap.get(week - 1);
+    const current = weekMap.get(week);
+    if (!previous || !current) return null;
+
+    const wire = wireMoves.get(teamId)?.get(week) || { adds: new Set(), drops: new Set() };
+    const acquired = [...current].filter((playerId) => !previous.has(playerId) && !wire.adds.has(playerId));
+    const lost = [...previous].filter((playerId) => !current.has(playerId) && !wire.drops.has(playerId));
+
+    return { acquired, lost };
+}
+
+function hasMutualPlayerExchange(deltaA, deltaB) {
+    const sentA = deltaA.lost.filter((playerId) => deltaB.acquired.includes(playerId));
+    const receivedA = deltaA.acquired.filter((playerId) => deltaB.lost.includes(playerId));
+    return sentA.length + receivedA.length > 0;
+}
+
+function buildInferredTradeSides(teamId, otherTeamId, deltaA, deltaB, teams, playerNameMap) {
+    const sentA = deltaA.lost.filter((playerId) => deltaB.acquired.includes(playerId));
+    const receivedA = deltaA.acquired.filter((playerId) => deltaB.lost.includes(playerId));
+    const sentB = deltaB.lost.filter((playerId) => deltaA.acquired.includes(playerId));
+    const receivedB = deltaB.acquired.filter((playerId) => deltaA.lost.includes(playerId));
+
+    const teamA = teams.find((entry) => entry.id === teamId);
+    const teamB = teams.find((entry) => entry.id === otherTeamId);
+
+    return [
+        {
+            teamId,
+            ownerKey: getOwnerKey(teamA),
+            manager: getOwnerDisplayName(teamA),
+            sent: sentA.map((playerId) => resolvePlayerName(playerId, playerNameMap)),
+            received: receivedA.map((playerId) => resolvePlayerName(playerId, playerNameMap)),
+            inferred: true,
+        },
+        {
+            teamId: otherTeamId,
+            ownerKey: getOwnerKey(teamB),
+            manager: getOwnerDisplayName(teamB),
+            sent: sentB.map((playerId) => resolvePlayerName(playerId, playerNameMap)),
+            received: receivedB.map((playerId) => resolvePlayerName(playerId, playerNameMap)),
+            inferred: true,
+        },
+    ];
+}
+
+function tryInferTradeBetweenTeams(teamId, otherTeamId, week, rosterByTeam, wireMoves, teams, playerNameMap) {
+    const deltaA = computeNetRosterChange(teamId, week, rosterByTeam, wireMoves);
+    const deltaB = computeNetRosterChange(otherTeamId, week, rosterByTeam, wireMoves);
+    if (!deltaA || !deltaB || !hasMutualPlayerExchange(deltaA, deltaB)) return null;
+
+    return {
+        sides: buildInferredTradeSides(teamId, otherTeamId, deltaA, deltaB, teams, playerNameMap),
+    };
+}
+
+function tryInferTradeWithCounterparty(teamId, week, rosterByTeam, wireMoves, teams, playerNameMap) {
+    const deltaA = computeNetRosterChange(teamId, week, rosterByTeam, wireMoves);
+    if (!deltaA || (deltaA.acquired.length === 0 && deltaA.lost.length === 0)) return null;
+
+    for (const team of teams) {
+        const otherTeamId = team.id;
+        if (otherTeamId === teamId) continue;
+
+        const inferred = tryInferTradeBetweenTeams(
+            teamId,
+            otherTeamId,
+            week,
+            rosterByTeam,
+            wireMoves,
+            teams,
+            playerNameMap
+        );
+        if (inferred) return { ...inferred, otherTeamId };
+    }
+
+    return null;
+}
+
+function buildInferredTradeDedupeKey(week, sides) {
+    const ownerKeys = sides.map((side) => side.ownerKey).filter(Boolean).sort();
+    if (ownerKeys.length < 2) return null;
+    return `${week}|${buildTradePairKey(ownerKeys[0], ownerKeys[1])}`;
+}
+
+function buildTradeTeamPairKey(week, teamIdA, teamIdB) {
+    return `${week}|${[teamIdA, teamIdB].sort((left, right) => left - right).join('-')}`;
+}
+
+function getTradeTeamIds(trade) {
+    return (trade.sides || []).map((side) => side.teamId).filter((id) => id != null);
+}
+
+function getTradeExchangePlayerNames(sides) {
+    return new Set(
+        (sides || []).flatMap((side) => [...(side.sent || []), ...(side.received || [])].filter(Boolean))
+    );
+}
+
+function tradeHasPlayerDetails(trade) {
+    return (trade.sides || []).some(
+        (side) => (side.sent && side.sent.length > 0) || (side.received && side.received.length > 0)
+    );
+}
+
+function existingTradeCoversRosterExchange(trades, week, teamIdA, teamIdB, exchangePlayerNames) {
+    const targetKey = buildTradeTeamPairKey(week, teamIdA, teamIdB);
+
+    return trades.some((trade) => {
+        if (trade.week !== week || trade.partial || !tradeHasPlayerDetails(trade)) return false;
+
+        const tradeTeamIds = getTradeTeamIds(trade).sort((left, right) => left - right);
+        if (tradeTeamIds.length < 2) return false;
+        if (buildTradeTeamPairKey(week, tradeTeamIds[0], tradeTeamIds[1]) !== targetKey) return false;
+
+        const existingPlayers = getTradeExchangePlayerNames(trade.sides);
+        return [...exchangePlayerNames].every((name) => existingPlayers.has(name));
+    });
+}
+
+function tryInferTradeBetweenTeamsAtWeekOrNearby(
+    teamId,
+    otherTeamId,
+    week,
+    rosterByTeam,
+    wireMoves,
+    teams,
+    playerNameMap
+) {
+    const candidateWeeks = [...new Set([week, week - 1, week + 1])]
+        .filter((candidateWeek) => candidateWeek >= 2)
+        .sort((left, right) => (left === week ? -1 : right === week ? 1 : left - right));
+
+    for (const candidateWeek of candidateWeeks) {
+        const inferred = tryInferTradeBetweenTeams(
+            teamId,
+            otherTeamId,
+            candidateWeek,
+            rosterByTeam,
+            wireMoves,
+            teams,
+            playerNameMap
+        );
+        if (inferred) {
+            return { ...inferred, week: candidateWeek };
+        }
+    }
+
+    return null;
+}
+
+function tryInferTradeWithCounterpartyAtWeekOrNearby(
+    teamId,
+    week,
+    rosterByTeam,
+    wireMoves,
+    teams,
+    playerNameMap
+) {
+    const candidateWeeks = [...new Set([week, week - 1, week + 1])]
+        .filter((candidateWeek) => candidateWeek >= 2)
+        .sort((left, right) => (left === week ? -1 : right === week ? 1 : left - right));
+
+    for (const candidateWeek of candidateWeeks) {
+        const inferred = tryInferTradeWithCounterparty(
+            teamId,
+            candidateWeek,
+            rosterByTeam,
+            wireMoves,
+            teams,
+            playerNameMap
+        );
+        if (inferred) {
+            return { ...inferred, week: candidateWeek };
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Fill in player details for partial trades when ESPN returns empty TRADE_ACCEPT stubs.
+ * Uses week-over-week roster diffs, excluding same-week waiver/free-agent moves.
+ * @param {Array} trades
+ * @param {Object} seasonData
+ * @returns {Array}
+ */
+function enrichPartialTradesFromRosters(trades, seasonData) {
+    const teams = getTeams(seasonData);
+    const playerNameMap = buildPlayerNameMap(seasonData?.kona_player_info?.players);
+    const rosterByTeam = extractWeeklyRosterByTeam(seasonData);
+    const wireMoves = getWirePlayerMovesByTeamWeek(seasonData);
+
+    if (!rosterByTeam.size) return trades;
+
+    const enriched = [];
+    const consumedInferredKeys = new Set();
+
+    trades.forEach((trade) => {
+        const needsEnrichment =
+            trade.partial ||
+            (trade.sides || []).some(
+                (side) =>
+                    side.detailsUnavailable ||
+                    ((!side.sent || side.sent.length === 0) && (!side.received || side.received.length === 0))
+            );
+
+        if (!needsEnrichment) {
+            enriched.push(trade);
+            return;
+        }
+
+        const teamIds = (trade.sides || []).map((side) => side.teamId).filter((id) => id != null);
+        const week = trade.week;
+        if (!week || !teamIds.length) {
+            enriched.push(trade);
+            return;
+        }
+
+        let inferred = null;
+
+        if (teamIds.length >= 2) {
+            inferred = tryInferTradeBetweenTeamsAtWeekOrNearby(
+                teamIds[0],
+                teamIds[1],
+                week,
+                rosterByTeam,
+                wireMoves,
+                teams,
+                playerNameMap
+            );
+        } else {
+            inferred = tryInferTradeWithCounterpartyAtWeekOrNearby(
+                teamIds[0],
+                week,
+                rosterByTeam,
+                wireMoves,
+                teams,
+                playerNameMap
+            );
+        }
+
+        if (!inferred?.sides?.length) {
+            enriched.push(trade);
+            return;
+        }
+
+        const resolvedWeek = inferred.week || week;
+        const dedupeKey = buildInferredTradeDedupeKey(resolvedWeek, inferred.sides);
+        if (dedupeKey && consumedInferredKeys.has(dedupeKey)) return;
+
+        if (dedupeKey) consumedInferredKeys.add(dedupeKey);
+
+        enriched.push({
+            ...trade,
+            week: resolvedWeek,
+            partial: false,
+            inferred: true,
+            sides: inferred.sides,
+        });
+    });
+
+    return enriched;
+}
+
+/**
+ * Find trades visible in weekly roster diffs but missing from ESPN transaction records.
+ * Supports multiple trades in the same week (e.g. one manager trading with two partners).
+ * @param {Array} trades
+ * @param {Object} seasonData
+ * @returns {Array}
+ */
+function discoverTradesFromRosters(trades, seasonData) {
+    const teams = getTeams(seasonData);
+    const playerNameMap = buildPlayerNameMap(seasonData?.kona_player_info?.players);
+    const rosterByTeam = extractWeeklyRosterByTeam(seasonData);
+    const wireMoves = getWirePlayerMovesByTeamWeek(seasonData);
+
+    if (!rosterByTeam.size || teams.length < 2) return trades;
+
+    const weeks = new Set();
+    rosterByTeam.forEach((weekMap) => {
+        weekMap.forEach((_players, week) => {
+            if (week >= 2) weeks.add(week);
+        });
+    });
+
+    const discovered = [];
+    const discoveredPairKeys = new Set(
+        trades
+            .filter((trade) => tradeHasPlayerDetails(trade) && getTradeTeamIds(trade).length >= 2)
+            .map((trade) => {
+                const [teamIdA, teamIdB] = getTradeTeamIds(trade).sort((left, right) => left - right);
+                return buildTradeTeamPairKey(trade.week, teamIdA, teamIdB);
+            })
+    );
+
+    [...weeks]
+        .sort((left, right) => left - right)
+        .forEach((week) => {
+            for (let leftIndex = 0; leftIndex < teams.length; leftIndex += 1) {
+                for (let rightIndex = leftIndex + 1; rightIndex < teams.length; rightIndex += 1) {
+                    const teamIdA = teams[leftIndex].id;
+                    const teamIdB = teams[rightIndex].id;
+                    const pairKey = buildTradeTeamPairKey(week, teamIdA, teamIdB);
+
+                    const inferred = tryInferTradeBetweenTeams(
+                        teamIdA,
+                        teamIdB,
+                        week,
+                        rosterByTeam,
+                        wireMoves,
+                        teams,
+                        playerNameMap
+                    );
+                    if (!inferred?.sides?.length) continue;
+
+                    const exchangePlayerNames = getTradeExchangePlayerNames(inferred.sides);
+                    if (
+                        existingTradeCoversRosterExchange(trades, week, teamIdA, teamIdB, exchangePlayerNames) ||
+                        discoveredPairKeys.has(pairKey)
+                    ) {
+                        continue;
+                    }
+
+                    discoveredPairKeys.add(pairKey);
+                    discovered.push({
+                        id: `roster-discovered-${week}-${teamIdA}-${teamIdB}`,
+                        week,
+                        processedAt: null,
+                        partial: false,
+                        inferred: true,
+                        discoveredFromRosters: true,
+                        sides: inferred.sides,
+                    });
+                }
+            }
+        });
+
+    if (!discovered.length) return trades;
+
+    return [...trades, ...discovered].sort((left, right) => {
+        if (left.week !== right.week) return left.week - right.week;
+        return (left.processedAt || 0) - (right.processedAt || 0);
+    });
+}
+
+/**
+ * Drop phantom partial stubs that never gained player details.
+ * @param {Array} trades
+ * @returns {Array}
+ */
+function finalizeParsedTrades(trades) {
+    return trades.filter((trade) => {
+        if (!trade.partial) return true;
+        return tradeHasPlayerDetails(trade);
+    });
+}
+
+/**
+ * Apply roster enrichment, discovery, and cleanup to parsed trades.
+ * @param {Array} trades
+ * @param {Object} seasonData
+ * @returns {Array}
+ */
+function applyRosterTradeInference(trades, seasonData) {
+    const enriched = enrichPartialTradesFromRosters(trades, seasonData);
+    const discovered = discoverTradesFromRosters(enriched, seasonData);
+    return finalizeParsedTrades(discovered);
+}
+
 /**
  * Parse executed trades for a season (player names when kona_player_info is available).
  * @param {Object} seasonData
@@ -929,10 +1380,12 @@ function parseExecutedTrades(seasonData) {
 
     trades.push(...pairOrphanTradeStubs(orphanStubs, teams));
 
-    return trades.sort((left, right) => {
+    const sorted = trades.sort((left, right) => {
         if (left.week !== right.week) return left.week - right.week;
         return (left.processedAt || 0) - (right.processedAt || 0);
     });
+
+    return applyRosterTradeInference(sorted, seasonData);
 }
 
 /**
@@ -997,6 +1450,34 @@ function buildTradeSociogramData(trades) {
     return {
         nodes: [...nodeMap.values()],
         links: [...linkMap.values()],
+    };
+}
+
+/**
+ * Rankings and highlights for the trade network UI.
+ * @param {{ nodes: Array, links: Array }} graphData
+ * @returns {Object}
+ */
+function summarizeTradeNetwork(graphData) {
+    const nodeById = new Map(graphData.nodes.map((node) => [node.id, node]));
+    const managers = [...graphData.nodes].sort((a, b) => b.tradeCount - a.tradeCount);
+    const pairs = graphData.links
+        .map((link) => ({
+            ...link,
+            sourceLabel: nodeById.get(link.source)?.label || link.source,
+            targetLabel: nodeById.get(link.target)?.label || link.target,
+        }))
+        .sort((a, b) => b.count - a.count);
+
+    return {
+        managerCount: managers.length,
+        relationshipCount: pairs.length,
+        topManager: managers[0] || null,
+        topPair: pairs[0] || null,
+        managers,
+        pairs,
+        maxManagerTrades: managers[0]?.tradeCount || 1,
+        maxPairCount: pairs[0]?.count || 1,
     };
 }
 
@@ -1099,6 +1580,7 @@ export {
     parseAllExecutedTrades,
     buildTradePairKey,
     buildTradeSociogramData,
+    summarizeTradeNetwork,
     analyzeTradePointsOverReplacement,
     buildSeasonRosterPointsByTeam,
 };

@@ -34,7 +34,6 @@ const CORRELATION_AXIS_TICK_FONT = {
     weight: '500',
 };
 
-let selectedMetricIds = new Set(LAB_DEFAULT_METRIC_IDS);
 let focusMetricId = LAB_DEFAULT_METRIC_IDS[0];
 let cachedAllSeasonsData = {};
 let cachedRows = [];
@@ -46,53 +45,36 @@ function formatCorrelation(value) {
 }
 
 function pickDefaultFocusMetric(results) {
-    const sorted = sortCorrelationResults(
-        results.filter((row) => selectedMetricIds.has(row.id) && row.valid)
-    );
+    const sorted = sortCorrelationResults(results.filter((row) => row.valid));
     if (sorted.length) return sorted[0].id;
-
-    const fallback = sortCorrelationResults([...results]);
-    return fallback[0]?.id || LAB_DEFAULT_METRIC_IDS[0];
+    return sortCorrelationResults([...results])[0]?.id || LAB_DEFAULT_METRIC_IDS[0];
 }
 
-function rStrengthClass(result) {
-    if (!result?.valid || result.r == null) return 'lab-r-none';
-    const abs = Math.abs(result.r);
-    if (abs >= 0.35) return 'lab-r-strong';
-    if (abs >= 0.2) return 'lab-r-modest';
-    return 'lab-r-weak';
-}
-
-function renderMetricToolbar() {
-    const toolbar = document.getElementById('correlation-metric-toolbar');
-    if (!toolbar) return;
-
-    const activeCount = selectedMetricIds.size;
-    const totalCount = getLabMetricIds().length;
-
-    toolbar.innerHTML = `
-        <div class="lab-toolbar-copy">
-            <span class="lab-toolbar-title">Metrics</span>
-            <span class="lab-toolbar-count">${activeCount} of ${totalCount} active</span>
-        </div>
-        <div class="correlation-metric-toggle-group" role="group" aria-label="Toggle metrics">
-            <button type="button" class="correlation-toggle-btn" data-action="all-on">All on</button>
-            <button type="button" class="correlation-toggle-btn" data-action="all-off">All off</button>
-        </div>
+function renderMetricCard(row) {
+    const metric = METRICS.find((entry) => entry.id === row.id);
+    const isFocused = focusMetricId === row.id;
+    const tooltip = [metric?.description, row.direction].filter(Boolean).join(' · ');
+    return `
+        <button
+            type="button"
+            class="lab-metric-card${isFocused ? ' lab-metric-card-focused' : ''}"
+            data-metric-id="${row.id}"
+            aria-pressed="${isFocused ? 'true' : 'false'}"
+            title="${tooltip}"
+        >
+            <div class="lab-metric-card-head">
+                <span class="lab-metric-name">${row.label}</span>
+                ${row.valid ? `<span class="lab-strength-badge">${row.strength}</span>` : ''}
+            </div>
+            <div class="lab-metric-card-stats">
+                <span class="lab-stat-inline"><span class="lab-stat-label">r</span> ${formatCorrelation(row.r)}</span>
+                <span class="lab-stat-sep" aria-hidden="true">·</span>
+                <span class="lab-stat-inline"><span class="lab-stat-label">R²</span> ${formatRSquared(row.r)}</span>
+                <span class="lab-stat-sep" aria-hidden="true">·</span>
+                <span class="lab-stat-inline"><span class="lab-stat-label">n</span> ${row.n || '—'}</span>
+            </div>
+        </button>
     `;
-
-    toolbar.querySelector('[data-action="all-on"]')?.addEventListener('click', () => {
-        selectedMetricIds = new Set(getLabMetricIds());
-        if (!selectedMetricIds.has(focusMetricId)) {
-            focusMetricId = pickDefaultFocusMetric(cachedResults);
-        }
-        refreshCorrelationWidget();
-    });
-
-    toolbar.querySelector('[data-action="all-off"]')?.addEventListener('click', () => {
-        selectedMetricIds = new Set();
-        refreshCorrelationWidget();
-    });
 }
 
 function renderMetricCards(results) {
@@ -110,79 +92,23 @@ function renderMetricCards(results) {
         if (byCategory[row.category]) byCategory[row.category].push(row);
     });
 
-    container.innerHTML = `<div class="lab-metric-flow">${categories.map((category) => {
-        const cards = byCategory[category];
-        if (!cards?.length) return '';
+    container.innerHTML = `<div class="lab-metric-columns">${categories.map((category) => {
+        const cards = sortCorrelationResults(byCategory[category] || []);
+        if (!cards.length) return '';
 
         return `
-            <span class="lab-category-label">${category}</span>
-            ${cards.map((row) => {
-                const metric = METRICS.find((entry) => entry.id === row.id);
-                const isSelected = selectedMetricIds.has(row.id);
-                const isFocused = focusMetricId === row.id;
-                const strengthClass = rStrengthClass(row);
-                const tooltip = [metric?.description, row.direction].filter(Boolean).join(' · ');
-                return `
-                    <article
-                        class="lab-metric-card ${strengthClass}${isSelected ? ' lab-metric-card-active' : ' lab-metric-card-inactive'}${isFocused ? ' lab-metric-card-focused' : ''}"
-                        data-metric-id="${row.id}"
-                    >
-                        <div class="lab-metric-card-inner">
-                            <button
-                                type="button"
-                                class="lab-metric-toggle"
-                                aria-pressed="${isSelected ? 'true' : 'false'}"
-                                aria-label="${isSelected ? 'Remove' : 'Add'} ${row.label}"
-                                title="${isSelected ? 'Remove from analysis' : 'Add to analysis'}"
-                            >
-                                <span class="lab-metric-toggle-icon" aria-hidden="true">${isSelected ? '−' : '+'}</span>
-                            </button>
-                            <button
-                                type="button"
-                                class="lab-metric-card-body"
-                                aria-pressed="${isFocused ? 'true' : 'false'}"
-                                title="${tooltip}"
-                            >
-                                <span class="lab-metric-name">${row.label}</span>
-                                <span class="lab-metric-card-stats">
-                                    <span class="lab-stat-inline"><span class="lab-stat-label">r</span> ${formatCorrelation(row.r)}</span>
-                                    <span class="lab-stat-sep" aria-hidden="true">·</span>
-                                    <span class="lab-stat-inline"><span class="lab-stat-label">R²</span> ${formatRSquared(row.r)}</span>
-                                    <span class="lab-stat-sep" aria-hidden="true">·</span>
-                                    <span class="lab-stat-inline"><span class="lab-stat-label">n</span> ${row.n || '—'}</span>
-                                </span>
-                                ${row.valid ? `<span class="lab-strength-badge">${row.strength}</span>` : ''}
-                            </button>
-                        </div>
-                    </article>
-                `;
-            }).join('')}
+            <section class="lab-metric-column">
+                <h3 class="lab-category-heading">${category}</h3>
+                <div class="lab-metric-column-list">
+                    ${cards.map((row) => renderMetricCard(row)).join('')}
+                </div>
+            </section>
         `;
     }).join('')}</div>`;
 
     container.querySelectorAll('.lab-metric-card').forEach((cardEl) => {
-        const metricId = cardEl.dataset.metricId;
-
-        cardEl.querySelector('.lab-metric-toggle')?.addEventListener('click', (event) => {
-            event.stopPropagation();
-            if (selectedMetricIds.has(metricId)) {
-                selectedMetricIds.delete(metricId);
-            } else {
-                selectedMetricIds.add(metricId);
-            }
-            if (!selectedMetricIds.has(focusMetricId)) {
-                focusMetricId = selectedMetricIds.size
-                    ? pickDefaultFocusMetric(cachedResults.filter((row) => selectedMetricIds.has(row.id)))
-                    : null;
-            }
-            refreshCorrelationWidget();
-        });
-
-        cardEl.querySelector('.lab-metric-card-body')?.addEventListener('click', () => {
-            if (!selectedMetricIds.has(metricId)) {
-                selectedMetricIds.add(metricId);
-            }
-            focusMetricId = metricId;
+        cardEl.addEventListener('click', () => {
+            focusMetricId = cardEl.dataset.metricId;
             refreshCorrelationWidget();
         });
     });
@@ -209,13 +135,11 @@ function renderScatterChart() {
     const emptyEl = document.getElementById('correlation-scatter-empty');
     if (!canvas) return;
 
-    if (!focusMetricId || !selectedMetricIds.has(focusMetricId)) {
+    if (!focusMetricId) {
         canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
         if (emptyEl) {
             emptyEl.hidden = false;
-            emptyEl.textContent = selectedMetricIds.size
-                ? 'Click a metric card to see its scatter plot.'
-                : 'Turn on at least one metric card to begin.';
+            emptyEl.textContent = 'Click a metric card to see its scatter plot.';
         }
         return;
     }
@@ -342,7 +266,7 @@ function renderSampleNote(allSeasonsData) {
     note.textContent = [
         `${cachedRows.length} manager-season${cachedRows.length === 1 ? '' : 's'} across ${seasons.length} season${seasons.length === 1 ? '' : 's'}.`,
         'Each dot is one manager in one season. Pearson r measures how closely the metric tracks with regular-season points scored that same year.',
-        'Use +/− to toggle metrics; click a card to update the scatter plot.',
+        'Click a metric card to update the scatter plot.',
         'Correlation shows co-movement, not causation.',
     ].join(' ');
 }
@@ -358,11 +282,7 @@ function refreshCorrelationWidget() {
     if (!focusMetricId || !getLabMetricIds().includes(focusMetricId)) {
         focusMetricId = pickDefaultFocusMetric(cachedResults);
     }
-    if (focusMetricId && !selectedMetricIds.has(focusMetricId)) {
-        selectedMetricIds.add(focusMetricId);
-    }
 
-    renderMetricToolbar();
     renderMetricCards(cachedResults);
     renderScatterChart();
     renderSampleNote(cachedAllSeasonsData);

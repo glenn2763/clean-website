@@ -131,6 +131,7 @@ function collectWeeklyScores(teamId, matchups) {
 function collectMatchupOutcomes(teamId, matchups) {
     const closeGames = { wins: 0, total: 0 };
     const winMargins = [];
+    const blowoutWins = { count: 0, totalGames: 0 };
 
     matchups.forEach((matchup) => {
         if (matchup.homeScore == null || matchup.awayScore == null) return;
@@ -144,6 +145,9 @@ function collectMatchupOutcomes(teamId, matchups) {
         const margin = teamScore - oppScore;
         const absMargin = Math.abs(margin);
 
+        blowoutWins.totalGames += 1;
+        if (margin >= 15) blowoutWins.count += 1;
+
         if (absMargin <= 5) {
             closeGames.total += 1;
             if (margin > 0) closeGames.wins += 1;
@@ -154,7 +158,32 @@ function collectMatchupOutcomes(teamId, matchups) {
         }
     });
 
-    return { closeGames, winMargins };
+    return { closeGames, winMargins, blowoutWins };
+}
+
+function weeklyScoreSpread(teamId, matchups) {
+    const { actual } = collectWeeklyScores(teamId, matchups);
+    if (!actual.length) return null;
+    return Math.max(...actual) - Math.min(...actual);
+}
+
+function weeklyProjectionStats(teamId, matchups) {
+    const { actual, projected } = collectWeeklyScores(teamId, matchups);
+    const n = Math.min(actual.length, projected.length);
+    if (n === 0) return null;
+
+    const diffs = [];
+    let hits = 0;
+    for (let i = 0; i < n; i += 1) {
+        if (actual[i] >= projected[i]) hits += 1;
+        diffs.push(actual[i] - projected[i]);
+    }
+
+    return {
+        hitRate: hits / n,
+        avgProjection: calculateAverage(projected.slice(0, n)),
+        diffStdDev: calculateConsistency(diffs),
+    };
 }
 
 function getTeamRosterEntries(team, seasonData, teamIndex, rosterByTeam) {
@@ -215,7 +244,11 @@ function rosterMetricsFromEntries(entries, positionMap) {
         if (positionId === POSITION_IDS.DST && points > byPosition.topDSTPoints) byPosition.topDSTPoints = points;
     });
 
-    return { ...totals, ...byPosition };
+    const depthCount = entries.filter((entry) => (entry.points || 0) >= 50).length;
+    const sortedPoints = entries.map((entry) => entry.points || 0).sort((a, b) => b - a);
+    const secondBestPlayerPoints = sortedPoints[1] ?? 0;
+
+    return { ...totals, ...byPosition, depthCount, secondBestPlayerPoints };
 }
 
 /**
@@ -280,6 +313,37 @@ const METRICS = [
         },
     },
     {
+        id: 'weeklyCeiling',
+        label: 'Best weekly score',
+        category: 'Scoring',
+        description: 'Highest single-week regular-season score.',
+        compute(team, seasonData, ctx) {
+            const { actual } = collectWeeklyScores(team.id, ctx.matchups);
+            if (!actual.length) return null;
+            return Math.max(...actual);
+        },
+    },
+    {
+        id: 'weeklyFloor',
+        label: 'Worst weekly score',
+        category: 'Scoring',
+        description: 'Lowest single-week regular-season score.',
+        compute(team, seasonData, ctx) {
+            const { actual } = collectWeeklyScores(team.id, ctx.matchups);
+            if (!actual.length) return null;
+            return Math.min(...actual);
+        },
+    },
+    {
+        id: 'weeklySpread',
+        label: 'Ceiling − floor',
+        category: 'Scoring',
+        description: 'Gap between best and worst weekly scores (boom-bust range).',
+        compute(team, seasonData, ctx) {
+            return weeklyScoreSpread(team.id, ctx.matchups);
+        },
+    },
+    {
         id: 'projectedVsActual',
         label: 'Actual − projected',
         category: 'Projections',
@@ -288,6 +352,36 @@ const METRICS = [
             const { actual, projected } = collectWeeklyScores(team.id, ctx.matchups);
             if (!actual.length || !projected.length) return null;
             return calculateAverage(actual) - calculateAverage(projected);
+        },
+    },
+    {
+        id: 'avgWeeklyProjection',
+        label: 'Avg weekly projection',
+        category: 'Projections',
+        description: 'Average projected score per regular-season week.',
+        compute(team, seasonData, ctx) {
+            const stats = weeklyProjectionStats(team.id, ctx.matchups);
+            return stats?.avgProjection ?? null;
+        },
+    },
+    {
+        id: 'projectionHitRate',
+        label: 'Beat projection %',
+        category: 'Projections',
+        description: 'Share of weeks where actual score met or beat the projection.',
+        compute(team, seasonData, ctx) {
+            const stats = weeklyProjectionStats(team.id, ctx.matchups);
+            return stats?.hitRate ?? null;
+        },
+    },
+    {
+        id: 'projDiffStdDev',
+        label: 'Projection surprise σ',
+        category: 'Projections',
+        description: 'Std dev of weekly (actual − projected); higher = more volatile vs projections.',
+        compute(team, seasonData, ctx) {
+            const stats = weeklyProjectionStats(team.id, ctx.matchups);
+            return stats?.diffStdDev ?? null;
         },
     },
     {
@@ -303,23 +397,14 @@ const METRICS = [
         },
     },
     {
-        id: 'wireAdds',
-        label: 'Waiver/FA adds',
+        id: 'wireMoves',
+        label: 'Waiver/FA moves',
         category: 'Activity',
-        description: 'Count of executed waiver and free-agent adds.',
+        description: 'Count of executed waiver and free-agent roster moves (each add is paired with a drop).',
         compute(team, seasonData, ctx) {
             if (ctx.partialSeason) return null;
-            return countWireAddsAndDrops(getTransactions(seasonData), team.id).adds;
-        },
-    },
-    {
-        id: 'wireDrops',
-        label: 'Waiver/FA drops',
-        category: 'Activity',
-        description: 'Count of executed waiver and free-agent drops.',
-        compute(team, seasonData, ctx) {
-            if (ctx.partialSeason) return null;
-            return countWireAddsAndDrops(getTransactions(seasonData), team.id).drops;
+            const { adds, drops } = countWireAddsAndDrops(getTransactions(seasonData), team.id);
+            return Math.max(adds, drops);
         },
     },
     {
@@ -344,6 +429,16 @@ const METRICS = [
         },
     },
     {
+        id: 'closeGamesPlayed',
+        label: 'Close games played',
+        category: 'Matchups',
+        description: 'Count of regular-season games decided by 5 points or fewer.',
+        compute(team, seasonData, ctx) {
+            const { closeGames } = collectMatchupOutcomes(team.id, ctx.matchups);
+            return closeGames.total;
+        },
+    },
+    {
         id: 'avgWinMargin',
         label: 'Avg win margin',
         category: 'Matchups',
@@ -352,6 +447,41 @@ const METRICS = [
             const { winMargins } = collectMatchupOutcomes(team.id, ctx.matchups);
             if (!winMargins.length) return null;
             return calculateAverage(winMargins);
+        },
+    },
+    {
+        id: 'blowoutWinPct',
+        label: 'Blowout win %',
+        category: 'Matchups',
+        description: 'Share of all games won by 15+ points.',
+        compute(team, seasonData, ctx) {
+            const { blowoutWins } = collectMatchupOutcomes(team.id, ctx.matchups);
+            if (blowoutWins.totalGames === 0) return null;
+            return blowoutWins.count / blowoutWins.totalGames;
+        },
+    },
+    {
+        id: 'rosterDepth',
+        label: 'Roster depth (50+ pts)',
+        category: 'Roster',
+        description: 'Number of rostered players with at least 50 season fantasy points.',
+        compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
+            const count = ctx.rosterMetrics.depthCount;
+            return count > 0 ? count : null;
+        },
+    },
+    {
+        id: 'starConcentration',
+        label: 'Star concentration',
+        category: 'Roster',
+        description: 'Top two players’ points as a share of total roster points (higher = more hero-ball).',
+        compute(team, seasonData, ctx) {
+            if (ctx.partialSeason) return null;
+            const total = ctx.rosterMetrics.rosterTotalPoints;
+            if (!total) return null;
+            const topTwo = ctx.rosterMetrics.topPlayerPoints + ctx.rosterMetrics.secondBestPlayerPoints;
+            return topTwo / total;
         },
     },
     {
@@ -449,31 +579,30 @@ const DEFAULT_METRIC_IDS = [
     'avgPointsAgainst',
     'consistency',
     'projectedVsActual',
-    'wireAdds',
+    'wireMoves',
 ];
 
-/** Hidden from Lab — tautological with points, luck-based, or not actionable */
+/** Hidden from Lab — tautological with points or not actionable */
 const LAB_EXCLUDED_METRIC_IDS = [
     'avgPointsFor',
     'totalPointsFor',
     'rosterTotalPoints',
-    'topPlayerPoints',
-    'topQBPoints',
-    'topRBPoints',
-    'topWRPoints',
     'topTEPoints',
     'topKPoints',
     'topDSTPoints',
-    'closeGameWinPct',
-    'avgWinMargin',
 ];
+
+const LAB_CATEGORY_ORDER = ['Scoring', 'Projections', 'Roster', 'Matchups', 'Schedule', 'Activity'];
 
 const LAB_DEFAULT_METRIC_IDS = [
     'projectedVsActual',
     'consistency',
-    'wireAdds',
+    'wireMoves',
     'tradeCount',
     'scheduleDifficulty',
+    'topRBPoints',
+    'weeklyCeiling',
+    'projectionHitRate',
 ];
 
 const SIGNAL_STRONG_ABS_R = 0.35;
@@ -886,7 +1015,8 @@ function getLabMetrics() {
 }
 
 function getLabMetricCategories() {
-    return [...new Set(getLabMetrics().map((metric) => metric.category))];
+    const categories = new Set(getLabMetrics().map((metric) => metric.category));
+    return LAB_CATEGORY_ORDER.filter((category) => categories.has(category));
 }
 
 function classifySignalStrength(r) {

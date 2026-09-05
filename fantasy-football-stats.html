@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 </head>
 <body class="field-report">
     <div class="fr-app">
@@ -78,22 +79,24 @@
             <nav class="fr-hub-nav" id="hub-nav" aria-label="Analysis hubs">
                 <button type="button" class="hub-btn" data-hub="pulse" aria-current="page">Pulse</button>
                 <button type="button" class="hub-btn" data-hub="scoring">Scoring</button>
-                <button type="button" class="hub-btn" data-hub="luck">Luck</button>
                 <button type="button" class="hub-btn" data-hub="matchups">Matchups</button>
-                <button type="button" class="hub-btn" data-hub="wire">Wire</button>
+                <button type="button" class="hub-btn" data-hub="trades">Trades</button>
                 <button type="button" class="hub-btn" data-hub="roster">Roster</button>
-                <button type="button" class="hub-btn" data-hub="lab">Lab</button>
+                <button type="button" class="hub-btn" data-hub="luck" data-hub-scope="all">Luck</button>
+                <button type="button" class="hub-btn" data-hub="waivers" data-hub-scope="all">Waiver Wire</button>
+                <button type="button" class="hub-btn" data-hub="lab" data-hub-scope="all">Lab</button>
             </nav>
 
             <div class="fr-stage">
                 <!-- PULSE -->
                 <div id="hub-pulse" class="hub-panel" data-hub-panel="pulse">
-                    <p class="hub-intro">League snapshot — standings for a season, or all-time highlights and championship history.</p>
+                    <p class="hub-intro hub-intro-season">League snapshot — playoff bracket and standings.</p>
+                    <p class="hub-intro hub-intro-all hidden">League snapshot — all-time highlights and championship history.</p>
 
                     <section class="analysis-section" data-scope="season">
                         <div class="section-chrome">
-                            <h2>League Overview</h2>
-                            <p class="section-description">Standings, scoring settings, and season context</p>
+                            <h2>Standings</h2>
+                            <p class="section-description">Playoff path for the final four and the rest of the table</p>
                         </div>
                         <div id="league-overview"></div>
                     </section>
@@ -129,7 +132,8 @@
 
                 <!-- SCORING -->
                 <div id="hub-scoring" class="hub-panel hidden" data-hub-panel="scoring">
-                    <p class="hub-intro">How teams score — weekly form in a season, or ceilings and win trends over history.</p>
+                    <p class="hub-intro hub-intro-season">How teams score — weekly trends and consistency.</p>
+                    <p class="hub-intro hub-intro-all hidden">How teams score — ceilings and win trends over league history.</p>
 
                     <section class="analysis-section" data-scope="season">
                         <div class="section-chrome">
@@ -139,26 +143,6 @@
                         </div>
                         <div class="chart-container">
                             <canvas id="weekly-trends-chart"></canvas>
-                        </div>
-                    </section>
-
-                    <section class="analysis-section" data-scope="season">
-                        <div class="section-chrome">
-                            <h2>Underachievers &amp; Overachievers</h2>
-                            <p class="section-description">Teams that scored significantly more or less than projected</p>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="projected-vs-actual-chart"></canvas>
-                        </div>
-                        <div class="tables-grid">
-                            <div>
-                                <h3>Biggest Underachievers</h3>
-                                <div id="underachievers-table"></div>
-                            </div>
-                            <div>
-                                <h3>Biggest Overachievers</h3>
-                                <div id="overachievers-table"></div>
-                            </div>
                         </div>
                     </section>
 
@@ -272,12 +256,13 @@
 
                 <!-- MATCHUPS -->
                 <div id="hub-matchups" class="hub-panel hidden" data-hub-panel="matchups">
-                    <p class="hub-intro">Game drama — nail-biters and blowouts in a season, or all-time head-to-head.</p>
+                    <p class="hub-intro hub-intro-season">Every matchup this season — filter by team and expand for the full box score.</p>
+                    <p class="hub-intro hub-intro-all hidden">Game drama — all-time head-to-head records.</p>
 
                     <section class="analysis-section" data-scope="season">
                         <div class="section-chrome">
-                            <h2>Matchup Highlights</h2>
-                            <p class="section-description">Closest games and biggest blowouts this season</p>
+                            <h2>Game Log</h2>
+                            <p class="section-description">Every matchup this season — expand a row for the full box score</p>
                         </div>
                         <div id="matchup-analysis"></div>
                     </section>
@@ -296,17 +281,9 @@
                     </div>
                 </div>
 
-                <!-- WIRE -->
-                <div id="hub-wire" class="hub-panel hidden" data-hub-panel="wire">
-                    <p class="hub-intro">Transactions — trades in a season, or waiver habits and the all-time trade network.</p>
-
-                    <section class="analysis-section" data-scope="season">
-                        <div class="section-chrome">
-                            <h2>Trades This Season</h2>
-                            <p class="section-description">Executed trades in the selected season</p>
-                        </div>
-                        <div id="trade-analyzer"></div>
-                    </section>
+                <!-- WAIVER WIRE -->
+                <div id="hub-waivers" class="hub-panel hidden" data-hub-panel="waivers">
+                    <p class="hub-intro">Waiver and free-agent claim activity by manager across every loaded season.</p>
 
                     <section class="analysis-section" data-scope="all">
                         <div class="section-chrome">
@@ -323,23 +300,43 @@
                         </details>
                     </section>
 
+                    <div class="scope-empty" data-empty-for="waivers-all" hidden>
+                        <p>Waiver wire trends need every season loaded.</p>
+                        <button type="button" class="btn load-all-seasons-btn">Load all seasons</button>
+                    </div>
+                </div>
+
+                <!-- TRADES -->
+                <div id="hub-trades" class="hub-panel hidden" data-hub-panel="trades">
+                    <p class="hub-intro hub-intro-season">Executed trades in the selected season.</p>
+                    <p class="hub-intro hub-intro-all hidden">The all-time trade network across every loaded season.</p>
+
+                    <section class="analysis-section" data-scope="season">
+                        <div class="section-chrome">
+                            <h2>Trades This Season</h2>
+                            <p class="section-description">Executed trades in the selected season</p>
+                        </div>
+                        <div id="trade-analyzer"></div>
+                    </section>
+
                     <section class="analysis-section" data-scope="all">
                         <div class="section-chrome">
                             <h2>Trade Network</h2>
-                            <p class="section-description">All-time trading patterns. Thicker lines mean more deals; click a line for every trade between those managers.</p>
+                            <p class="section-description">Who trades the most, which pairs deal together, and a ring map of every relationship.</p>
                         </div>
                         <div id="league-trade-network"></div>
                     </section>
 
-                    <div class="scope-empty" data-empty-for="wire-all" hidden>
-                        <p>Waivers and the trade network need every season loaded.</p>
+                    <div class="scope-empty" data-empty-for="trades-all" hidden>
+                        <p>The trade network needs every season loaded.</p>
                         <button type="button" class="btn load-all-seasons-btn">Load all seasons</button>
                     </div>
                 </div>
 
                 <!-- ROSTER -->
                 <div id="hub-roster" class="hub-panel hidden" data-hub-panel="roster">
-                    <p class="hub-intro">Who filled the roster — positional leaders in a season, or birthplace and college origins over history.</p>
+                    <p class="hub-intro hub-intro-season">Positional leaders — top performers by position this season.</p>
+                    <p class="hub-intro hub-intro-all hidden">Roster origins — where players were born or went to college over league history.</p>
 
                     <section class="analysis-section" data-scope="season">
                         <div class="section-chrome">
@@ -352,14 +349,21 @@
                     <section class="analysis-section" id="section-birthplace-map" data-scope="all">
                         <div class="section-chrome">
                             <h2>Roster Origins</h2>
-                            <p class="section-description">Where every player ever rostered was born or went to college. Toggle location type, then filter by manager.</p>
+                            <p class="section-description">Where every player ever rostered was born or went to college. Density shows how many players cluster in each region — toggle location type, then filter by manager.</p>
                         </div>
                         <p id="birthplace-map-notice" class="section-unavailable-notice hidden" aria-live="polite"></p>
                         <div id="birthplace-location-mode" class="birthplace-mode-picker" role="radiogroup" aria-label="Map location type"></div>
                         <p id="birthplace-map-summary" class="subsection-description"></p>
                         <div id="birthplace-manager-picker" class="birthplace-manager-picker" role="toolbar" aria-label="Filter map by manager"></div>
                         <div class="birthplace-map-layout">
-                            <div id="birthplace-map" class="birthplace-map" role="img" aria-label="Map of player locations"></div>
+                            <div class="birthplace-map-panel">
+                                <div id="birthplace-map" class="birthplace-map" role="img" aria-label="Heat map of player origins"></div>
+                                <div class="birthplace-heat-legend" aria-hidden="true">
+                                    <span class="birthplace-heat-legend-label">Low</span>
+                                    <span class="birthplace-heat-legend-bar"></span>
+                                    <span class="birthplace-heat-legend-label">High</span>
+                                </div>
+                            </div>
                             <div id="birthplace-player-list" class="birthplace-player-panel" aria-live="polite"></div>
                         </div>
                     </section>
@@ -372,7 +376,7 @@
 
                 <!-- LAB -->
                 <div id="hub-lab" class="hub-panel hidden" data-hub-panel="lab">
-                    <p class="hub-intro">Which stats track with scoring in a season — toggle metrics and explore the scatter plot.</p>
+                    <p class="hub-intro">Which stats track with scoring in a season — click a metric to explore the scatter plot.</p>
 
                     <div class="scope-empty" data-empty-for="lab" hidden>
                         <p>The Metric Correlator needs multiple seasons of data.</p>
@@ -382,10 +386,9 @@
                     <section class="analysis-section" id="section-wins-correlation" data-scope="all">
                         <div class="section-chrome">
                             <h2>Metric Correlator</h2>
-                            <p class="section-description">Does a metric move with regular-season points scored that same year? Each dot is one manager-season. Use +/− to toggle metrics; click a card for the scatter plot.</p>
+                            <p class="section-description">Does a metric move with regular-season points scored that same year? Each dot is one manager-season. Click a card to update the scatter plot.</p>
                         </div>
                         <p class="section-unavailable-notice hidden">Need more season data for meaningful correlation.</p>
-                        <div id="correlation-metric-toolbar" class="lab-metric-toolbar"></div>
                         <div id="correlation-metric-cards" class="lab-metric-cards"></div>
                         <div class="lab-scatter-stage">
                             <div class="chart-container chart-container-correlation chart-container-lab">

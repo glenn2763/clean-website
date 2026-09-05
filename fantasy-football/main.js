@@ -8,8 +8,19 @@ import { getActiveSeasons } from './utils.js';
 import { renderHub, destroyAllCharts } from './components/index.js';
 import { refreshAllCharts } from './charts.js';
 
-const HUBS = ['pulse', 'scoring', 'luck', 'matchups', 'wire', 'roster', 'lab'];
+const HUBS = ['pulse', 'scoring', 'matchups', 'trades', 'roster', 'luck', 'waivers', 'lab'];
+const ALL_ONLY_HUBS = new Set(['luck', 'waivers', 'lab']);
 const DEFAULT_HUB = 'pulse';
+
+function getHubsForScope(scopeType) {
+    if (scopeType === 'all') return HUBS;
+    return HUBS.filter((hubId) => !ALL_ONLY_HUBS.has(hubId));
+}
+
+function resolveHub(hubId, scopeType) {
+    const hubs = getHubsForScope(scopeType);
+    return hubs.includes(hubId) ? hubId : DEFAULT_HUB;
+}
 
 const LEAGUE_PRESETS = {
     37892: 'Domination League',
@@ -79,7 +90,24 @@ function init() {
         allScopePanel.classList.toggle('hidden', scopeType !== 'all');
         analyzeBtn.textContent = scopeType === 'all' ? 'Analyze All Seasons' : 'Analyze Season';
         updateMultiSeasonSummary();
+        applyHubNavVisibility();
         applyScopeVisibility();
+        ensureActiveHubForScope(scopeType);
+    }
+
+    function applyHubNavVisibility(scopeType = getScopeType()) {
+        hubNav.querySelectorAll('.hub-btn').forEach((btn) => {
+            const hubScope = btn.getAttribute('data-hub-scope');
+            const visible = hubScope !== 'all' || scopeType === 'all';
+            btn.classList.toggle('hidden', !visible);
+        });
+    }
+
+    function ensureActiveHubForScope(scopeType) {
+        const resolved = resolveHub(activeHub, scopeType);
+        if (resolved !== activeHub) {
+            setActiveHub(resolved, { updateHash: true });
+        }
     }
 
     function updateMultiSeasonSummary() {
@@ -177,6 +205,12 @@ function init() {
             section.classList.toggle('hidden', !visible);
         });
 
+        document.querySelectorAll('.hub-intro-season, .hub-intro-all').forEach((el) => {
+            const isSeasonIntro = el.classList.contains('hub-intro-season');
+            const show = scopeType === 'season' ? isSeasonIntro : !isSeasonIntro;
+            el.classList.toggle('hidden', !show);
+        });
+
         // Empty states when multi-year data is required but unavailable
         document.querySelectorAll('.scope-empty').forEach((el) => {
             const key = el.getAttribute('data-empty-for');
@@ -184,9 +218,7 @@ function init() {
 
             if (!hasAnyData) {
                 show = false;
-            } else if (key === 'luck' || key === 'lab') {
-                show = scopeType === 'season' || (scopeType === 'all' && !hasMulti);
-            } else if (key.endsWith('-all')) {
+            } else if (key === 'luck' || key === 'lab' || key.endsWith('-all')) {
                 show = scopeType === 'all' && !hasMulti;
             }
 
@@ -197,7 +229,8 @@ function init() {
     }
 
     function setActiveHub(hubId, { updateHash = true } = {}) {
-        if (!HUBS.includes(hubId)) hubId = DEFAULT_HUB;
+        const scopeType = currentScopeType || getScopeType();
+        hubId = resolveHub(hubId, scopeType);
         activeHub = hubId;
 
         document.querySelectorAll('.hub-panel').forEach((panel) => {
@@ -223,6 +256,7 @@ function init() {
             history.replaceState(null, '', url);
         }
 
+        applyHubNavVisibility();
         applyScopeVisibility();
         ensureHubRendered(hubId);
     }
@@ -230,7 +264,8 @@ function init() {
     function ensureHubRendered(hubId) {
         if (!currentData || !currentScopeType) return;
 
-        if (!renderedHubs.has(hubId)) {
+        const alwaysRefresh = hubId === 'trades';
+        if (!renderedHubs.has(hubId) || alwaysRefresh) {
             renderHub(hubId, currentScopeType, currentData);
             renderedHubs.add(hubId);
         }
@@ -244,7 +279,9 @@ function init() {
 
     function hubFromHash() {
         const hash = window.location.hash.replace(/^#/, '');
-        return HUBS.includes(hash) ? hash : DEFAULT_HUB;
+        const hubId = hash === 'wire' ? 'waivers' : hash;
+        const scopeType = currentScopeType || getScopeType();
+        return resolveHub(HUBS.includes(hubId) ? hubId : DEFAULT_HUB, scopeType);
     }
 
     async function loadAvailableSeasons() {

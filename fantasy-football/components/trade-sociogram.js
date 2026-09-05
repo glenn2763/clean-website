@@ -1,161 +1,95 @@
 /**
- * Trade Sociogram
- * Force-directed network of managers; edge weight = executed trades between them.
+ * Trade Sociogram — circular manager network; edge weight = trades between a pair.
  */
 
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
-import { buildTradeSociogramData } from '../utils.js';
 
 function managerColor(index) {
-    return d3.hsl((index * 41) % 360, 0.62, 0.5);
-}
-
-function truncateLabel(label, maxLength = 16) {
-    if (!label || label.length <= maxLength) return label;
-    return `${label.slice(0, maxLength - 1)}…`;
+    return d3.hsl((index * 41) % 360, 0.62, 0.48);
 }
 
 function nodeRadius(node) {
-    return 14 + Math.min(node.tradeCount, 5) * 2;
+    return 16 + Math.min(node.tradeCount, 6) * 1.5;
 }
 
-function labelOffset(node) {
-    return 28 + Math.min(node.tradeCount, 5) * 2;
+function labelAnchor(angle) {
+    const cos = Math.cos(angle);
+    if (cos > 0.35) return 'start';
+    if (cos < -0.35) return 'end';
+    return 'middle';
 }
 
-function renderTradeSociogram(container, trades, renderTradeDetail) {
+function labelOffsetX(angle, anchor) {
+    if (anchor === 'start') return 8;
+    if (anchor === 'end') return -8;
+    return 0;
+}
+
+function layoutCircularNodes(nodes, width, height) {
+    const cx = width / 2;
+    const cy = height / 2;
+    const ringRadius = Math.min(width, height) / 2 - 64;
+    const labelRadius = ringRadius + 26;
+
+    nodes.forEach((node, index) => {
+        const angle = (2 * Math.PI * index) / nodes.length - Math.PI / 2;
+        node.x = cx + ringRadius * Math.cos(angle);
+        node.y = cy + ringRadius * Math.sin(angle);
+        node.angle = angle;
+        node.labelAnchor = labelAnchor(angle);
+        node.labelX = cx + labelRadius * Math.cos(angle) + labelOffsetX(angle, node.labelAnchor);
+        node.labelY = cy + labelRadius * Math.sin(angle);
+    });
+
+    return { cx, cy, ringRadius };
+}
+
+function renderTradeSociogram(container, graphData, options = {}) {
     container.innerHTML = '';
 
-    const graphData = buildTradeSociogramData(trades);
-    if (graphData.nodes.length === 0 || graphData.links.length === 0) {
+    const {
+        selectedPairId = null,
+        selectedManagerId = null,
+        onPairSelect = () => {},
+        onManagerSelect = () => {},
+    } = options;
+    const nodes = graphData.nodes.map((node) => ({ ...node }));
+    const links = graphData.links.map((link) => ({ ...link }));
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+
+    if (!nodes.length || !links.length) {
         container.innerHTML =
-            '<p class="trade-sociogram-empty">Could not build the trade network from this data. If trade cards appear below, try clearing saved data and re-running analysis.</p>';
+            '<p class="trade-sociogram-empty">Not enough trading relationships to draw a network map.</p>';
         return;
     }
 
-    const nodes = graphData.nodes.map((node) => ({ ...node }));
-    const links = graphData.links.map((link) => ({ ...link }));
-    const width = Math.min(Math.max(container.clientWidth || 640, 480), 900);
-    const height = Math.min(560, Math.max(360, Math.round(width * 0.55), nodes.length * 48));
-    const maxCount = d3.max(graphData.links, (link) => link.count) || 1;
+    const width = Math.max(container.clientWidth || 640, 480);
+    const height = Math.min(460, Math.max(340, 280 + nodes.length * 12));
+    layoutCircularNodes(nodes, width, height);
 
-    const wrapper = d3.select(container).append('div').attr('class', 'trade-sociogram-layout');
+    links.forEach((link) => {
+        link.sourceNode = nodeById.get(link.source);
+        link.targetNode = nodeById.get(link.target);
+    });
 
-    const graphHost = wrapper.append('div').attr('class', 'trade-sociogram-graph');
-    const detailHost = wrapper.append('div').attr('class', 'trade-sociogram-detail trade-sociogram-detail-hidden');
+    const maxCount = d3.max(links, (link) => link.count) || 1;
+    const colors = new Map(nodes.map((node, index) => [node.id, managerColor(index)]));
 
-    const svg = graphHost
+    const svg = d3
+        .select(container)
         .append('svg')
         .attr('viewBox', [0, 0, width, height])
         .attr('width', '100%')
         .attr('height', height)
         .attr('class', 'trade-sociogram-svg');
 
-    const content = svg.append('g').attr('class', 'trade-sociogram-content');
-
-    const tooltip = graphHost
+    const tooltip = d3
+        .select(container)
         .append('div')
         .attr('class', 'trade-sociogram-tooltip')
         .style('opacity', 0);
 
-    const colors = new Map(nodes.map((node, index) => [node.id, managerColor(index)]));
-
-    const simulation = d3
-        .forceSimulation(nodes)
-        .force(
-            'link',
-            d3
-                .forceLink(links)
-                .id((node) => node.id)
-                .distance((link) => 120 - Math.min(link.count, 6) * 6)
-        )
-        .force('charge', d3.forceManyBody().strength(-280))
-        .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius((node) => nodeRadius(node) + 22));
-
-    let selectedLinkId = null;
-
-    const fitGraph = (animate = true) => {
-        const bounds = content.node()?.getBBox();
-        if (!bounds?.width || !bounds?.height) return;
-
-        const padding = 52;
-        const scale = Math.min(
-            (width - padding * 2) / bounds.width,
-            (height - padding * 2) / bounds.height,
-            2
-        );
-        const translateX = width / 2 - scale * (bounds.x + bounds.width / 2);
-        const translateY = height / 2 - scale * (bounds.y + bounds.height / 2);
-        const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
-
-        if (animate) {
-            svg.transition().duration(350).call(zoom.transform, transform);
-        } else {
-            svg.call(zoom.transform, transform);
-        }
-    };
-
-    const zoom = d3
-        .zoom()
-        .scaleExtent([0.2, 4])
-        .filter((event) => {
-            if (event.type === 'wheel') return true;
-            if (event.type === 'dblclick') return false;
-
-            let target = event.target;
-            while (target && target !== svg.node()) {
-                if (target.classList?.contains('trade-sociogram-node')) return false;
-                target = target.parentNode;
-            }
-            return true;
-        })
-        .on('zoom', (event) => {
-            content.attr('transform', event.transform);
-        });
-
-    svg.call(zoom).on('dblclick.zoom', null);
-
-    const resetLinkStyles = () => {
-        linkGroups
-            .select('.trade-sociogram-link-visible')
-            .attr('stroke-opacity', (link) => (selectedLinkId && link.id !== selectedLinkId ? 0.25 : 0.85));
-        nodeGroups.attr('opacity', (node) => {
-            if (!selectedLinkId) return 1;
-            const selected = links.find((link) => link.id === selectedLinkId);
-            if (!selected) return 1;
-            return node.id === selected.source.id || node.id === selected.target.id ? 1 : 0.35;
-        });
-    };
-
-    const hideDetail = () => {
-        selectedLinkId = null;
-        detailHost.classed('trade-sociogram-detail-hidden', true).html('');
-        resetLinkStyles();
-    };
-
-    const showDetail = (link) => {
-        selectedLinkId = link.id;
-        const sourceLabel = link.source.label || link.source.id;
-        const targetLabel = link.target.label || link.target.id;
-        const tradeLabel = link.count === 1 ? 'trade' : 'trades';
-
-        detailHost
-            .classed('trade-sociogram-detail-hidden', false)
-            .html(`
-                <div class="trade-sociogram-detail-header">
-                    <h4 class="trade-sociogram-detail-title">${sourceLabel} ↔ ${targetLabel}</h4>
-                    <span class="trade-sociogram-detail-count">${link.count} ${tradeLabel}</span>
-                    <button type="button" class="trade-sociogram-detail-close" aria-label="Close trade details">×</button>
-                </div>
-                <div class="trade-list trade-sociogram-detail-list">
-                    ${link.trades.map((trade) => renderTradeDetail(trade)).join('')}
-                </div>
-            `);
-
-        detailHost.select('.trade-sociogram-detail-close').on('click', hideDetail);
-        resetLinkStyles();
-    };
+    const content = svg.append('g').attr('class', 'trade-sociogram-content');
 
     const linkGroups = content
         .append('g')
@@ -167,13 +101,13 @@ function renderTradeSociogram(container, trades, renderTradeDetail) {
         .style('cursor', 'pointer')
         .on('click', (event, link) => {
             event.stopPropagation();
-            showDetail(link);
+            onPairSelect(link);
         })
         .on('mouseenter', (event, link) => {
             tooltip
                 .style('opacity', 1)
                 .html(
-                    `<strong>${link.source.label} ↔ ${link.target.label}</strong><br>` +
+                    `<strong>${link.sourceNode.label} ↔ ${link.targetNode.label}</strong><br>` +
                         `${link.count} trade${link.count === 1 ? '' : 's'} — click to view`
                 )
                 .style('left', `${event.offsetX + 12}px`)
@@ -186,24 +120,76 @@ function renderTradeSociogram(container, trades, renderTradeDetail) {
             tooltip.style('opacity', 0);
         });
 
+    const linkInvolvesManager = (link) =>
+        selectedManagerId &&
+        (link.source === selectedManagerId || link.target === selectedManagerId);
+
+    const linkOpacity = (link) => {
+        if (selectedManagerId) {
+            return linkInvolvesManager(link) ? 0.95 : 0.12;
+        }
+        if (!selectedPairId) return 0.82;
+        return link.id === selectedPairId ? 0.95 : 0.22;
+    };
+
+    const linkLabelOpacity = (link) => {
+        if (selectedManagerId) {
+            return linkInvolvesManager(link) ? 1 : 0.25;
+        }
+        return selectedPairId && link.id !== selectedPairId ? 0.35 : 1;
+    };
+
+    const nodeOpacity = (node) => {
+        if (selectedManagerId) {
+            if (node.id === selectedManagerId) return 1;
+            return links.some(
+                (link) =>
+                    linkInvolvesManager(link) &&
+                    (link.source === node.id || link.target === node.id)
+            )
+                ? 1
+                : 0.35;
+        }
+        if (!selectedPairId) return 1;
+        const selected = links.find((link) => link.id === selectedPairId);
+        if (!selected) return 1;
+        return node.id === selected.source || node.id === selected.target ? 1 : 0.4;
+    };
+
+    const selectManager = (event, node) => {
+        event.stopPropagation();
+        onManagerSelect(node);
+    };
+
     linkGroups
         .append('line')
         .attr('class', 'trade-sociogram-link-hit')
+        .attr('x1', (link) => link.sourceNode.x)
+        .attr('y1', (link) => link.sourceNode.y)
+        .attr('x2', (link) => link.targetNode.x)
+        .attr('y2', (link) => link.targetNode.y)
         .attr('stroke', 'transparent')
-        .attr('stroke-width', (link) => 10 + (link.count / maxCount) * 14);
+        .attr('stroke-width', (link) => 12 + (link.count / maxCount) * 12);
 
     linkGroups
         .append('line')
         .attr('class', 'trade-sociogram-link-visible')
+        .attr('x1', (link) => link.sourceNode.x)
+        .attr('y1', (link) => link.sourceNode.y)
+        .attr('x2', (link) => link.targetNode.x)
+        .attr('y2', (link) => link.targetNode.y)
         .attr('stroke', '#0a7a6a')
-        .attr('stroke-width', (link) => 1.5 + (link.count / maxCount) * 7)
-        .attr('stroke-opacity', 0.85);
+        .attr('stroke-width', (link) => 2 + (link.count / maxCount) * 8)
+        .attr('stroke-opacity', linkOpacity);
 
     linkGroups
         .append('text')
         .attr('class', 'trade-sociogram-link-label')
+        .attr('x', (link) => (link.sourceNode.x + link.targetNode.x) / 2)
+        .attr('y', (link) => (link.sourceNode.y + link.targetNode.y) / 2)
         .attr('text-anchor', 'middle')
-        .attr('dy', -6)
+        .attr('dy', -5)
+        .attr('opacity', linkLabelOpacity)
         .text((link) => link.count);
 
     const nodeGroups = content
@@ -212,73 +198,80 @@ function renderTradeSociogram(container, trades, renderTradeDetail) {
         .selectAll('g')
         .data(nodes)
         .join('g')
-        .attr('class', 'trade-sociogram-node')
-        .call(
-            d3
-                .drag()
-                .on('start', (event, node) => {
-                    event.sourceEvent?.stopPropagation();
-                    if (!event.active) simulation.alphaTarget(0.3).restart();
-                    node.fx = node.x;
-                    node.fy = node.y;
-                })
-                .on('drag', (event, node) => {
-                    node.fx = event.x;
-                    node.fy = event.y;
-                })
-                .on('end', (event, node) => {
-                    if (!event.active) simulation.alphaTarget(0);
-                    node.fx = null;
-                    node.fy = null;
-                })
-        );
+        .attr('class', (node) =>
+            `trade-sociogram-node${node.id === selectedManagerId ? ' trade-sociogram-node-selected' : ''}`
+        )
+        .attr('transform', (node) => `translate(${node.x},${node.y})`)
+        .attr('opacity', nodeOpacity)
+        .style('cursor', 'pointer')
+        .on('click', selectManager)
+        .on('mouseenter', (event, node) => {
+            tooltip
+                .style('opacity', 1)
+                .html(
+                    `<strong>${node.label}</strong><br>` +
+                        `${node.tradeCount} trade${node.tradeCount === 1 ? '' : 's'} — click to view all`
+                )
+                .style('left', `${event.offsetX + 12}px`)
+                .style('top', `${event.offsetY + 12}px`);
+        })
+        .on('mousemove', (event) => {
+            tooltip.style('left', `${event.offsetX + 12}px`).style('top', `${event.offsetY + 12}px`);
+        })
+        .on('mouseleave', () => {
+            tooltip.style('opacity', 0);
+        });
 
     nodeGroups
         .append('circle')
         .attr('r', (node) => nodeRadius(node))
         .attr('fill', (node) => colors.get(node.id))
-        .attr('stroke', '#ffffff')
-        .attr('stroke-width', 2);
+        .attr('stroke', (node) => (node.id === selectedManagerId ? '#0a7a6a' : '#ffffff'))
+        .attr('stroke-width', (node) => (node.id === selectedManagerId ? 3.5 : 2.5));
 
     nodeGroups
         .append('text')
-        .attr('class', 'trade-sociogram-node-label')
+        .attr('class', 'trade-sociogram-node-count')
         .attr('text-anchor', 'middle')
-        .attr('dy', (node) => labelOffset(node))
-        .text((node) => truncateLabel(node.label));
+        .attr('dy', '0.35em')
+        .attr('fill', '#fff')
+        .attr('font-size', '11px')
+        .attr('font-weight', '700')
+        .text((node) => node.tradeCount);
 
-    nodeGroups.append('title').text((node) => `${node.label} (${node.tradeCount} trade${node.tradeCount === 1 ? '' : 's'})`);
-
-    svg.on('click', hideDetail);
-    svg.on('dblclick', (event) => {
-        if (event.target === svg.node()) {
-            fitGraph(true);
-        }
-    });
-
-    let hasFit = false;
-    simulation.on('tick', () => {
-        linkGroups.selectAll('line').each(function updateLinkPosition(link) {
-            const line = d3.select(this);
-            line.attr('x1', link.source.x)
-                .attr('y1', link.source.y)
-                .attr('x2', link.target.x)
-                .attr('y2', link.target.y);
+    content
+        .selectAll('.trade-sociogram-node-name')
+        .data(nodes)
+        .join('text')
+        .attr('class', (node) =>
+            `trade-sociogram-node-name${node.id === selectedManagerId ? ' trade-sociogram-node-name-selected' : ''}`
+        )
+        .attr('x', (node) => node.labelX)
+        .attr('y', (node) => node.labelY)
+        .attr('text-anchor', (node) => node.labelAnchor)
+        .attr('dy', '0.35em')
+        .attr('opacity', nodeOpacity)
+        .style('cursor', 'pointer')
+        .text((node) => node.label)
+        .on('click', selectManager)
+        .on('mouseenter', (event, node) => {
+            tooltip
+                .style('opacity', 1)
+                .html(
+                    `<strong>${node.label}</strong><br>` +
+                        `${node.tradeCount} trade${node.tradeCount === 1 ? '' : 's'} — click to view all`
+                )
+                .style('left', `${event.offsetX + 12}px`)
+                .style('top', `${event.offsetY + 12}px`);
+        })
+        .on('mousemove', (event) => {
+            tooltip.style('left', `${event.offsetX + 12}px`).style('top', `${event.offsetY + 12}px`);
+        })
+        .on('mouseleave', () => {
+            tooltip.style('opacity', 0);
         });
 
-        linkGroups
-            .select('.trade-sociogram-link-label')
-            .attr('x', (link) => (link.source.x + link.target.x) / 2)
-            .attr('y', (link) => (link.source.y + link.target.y) / 2);
-
-        nodeGroups.attr('transform', (node) => `translate(${node.x},${node.y})`);
-    });
-
-    simulation.on('end', () => {
-        if (hasFit) return;
-        hasFit = true;
-        fitGraph(true);
-    });
+    nodeGroups.append('title').text((node) => `${node.label} — ${node.tradeCount} trade${node.tradeCount === 1 ? '' : 's'}`);
 }
 
-export { renderTradeSociogram, buildTradeSociogramData };
+export { renderTradeSociogram };

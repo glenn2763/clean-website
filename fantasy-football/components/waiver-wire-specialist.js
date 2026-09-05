@@ -14,6 +14,7 @@ import {
     hasTransactionView,
 } from '../utils.js';
 import { createChart, seriesColor, seriesFill } from '../charts.js';
+import { collectTableExtremes, renderExtremeTd } from './table-extremes.js';
 
 function fadeHslColor(hslColor, alpha) {
     if (hslColor.startsWith('hsla(')) {
@@ -239,6 +240,34 @@ function buildWireChart({
 }
 
 function renderWireTable(tableEl, seasons, ownerList, ownerMap, ownerSeasons, chart) {
+    const numericValues = [];
+    const tableRows = ownerList.map((ownerKey, datasetIndex) => {
+        const careerAdds = seasons.reduce(
+            (sum, season) => sum + (ownerSeasons[ownerKey][season]?.adds || 0),
+            0
+        );
+
+        const seasonCells = seasons.map((season) => {
+            const record = ownerSeasons[ownerKey][season];
+            const value = record?.adds ?? null;
+            const index = numericValues.length;
+            numericValues.push(value);
+            return {
+                index,
+                html: record ? String(record.adds) : '—',
+            };
+        });
+
+        return {
+            ownerKey,
+            datasetIndex,
+            seasonCells,
+            careerAdds,
+        };
+    });
+
+    const extremes = collectTableExtremes(numericValues);
+
     tableEl.innerHTML = `
         <table class="season-comp-table">
             <thead>
@@ -249,23 +278,15 @@ function renderWireTable(tableEl, seasons, ownerList, ownerMap, ownerSeasons, ch
                 </tr>
             </thead>
             <tbody>
-                ${ownerList.map((ownerKey, datasetIndex) => {
-                    const careerAdds = seasons.reduce(
-                        (sum, season) => sum + (ownerSeasons[ownerKey][season]?.adds || 0),
-                        0
-                    );
-                    return `
-                        <tr data-dataset-index="${datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this manager">
-                            <td>${getOwnerLabel(ownerKey, ownerMap)}</td>
-                            ${seasons.map((season) => {
-                                const record = ownerSeasons[ownerKey][season];
-                                if (!record) return '<td>—</td>';
-                                return `<td>${record.adds}</td>`;
-                            }).join('')}
-                            <td><strong>${careerAdds}</strong></td>
-                        </tr>
-                    `;
-                }).join('')}
+                ${tableRows.map((row) => `
+                    <tr data-dataset-index="${row.datasetIndex}" role="button" tabindex="0" aria-pressed="true" title="Click to show or hide this manager">
+                        <td>${getOwnerLabel(row.ownerKey, ownerMap)}</td>
+                        ${row.seasonCells.map((cell) =>
+                            renderExtremeTd(cell.html, extremes, cell.index)
+                        ).join('')}
+                        <td><strong>${row.careerAdds}</strong></td>
+                    </tr>
+                `).join('')}
             </tbody>
         </table>
     `;
